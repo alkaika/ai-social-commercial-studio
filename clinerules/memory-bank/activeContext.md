@@ -1,19 +1,20 @@
-# Active Context (2026-10-26)
+# Active Context (2026-10-27)
+
+> Living note — status as of last push. Durable architecture lives in `systemPatterns.md`; durable scope in `projectbrief.md`.
 
 ## Current Focus
-Motion flow LOCKED per user: [uploaded meta.ai clip] → Wonder → Ken Burns. Implemented per-scene upload slot + Wonder animate + tier resolver. Build-verify + commit/push pending.
+Motion flow LOCKED per user: [uploaded meta.ai clip] → Wonder → Ken Burns. Implemented, build-verified ✅, committed + pushed (`6facfa3`). Awaiting user's real Meta gateway sample to replace OpenAI-compatible assumptions in adapters.
 
 ## Recent Changes
-- Motion update: `ScriptScene` gains `motionSource/videoUrl/muteSourceAudio` (`lib/script-utils.ts`); `resolveMotionTier()` + `generateMotion()` kept for Wonder (`lib/muse/visual.ts`); Storyboard per-scene 🎞 Use a Meta AI clip (upload+preview+mute toggle+remove), 🎞 Animate (Wonder) button, motion badge; Export icons per tier; `motionPlan()` render contract (`lib/render/ffmpeg.ts`).
-- Earlier: scaffolded 41 files, `npm install` (140 pkgs), fixed 2 type errors, `npm run build` ✅, live smoke test `/api/muse/script` returned 3 scenes.
-- Repo live: https://github.com/alkaika/ai-social-commercial-studio (public, pushed 2026-10-27).
+- Motion update (2026-10-27, `6facfa3`): `ScriptScene` gains `motionSource/videoUrl/muteSourceAudio`; `resolveMotionTier()` + Wonder `generateMotion()`; Storyboard per-scene clip slot + Wonder button + badge; Export tier icons; `motionPlan()` render contract. `npm run build` ✅ (13 routes).
+- Earlier: scaffolded 41 files, `npm install` (140 pkgs), fixed 2 type errors, live smoke test `/api/muse/script` → 3 scenes.
+- Repo live: https://github.com/alkaika/ai-social-commercial-studio (public, `main` = `6facfa3`).
+- Docs decision: keep `clinerules/` in repo (no secrets inside) — freshened this file + `progress.md`.
 
 ## Next Steps
-1. `npm run build` + smoke test motion attach (object URL preview) — do now.
-2. Commit + push motion changes.
-3. Get gateway sample → update `client.ts/spark.ts/voice.ts/visual.ts` paths/payloads (Wonder quality test decides Seedance later).
-4. Wire FFmpeg.wasm (`lib/render/ffmpeg.ts` honoring `motionPlan()` + mute/dub).
-5. Build Advanced timeline UI; tests; Next upgrade.
+1. Get gateway sample → update `client.ts/spark.ts/voice.ts/visual.ts` paths/payloads (Wonder quality test decides Seedance later).
+2. Wire FFmpeg.wasm (`lib/render/ffmpeg.ts` honoring `motionPlan()` + mute/dub).
+3. Build Advanced timeline UI; tests; Next upgrade past 14.2.5.
 
 ## Active Decisions
 - Motion locked: metai-upload → wonder → kenburns. No Seedance for now (user deferred).
