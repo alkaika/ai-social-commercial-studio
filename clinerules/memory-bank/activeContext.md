@@ -1,22 +1,24 @@
 # Active Context (2026-10-26)
 
 ## Current Focus
-MVP scaffold COMPLETE and build-verified. Awaiting user's real Meta gateway sample (base URL + redacted curl) to replace OpenAI-compatible assumptions in 4 adapter files.
+Motion flow LOCKED per user: [uploaded meta.ai clip] → Wonder → Ken Burns. Implemented per-scene upload slot + Wonder animate + tier resolver. Build-verify + commit/push pending.
 
 ## Recent Changes
-- Scaffolded 41 files, `npm install` (140 pkgs), fixed 2 type errors (SourceHub heroImages, webauthn optionsJSON), `npm run build` ✅, live smoke test `/api/muse/script` returned 3 scenes.
-- Implemented all locked scope: BYOK proxy, passkey vault, factual writer table, Source Hub, storyboard + Director's Notes, export SRT/txt/backup.
+- Motion update: `ScriptScene` gains `motionSource/videoUrl/muteSourceAudio` (`lib/script-utils.ts`); `resolveMotionTier()` + `generateMotion()` kept for Wonder (`lib/muse/visual.ts`); Storyboard per-scene 🎞 Use a Meta AI clip (upload+preview+mute toggle+remove), 🎞 Animate (Wonder) button, motion badge; Export icons per tier; `motionPlan()` render contract (`lib/render/ffmpeg.ts`).
+- Earlier: scaffolded 41 files, `npm install` (140 pkgs), fixed 2 type errors, `npm run build` ✅, live smoke test `/api/muse/script` returned 3 scenes.
+- Repo live: https://github.com/alkaika/ai-social-commercial-studio (public, pushed 2026-10-27).
 
 ## Next Steps
-1. Get gateway sample → update `client.ts/spark.ts/voice.ts/visual.ts` paths/payloads.
-2. Wire FFmpeg.wasm (`lib/render/ffmpeg.ts`) for one-click MP4.
-3. Build Advanced timeline UI (tracks model ready via projectStore).
-4. Add tests: duration math, revision locked/pinned rules, Playwright WebAuthn virtual auth.
-5. Upgrade Next.js past 14.2.5 vuln; consider Dexie for project persistence.
+1. `npm run build` + smoke test motion attach (object URL preview) — do now.
+2. Commit + push motion changes.
+3. Get gateway sample → update `client.ts/spark.ts/voice.ts/visual.ts` paths/payloads (Wonder quality test decides Seedance later).
+4. Wire FFmpeg.wasm (`lib/render/ffmpeg.ts` honoring `motionPlan()` + mute/dub).
+5. Build Advanced timeline UI; tests; Next upgrade.
 
 ## Active Decisions
-- Stay neutral on writer choice (no recommendation badge) — cost vs privacy is user's call.
-- Session memory default; vault opt-in; `?demo=1` for no-key trial.
+- Motion locked: metai-upload → wonder → kenburns. No Seedance for now (user deferred).
+- No meta.ai API/automation (none exists; ToS) — manual upload only. Check meta.ai terms for ad use.
+- Stay neutral on writer choice; session memory default; vault opt-in; `?demo=1` trial.
 - Per-scene regen only; dual approval (plan+cost, then result).
 
 ## Rule Acknowledged

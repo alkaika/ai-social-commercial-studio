@@ -30,7 +30,7 @@ export default function Storyboard({ onDone }: { onDone: () => void }) {
     } catch (e: any) { setMsg(e.message); } finally { setBusy(false); }
   }
 
-  async function quick(sceneId: string, action: 'rewrite' | 'new-image' | 'new-voice') {
+  async function quick(sceneId: string, action: 'rewrite' | 'new-image' | 'new-voice' | 'animate') {
     if (!script) return;
     setBusy(true);
     try {
@@ -43,6 +43,17 @@ export default function Storyboard({ onDone }: { onDone: () => void }) {
         const sc = script.scenes.find((s) => s.id === sceneId);
         await fetch('/api/muse/voice', { method: 'POST', headers: hdr(), body: JSON.stringify({ text: sc?.voiceover || '' }) });
         setMsg(`New voice for ${sceneId} ready.`);
+      } else if (action === 'animate') {
+        const sc2 = script.scenes.find((s) => s.id === sceneId);
+        const res = await fetch('/api/muse/motion', { method: 'POST', headers: hdr(), body: JSON.stringify({ imageUrl: sc2?.imageUrl || '', prompt: `${brand.brandName}: ${sc2?.visualPrompt || sc2?.heading}` }) });
+        const j = await res.json();
+        if (j.videoUrl) {
+          set({ script: { ...script, scenes: script.scenes.map((s) => (s.id === sceneId ? { ...s, videoUrl: j.videoUrl, motionSource: 'wonder' as const } : s)) } });
+          setMsg(`Motion ready for ${sceneId} (Muse Wonder).`);
+        } else {
+          set({ script: { ...script, scenes: script.scenes.map((s) => (s.id === sceneId ? { ...s, motionSource: 'kenburns' as const } : s)) } });
+          setMsg(`Wonder unavailable — ${sceneId} will use Ken Burns motion (free).`);
+        }
       } else {
         const res = await fetch('/api/muse/revise', { method: 'POST', headers: hdr(), body: JSON.stringify({ script, instruction: `Rewrite scene ${sceneId} punchier, same length or shorter.`, sparkModel }) });
         const j = await res.json();
@@ -96,6 +107,34 @@ export default function Storyboard({ onDone }: { onDone: () => void }) {
               <button className="btn-secondary" disabled={busy} onClick={() => quick(s.id, 'rewrite')}>✍️ Rewrite</button>
               <button className="btn-secondary" disabled={busy} onClick={() => quick(s.id, 'new-image')}>🖼 New picture</button>
               <button className="btn-secondary" disabled={busy} onClick={() => quick(s.id, 'new-voice')}>🎙 New voice</button>
+              <button className="btn-secondary" disabled={busy} onClick={() => quick(s.id, 'animate')}>🎞 Animate (Wonder)</button>
+            </div>
+            <div className="border-t pt-2 mt-2 space-y-2">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-sm font-medium">🎬 Motion: {s.motionSource === 'metai-upload' ? <span className="badge">Meta AI clip ✅</span> : s.motionSource === 'wonder' ? <span className="badge">Wonder ✅</span> : <span className="badge">Ken Burns (free)</span>}</span>
+              </div>
+              {s.videoUrl && s.motionSource !== 'wonder' && (
+                <video src={s.videoUrl} controls muted playsInline className="w-full max-h-56 rounded-xl border bg-black" />
+              )}
+              <div className="flex flex-wrap gap-2 items-center">
+                <label className="btn-secondary cursor-pointer inline-block">
+                  🎞 Use a Meta AI clip
+                  <input type="file" accept="video/*" className="hidden" onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (!f || !script) return;
+                    const url = URL.createObjectURL(f);
+                    set({ script: { ...script, scenes: script.scenes.map((x) => x.id === s.id ? { ...x, videoUrl: url, motionSource: 'metai-upload' as const, muteSourceAudio: x.muteSourceAudio ?? true } : x) } });
+                    setMsg(`Meta AI clip attached to ${s.id}. Its sound will be muted under your voice-over.`);
+                  }} />
+                </label>
+                {s.motionSource === 'metai-upload' && (
+                  <>
+                    <button className="text-xs underline" onClick={() => set({ script: { ...script!, scenes: script!.scenes.map((x) => x.id === s.id ? { ...x, muteSourceAudio: !(x.muteSourceAudio ?? true) } : x) } })}>{(s.muteSourceAudio ?? true) ? '🔇 Clip muted (VO on top)' : '🔊 Clip sound on'}</button>
+                    <button className="text-xs underline" onClick={() => set({ script: { ...script!, scenes: script!.scenes.map((x) => x.id === s.id ? { ...x, videoUrl: undefined, motionSource: 'kenburns' as const } : x) } })}>Remove clip</button>
+                  </>
+                )}
+              </div>
+              <p className="text-xs text-neutral-500">How to get a clip: go to meta.ai → describe or upload a photo → download the ~10s MP4 → attach it here. Check meta.ai terms for ad use.</p>
             </div>
           </div>
         );

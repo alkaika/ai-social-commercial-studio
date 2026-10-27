@@ -17,7 +17,13 @@ Web app that generates 5/10/15/30/60s social commercials from a company website 
 - Voice Transcribe 1.0 (`muse-voice-transcribe-1.0`) — TTS + transcribe for captions
 - Image 1.0 (`muse-image-1.0`) — scene keyframes
 - Sam 3.1 (`sam-3.1`) — segmentation / cutout
-- Wonder 1.0 (`muse-wonder-1.0`) — image-to-video, Ken Burns fallback
+- Wonder 1.0 (`muse-wonder-1.0`) — image-to-video tier 2 (gateway; test quality)
+
+## Motion Flow (LOCKED: meta.ai clip → Wonder → Ken Burns)
+1. `metai-upload` — user attaches MP4 made in consumer meta.ai app (no public API exists; manual import is the only legit path). Per-scene upload slot in Storyboard, inline preview, mute/dub toggle (default muted under our VO), remove option. Free (user's Meta account).
+2. `wonder` — Muse Wonder 1.0 via gateway (`POST /api/muse/motion` → `generateMotion()`). Per-scene `🎞 Animate (Wonder)` button.
+3. `kenburns` — always-available local fallback over stills. Free.
+- Resolver: `resolveMotionTier()` in `lib/muse/visual.ts`. Scene fields: `motionSource`, `videoUrl`, `muteSourceAudio` (see `lib/script-utils.ts`). Render contract in `lib/render/ffmpeg.ts:motionPlan()`.
 
 ## Scope Locked
 - Writer choice at start of EVERY project: exact 3-row table (Input $1.25 vs $0.10 / Output $4.25 vs $0.20 / Data rights). No pros/cons. Source: `config/pricing.ts`.
@@ -29,3 +35,5 @@ Web app that generates 5/10/15/30/60s social commercials from a company website 
 ## Non-Goals (MVP)
 - No server DB, no accounts. Projects in IndexedDB.
 - No server FFmpeg. FFmpeg.wasm stub at `lib/render/ffmpeg.ts`.
+- No Seedance/outside video model unless Wonder disappoints (user deferred).
+- No meta.ai automation/scraping (ToS) — manual upload only.

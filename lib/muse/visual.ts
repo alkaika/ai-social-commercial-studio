@@ -25,6 +25,20 @@ export async function segmentImage(opts: { key: string; baseUrl: string; imageUr
   } catch { return { maskUrl: '', mock: true }; }
 }
 
+export type MotionTier = 'metai-upload' | 'wonder' | 'kenburns';
+
+// Locked motion flow: [uploaded meta.ai clip] -> Wonder -> Ken Burns.
+// - 'metai-upload': user-made clip from the consumer meta.ai app (10s w/ audio).
+//   No API exists; the app accepts the upload and we mute/duck its baked-in
+//   audio under our own Voice-over at render time.
+// - 'wonder': Muse Wonder 1.0 image-to-video via gateway.
+// - 'kenburns': always-available local fallback (slow zoom over the still).
+export function resolveMotionTier(scene: { videoUrl?: string; motionSource?: string }): MotionTier {
+  if (scene.videoUrl && scene.motionSource !== 'wonder') return 'metai-upload';
+  if (scene.motionSource === 'wonder' || scene.videoUrl) return 'wonder';
+  return 'kenburns';
+}
+
 export async function generateMotion(opts: { key: string; baseUrl: string; imageUrl: string; prompt: string }) {
   if (!opts.key || opts.key === 'DEMO') return { videoUrl: '', mock: true, fallback: 'kenburns' as const };
   try {
@@ -33,6 +47,6 @@ export async function generateMotion(opts: { key: string; baseUrl: string; image
       body: { model: 'muse-wonder-1.0', image: opts.imageUrl, prompt: opts.prompt },
       timeoutMs: 180000,
     });
-    return { videoUrl: data?.data?.[0]?.url || '', mock: false, fallback: 'kenburns' as const };
+    return { videoUrl: data?.data?.[0]?.url || '', mock: false, motionSource: 'wonder' as const, fallback: 'kenburns' as const };
   } catch { return { videoUrl: '', mock: true, fallback: 'kenburns' as const }; }
 }

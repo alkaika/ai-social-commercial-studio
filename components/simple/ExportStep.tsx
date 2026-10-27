@@ -32,7 +32,7 @@ export default function ExportStep() {
       <div className="rounded-2xl border bg-neutral-900 text-white p-6 space-y-2 max-w-sm mx-auto" style={{ aspectRatio: PLATFORMS[platform].aspect.replace(':', '/') }}>
         <p className="font-bold">{brand.brandName}</p>
         {script.scenes.map((s) => (
-          <div key={s.id} className="text-sm opacity-90">🎬 {s.heading}: {s.onScreenText}</div>
+          <div key={s.id} className="text-sm opacity-90">🎬 {s.heading}: {s.onScreenText} {s.motionSource === 'metai-upload' ? '🎞' : s.motionSource === 'wonder' ? '✨' : '🖼'}</div>
         ))}
         <p className="text-xs opacity-70">Phone preview — final MP4 renders at full {PLATFORMS[platform].width}×{PLATFORMS[platform].height}.</p>
       </div>

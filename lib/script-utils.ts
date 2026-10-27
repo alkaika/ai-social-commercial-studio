@@ -13,6 +13,8 @@ export interface BrandKit {
   avoidWords: string[];
 }
 
+export type MotionSource = 'metai-upload' | 'wonder' | 'kenburns';
+
 export interface ScriptScene {
   id: string;
   heading: string;
@@ -23,6 +25,10 @@ export interface ScriptScene {
   locked?: boolean;
   voiceUrl?: string;
   imageUrl?: string;
+  // Motion flow: [uploaded meta.ai clip] -> Wonder -> Ken Burns (locked priority order)
+  motionSource?: MotionSource;
+  videoUrl?: string; // object URL or remote URL for uploaded meta.ai clip / Wonder output
+  muteSourceAudio?: boolean; // strip/duck baked-in audio under our Voice-over (default true)
 }
 
 export interface AdScript {
