@@ -5,6 +5,7 @@
 - Landing + 8-step wizard renders; demo mode works keyless.
 - Key validate (6 checks), writer factual table, scrape (multi-URL), uploads, snippets+pin, configure, script gen (mock→real fallback), quick buttons, Director's Notes plan+cost, lock scene, fits-meter, SRT/txt/backup export.
 - Live smoke test: 15s script → 3 scenes (Hook…).
+- GitHub repo live: https://github.com/alkaika/ai-social-commercial-studio (public, main @27cad2a, 51 files pushed 2026-10-27). Local git remote `origin` set, branch `main`.
 
 ## What's Left
 - Real gateway shapes (need sample curl) — adapters ready, 4 files to touch.
@@ -17,3 +18,4 @@
 
 ## Decision Evolution
 Plan→Act 2026-10-26: plan-only → scaffolded. Added layers: BYOK vault → sources → easy UI → revise loop → factual writer table → built. User asked `update memory bank` + always-read-first → created `clinerules/memory-bank/{projectbrief,productContext,activeContext,systemPatterns,techContext,progress}.md`.
+Repo 2026-10-27: `ai-social-commercial-studio` public via `gh` (Composio github toolkit blocked for session, used local gh CLI as alkaika).
