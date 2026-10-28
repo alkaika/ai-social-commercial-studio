@@ -40,9 +40,10 @@ export default function Storyboard({ onDone }: { onDone: () => void }) {
         const j = await res.json();
         set({ script: { ...script, scenes: script.scenes.map((s) => (s.id === sceneId ? { ...s, imageUrl: j.url } : s)) } });
       } else if (action === 'new-voice') {
-        const sc = script.scenes.find((s) => s.id === sceneId);
-        await fetch('/api/muse/voice', { method: 'POST', headers: hdr(), body: JSON.stringify({ text: sc?.voiceover || '' }) });
-        setMsg(`Meta has no voice-over synthesis endpoint (Voice Transcribe is speech-to-text for captions). For ${sceneId}: record/upload your own voice, or use the audio in a meta.ai clip — captions will be generated from your script.`);
+        // Meta Model API has NO text-to-speech endpoint (Voice Transcribe is
+        // speech-to-text only). Route the user to the two real options:
+        // (1) meta.ai text-to-voice video clip, or (2) their own recording/upload.
+        setMsg(`🎙 For ${sceneId}: Meta has no voice-over API. Best option: go to meta.ai and paste "Make a video of a [warm female / energetic / calm] voice saying: '${script.scenes.find((s) => s.id === sceneId)?.voiceover || ''}'" — download the ~10s clip, then use "🎙 Use a Meta AI voice clip" below. Or record/upload your own voice. Captions come from your script.`);
       } else if (action === 'animate') {
         const sc2 = script.scenes.find((s) => s.id === sceneId);
         const res = await fetch('/api/muse/motion', { method: 'POST', headers: hdr(), body: JSON.stringify({ imageUrl: sc2?.imageUrl || '', prompt: `${brand.brandName}: ${sc2?.visualPrompt || sc2?.heading}` }) });
@@ -100,7 +101,29 @@ export default function Storyboard({ onDone }: { onDone: () => void }) {
               <button className="text-xs underline" onClick={() => set({ script: { ...script, scenes: script.scenes.map((x) => x.id === s.id ? { ...x, locked: !x.locked } : x) } })}>{s.locked ? '🔒 Locked (AI will skip)' : 'Lock this scene'}</button>
             </div>
             <label className="text-sm font-medium">💬 Words spoken (~{sec.toFixed(1)}s)</label>
+            {s.voiceSource === 'metai-clip' && s.voiceClipUrl && (
+              <div className="flex items-center gap-2 text-sm bg-neutral-50 border rounded-xl p-2">
+                <span className="badge">🎙 Meta AI voice ✅</span>
+                <audio src={s.voiceClipUrl} controls className="w-full max-w-xs" />
+              </div>
+            )}
             <textarea className="input" rows={2} value={s.voiceover} onChange={(e) => set({ script: { ...script, scenes: script.scenes.map((x) => x.id === s.id ? { ...x, voiceover: e.target.value } : x) } })} />
+            <div className="flex flex-wrap gap-2 items-center">
+              <label className="btn-secondary cursor-pointer inline-block">
+                🎙 Use a Meta AI voice clip
+                <input type="file" accept="video/*,audio/*" className="hidden" onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (!f || !script) return;
+                  const url = URL.createObjectURL(f);
+                  set({ script: { ...script, scenes: script.scenes.map((x) => x.id === s.id ? { ...x, voiceSource: 'metai-clip' as const, voiceClipUrl: url, voiceUrl: url } : x) } });
+                  setMsg(`🎙 Voice clip attached to ${s.id}. This audio WILL play in your commercial (motion clips stay muted under it unless you toggle them).`);
+                }} />
+              </label>
+              {s.voiceSource === 'metai-clip' && (
+                <button className="text-xs underline" onClick={() => set({ script: { ...script!, scenes: script!.scenes.map((x) => x.id === s.id ? { ...x, voiceSource: undefined, voiceClipUrl: undefined, voiceUrl: undefined } : x) } })}>Remove voice</button>
+              )}
+            </div>
+            <p className="text-xs text-neutral-500">How to get voice: go to meta.ai and paste: Make a video of a warm, female, energetic voice saying, then your line above in quotes. Download the clip and attach it here. One clip per scene keeps timing tight.</p>
             <label className="text-sm font-medium">📝 Words on screen</label>
             <input className="input" value={s.onScreenText} onChange={(e) => set({ script: { ...script, scenes: script.scenes.map((x) => x.id === s.id ? { ...x, onScreenText: e.target.value } : x) } })} />
             <div className="flex flex-wrap gap-2 pt-1">

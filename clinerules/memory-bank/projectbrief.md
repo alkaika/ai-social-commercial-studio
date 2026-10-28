@@ -19,12 +19,13 @@ Web app that generates 5/10/15/30/60s social commercials from a company website 
 - Sam 3.1 (`sam-3-1` per docs, hyphens) — segmentation via POST /v1/responses. Catalog-dependent: this key returned `model_not_found` for `sam-3-1`, so validate auto-discovers any SAM-like ID from GET /v1/models; SAM stays in preview mode if absent.
 - Wonder 1.0 (`muse-wonder-1.0`) — TEXT/reasoning model ($4/$20), NOT video. No video endpoint exists.
 
-## Motion Flow (meta.ai clip → Ken Burns; Wonder is NOT video)
-1. `metai-upload` — user attaches MP4 made in consumer meta.ai app (no public API exists; manual import is the only legit path). Per-scene upload slot in Storyboard, inline preview, mute/dub toggle (default muted under user voice-over), remove option. Free (user's Meta account).
-2. `kenburns` — always-available local fallback over stills. Free. (Storyboard button: `🎞 Ken Burns motion`.)
+## Motion + Voice-over (consumer meta.ai clips; NO Meta API TTS or video gen)
+1. `metai-upload` motion — user attaches MP4 made in consumer meta.ai app (no public API exists; manual import is the only legit path). Per-scene upload slot in Storyboard, inline preview, mute/dub toggle (default muted under user voice-over), remove option. Free (user's Meta account).
+2. `metai-clip` voice-over — user turns scene script into spoken audio via meta.ai ("Make a video of a [style] voice saying: '...'"), uploads the ~10s clip per scene (accepts video/* + audio/*). Audio player + 🎙 badge inline; this audio WILL play in the final mix (motion clips stay muted under it). Bypasses the Meta Model API gap honestly.
+3. `kenburns` — always-available local fallback over stills. Free. (Storyboard button: `🎞 Ken Burns motion`.)
 - `wonder` value reserved in schema for a future Meta video API — today Muse Wonder is text-only, so no tier routes to it. Animate never promises API video.
-- Resolver: `resolveMotionTier()` in `lib/muse/visual.ts`. Scene fields: `motionSource`, `videoUrl`, `muteSourceAudio` (see `lib/script-utils.ts`). Render contract in `lib/render/ffmpeg.ts:motionPlan()`.
-- Voice-over: Meta has NO TTS. Real VO = user recording/upload or meta.ai clip audio; Voice Transcribe only makes captions from final audio (script-derived captions today, `/v1/asr/transcribe` later).
+- Resolver: `resolveMotionTier()` in `lib/muse/visual.ts`. Scene fields: `motionSource`, `videoUrl`, `muteSourceAudio`, `voiceSource`, `voiceClipUrl` (see `lib/script-utils.ts`). Render contract in `lib/render/ffmpeg.ts:motionPlan()` includes VO source per scene.
+- Voice-over: Meta has NO TTS. Real VO = (a) meta.ai text-to-voice clip per scene, (b) user recording/upload (future), or (c) script-only (captions derive from script, then `/v1/asr/transcribe` on the final mix later).
 
 ## Scope Locked
 - Writer choice at start of EVERY project: exact 3-row table (Input $1.25 vs $0.10 / Output $4.25 vs $0.20 / Data rights). No pros/cons. Source: `config/pricing.ts`.

@@ -10,9 +10,11 @@
 //   2. 'kenburns' — slow zoom over scene.imageUrl (always available, free).
 //   Note: Muse Wonder 1.0 is a text/reasoning model — no video endpoint exists.
 //   If Meta ships one, resolveMotionTier gains the tier back here.
-export function motionPlan(scenes: { id: string; videoUrl?: string; motionSource?: string; imageUrl?: string }[]) {
+//   Voice: Meta has NO TTS; per-scene VO comes from s.voiceClipUrl
+//   (meta.ai text-to-voice clip) or stays script-only.
+export function motionPlan(scenes: { id: string; videoUrl?: string; motionSource?: string; imageUrl?: string; voiceSource?: string; voiceClipUrl?: string }[]) {
   const { resolveMotionTier } = require('@/lib/muse/visual') as typeof import('@/lib/muse/visual');
-  return scenes.map((s) => ({ id: s.id, tier: resolveMotionTier(s), src: s.videoUrl || s.imageUrl || '' }));
+  return scenes.map((s) => ({ id: s.id, tier: resolveMotionTier(s), src: s.videoUrl || s.imageUrl || '', vo: s.voiceClipUrl || null, voSource: s.voiceSource || 'script' }));
 }
 
 export async function renderCommercial() {

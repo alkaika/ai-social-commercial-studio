@@ -29,7 +29,16 @@ export interface ScriptScene {
   // ('wonder' value is reserved — Meta has no video-generation endpoint today.)
   motionSource?: MotionSource;
   videoUrl?: string; // object URL or remote URL for uploaded meta.ai clip
-  muteSourceAudio?: boolean; // strip/duck baked-in audio under our Voice-over (default true)
+  muteSourceAudio?: boolean; // strip/duck baked-in motion-clip audio when layering VO (default true)
+  // Voice-over sources (Meta has NO TTS endpoint on the API):
+  // - 'metai-clip': audio baked into an uploaded meta.ai text-to-voice video
+  //   ("Make a video of a warm female voice saying: '...'"). Set voiceUrl to
+  //   the clip URL and keep clip sound ON.
+  // - 'upload' | 'record': user-provided audio (future record button).
+  // - default/undefined: script text is the source of truth; captions derive
+  //   from it until final-mix transcription via /v1/asr/transcribe.
+  voiceSource?: 'metai-clip' | 'upload' | 'record';
+  voiceClipUrl?: string; // audio or video URL used as the actual VO audio
 }
 
 export interface AdScript {

@@ -3,16 +3,12 @@
 > Living note — status as of last push. Durable architecture lives in `systemPatterns.md`; durable scope in `projectbrief.md`.
 
 ## Current Focus
-User live test #4: **5/6 ✅** (spark×2, image, voice, wonder all Model-found/OK). Only SAM fails: `GET /v1/models/sam-3-1` → 404 `model_not_found` — docs ID doesn't match this key's catalog. Shipped: SAM fallback enumerates `GET /v1/models` and fuzzy-matches /sam/i; if found, uses the catalog ID automatically; if absent, SAM stays in preview mode (script/images/captions unaffected). Memory bank: SAM marked catalog-dependent, `activeContext` dupe-cleaned. Awaiting user retest — expect 6/6 ✅ if the key's catalog lists any SAM-like ID.
+Good catch by user: consumer meta.ai also does text-to-voice ("Make a video of a warm female voice saying: '...'"). Meta Model API still has NO TTS, so wired as a legit import path: per-scene 🎙 voice-clip slot (video/audio upload + inline player + remove) with `voiceSource`/`voiceClipUrl` on the scene, voice routing message now pastes the exact meta.ai prompt prefilled with the scene's line, `motionPlan()` carries VO per scene. Clarifies audio hierarchy: voice clip PLAYS, motion clips muted under it. Memory bank + render contract updated.
 
 ## Recent Changes
-- Validate v2 (`bb74b5e`): CANDIDATES map, normalizeBase() shared, MuseGatewayError with status, auth-vs-fail UI badge (🔑 endpoint exists, key rejected).
-- Earlier: hydration fix (`f7f2840`), /v1 normalization + reasons (`c0ae937`), motion (`6facfa3`). `npm run build` ✅. Repo `main` = `bb74b5e`.
-
-## Recent Changes
-- Validate diagnostics: `validate/route.ts` returns `{checks, details, baseUrl}`; `KeySetup.tsx` expandable reasons + 0/6 URL-mismatch explainer.
-- URL normalization in `callMuse()` strips trailing `/v1`.
-- Earlier motion update (`6facfa3`) build-verified ✅, committed + pushed. Repo `main` = `6facfa3`.
+- meta.ai voice clips: per-scene 🎙 slot + `voiceSource`/`voiceClipUrl`, routing message pastes exact meta.ai prompt, `motionPlan()` carries VO. (This turn.)
+- Validate: catalog checks + SAM auto-discovery (`d7023cd`), default gateway `https://api.meta.ai/v1` (`3cfaee8`), aligned adapters to verified API (`1f7f4f4`). `npm run build` ✅ (13 routes).
+- Earlier: motion clips (`6facfa3`), hydration fix, /v1 normalization.
 
 ## Next Steps
 1. User retests with fixed build → paste "Why did checks fail?" details.
@@ -22,7 +18,7 @@ User live test #4: **5/6 ✅** (spark×2, image, voice, wonder all Model-found/O
 3. FFmpeg.wasm `motionPlan()` + mute/dub; Advanced timeline; tests; Next upgrade.
 
 ## Active Decisions
-- Motion locked: metai-upload → wonder → kenburns. No Seedance for now (user deferred).
+- Motion + voice: metai-upload clips → kenburns; `metai-clip` voice clips per scene. No Seedance. No meta.ai automation (ToS) — manual upload only. Check meta.ai terms for ad use.
 - No meta.ai API/automation (none exists; ToS) — manual upload only. Check meta.ai terms for ad use.
 - Stay neutral on writer choice; session memory default; vault opt-in; `?demo=1` trial.
 - Per-scene regen only; dual approval (plan+cost, then result).
