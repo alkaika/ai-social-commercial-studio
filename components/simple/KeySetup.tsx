@@ -11,8 +11,11 @@ export default function KeySetup({ onDone }: { onDone: () => void }) {
   const [busy, setBusy] = useState(false);
   const [hasVault, setHasVault] = useState(false);
   const [details, setDetails] = useState<Record<string, string>>({});
+  // Client-only UI (vault + biometrics) must not render during SSR,
+  // or React hydration fails: server HTML won't match the browser.
+  const [mounted, setMounted] = useState(false);
 
-  useEffect(() => { vaultHas().then(setHasVault).catch(() => {}); }, []);
+  useEffect(() => { setMounted(true); vaultHas().then(setHasVault).catch(() => {}); }, []);
 
   const headers = (kk: string, uu: string) => ({ 'x-meta-key': kk, 'x-meta-base-url': uu });
 
@@ -50,7 +53,7 @@ export default function KeySetup({ onDone }: { onDone: () => void }) {
     <div className="card space-y-4">
       <h2 className="text-xl font-bold">🔑 Connect your Meta key</h2>
       <p className="text-neutral-600 text-sm">Your key is like a password that lets this app use Meta&apos;s AI. It stays in this tab&apos;s memory and is sent only with your own requests. It is never stored on our server.</p>
-      {hasVault && <button className="btn-secondary" onClick={unlock} disabled={busy}>🔓 Unlock with Face ID / fingerprint</button>}
+      {mounted && hasVault && <button className="btn-secondary" onClick={unlock} disabled={busy}>🔓 Unlock with Face ID / fingerprint</button>}
       <label className="block text-sm font-medium">Meta API key</label>
       <input className="input" type="password" placeholder="Paste your Meta key" value={k} onChange={(e) => setK(e.target.value)} />
       <label className="block text-sm font-medium">Gateway URL (advanced — usually leave as-is)</label>
@@ -58,7 +61,7 @@ export default function KeySetup({ onDone }: { onDone: () => void }) {
       {key && <p className="text-sm">Current key: <span className="badge">{maskedKey(key)}</span></p>}
       <div className="flex flex-wrap gap-2">
         <button className="btn-primary" disabled={busy || !k} onClick={() => test(k, url)}>{busy ? 'Checking…' : 'Test my key'}</button>
-        {prfSupported() && <button className="btn-secondary" disabled={busy || !k} onClick={enroll}>💾 Save with biometrics</button>}
+        {mounted && prfSupported() && <button className="btn-secondary" disabled={busy || !k} onClick={enroll}>💾 Save with biometrics</button>}
         <button className="btn-secondary" onClick={() => { forget(); vaultForget(); setHasVault(false); setK(''); setMsg('Forgotten — key wiped from memory and this device.'); }}>Forget key</button>
       </div>
       {Object.keys(modelStatus).length > 0 && (
