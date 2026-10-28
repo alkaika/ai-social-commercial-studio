@@ -70,7 +70,7 @@ export function byokHeaders(req: Request): { key: string; baseUrl: string } {
   const baseUrl =
     req.headers.get('x-meta-base-url') ??
     process.env.META_GATEWAY_URL ??
-    'https://api.meta.example';
+    'https://api.meta.ai/v1';
   if (!key) throw new Error('Missing API key. Add your Meta key first — it is sent with this request only.');
   return { key, baseUrl };
 }

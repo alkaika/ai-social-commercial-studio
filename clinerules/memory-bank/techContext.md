@@ -10,7 +10,7 @@ npm install
 npm run dev   # http://localhost:3000/studio?demo=1
 npm run build # passes, 13 routes
 ```
-No ffmpeg needed (wasm stub). No DB. `.env.example` has only optional META_GATEWAY_URL.
+No ffmpeg needed (wasm stub). No DB. `.env.example` defaults META_GATEWAY_URL to the verified Meta Model API (`https://api.meta.ai/v1`).
 
 ## Constraints
 - simplewebauthn/browser v9: `startRegistration(opts)` / `startAuthentication(opts)` take options directly (NOT `{optionsJSON}`) → code uses `as any` casts. Verified via .d.ts.

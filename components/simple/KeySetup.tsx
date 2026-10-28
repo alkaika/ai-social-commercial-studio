@@ -6,7 +6,7 @@ import { vaultEnroll, vaultUnlock, vaultHas, vaultForget, prfSupported } from '@
 export default function KeySetup({ onDone }: { onDone: () => void }) {
   const { key, baseUrl, setKey, setStatus, forget, modelStatus } = useKeyStore() as any;
   const [k, setK] = useState(key);
-  const [url, setUrl] = useState(baseUrl || process.env.NEXT_PUBLIC_META_GATEWAY || 'https://api.meta.example');
+  const [url, setUrl] = useState(baseUrl || process.env.NEXT_PUBLIC_META_GATEWAY || 'https://api.meta.ai/v1');
   const [msg, setMsg] = useState('');
   const [busy, setBusy] = useState(false);
   const [hasVault, setHasVault] = useState(false);

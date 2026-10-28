@@ -1,6 +1,6 @@
 # Progress
 
-> Living note — status as of last push (`6facfa3`, 2026-10-27). `clinerules/` is intentionally committed (no secrets inside) so clones carry the why, not just the what.
+> Living note — status as of last push. `clinerules/` is intentionally committed (no secrets inside) so clones carry the why, not just the what.
 
 ## What Works ✅
 - `npm run build` passes (13 routes: /, /studio, 8 APIs).
@@ -8,7 +8,8 @@
 - Key validate (6 checks), writer factual table, scrape (multi-URL), uploads, snippets+pin, configure, script gen (mock→real fallback), quick buttons, Director's Notes plan+cost, lock scene, fits-meter, SRT/txt/backup export.
 - Motion flow: per-scene meta.ai clip slot (upload+preview+mute toggle+remove), Wonder animate button, Ken Burns fallback, tier badge + export icons, `motionPlan()` render contract.
 - Live smoke test: 15s script → 3 scenes (Hook…).
-- GitHub repo live: https://github.com/alkaika/ai-social-commercial-studio (public, `main` = `6facfa3`). Local git remote `origin` set, branch `main`.
+- GitHub repo live: https://github.com/alkaika/ai-social-commercial-studio (public). Local git remote `origin` set, branch `main`.
+- Default gateway everywhere is the verified Meta Model API (`https://api.meta.ai/v1`), so the Key step comes prefilled — user only pastes their key.
 
 ## What's Left
 - Real gateway shapes (need sample curl) — adapters ready, 4 files to touch.

@@ -16,4 +16,4 @@ npm run dev
 Open http://localhost:3000/studio?demo=1 for no-key demo.
 
 ## Wire real Meta endpoints
-Adapters in `lib/muse/` assume OpenAI-compatible paths. Drop your gateway base URL in the Key step, or set META_GATEWAY_URL. Only `lib/muse/client.ts`, `spark.ts`, `voice.ts`, `visual.ts` need shape tweaks.
+Default gateway is the Meta Model API (`https://api.meta.ai/v1`, verified 2026-10-27). Adapters in `lib/muse/` call verified paths — only touch them if Meta changes its API.
