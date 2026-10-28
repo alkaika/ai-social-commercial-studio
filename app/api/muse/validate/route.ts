@@ -6,10 +6,20 @@ export async function POST(req: NextRequest) {
   try {
     const { key, baseUrl } = byokHeaders(req);
     // Validate key against each model with a tiny call. Never logs the key.
+    // Returns per-model status + short error reason so the UI can explain WHY.
     const checks: Record<string, 'ok' | 'fail'> = {};
+    const details: Record<string, string> = {};
     const tryCheck = async (name: string, path: string, body: any) => {
-      try { await callMuse({ key, baseUrl, path, body, timeoutMs: 20000 }); checks[name] = 'ok'; }
-      catch { checks[name] = 'fail'; }
+      const url = `${baseUrl.replace(/\/$/, '')}${path}`;
+      try {
+        await callMuse({ key, baseUrl, path, body, timeoutMs: 20000 });
+        checks[name] = 'ok';
+        details[name] = `OK (${url})`;
+      } catch (e: any) {
+        checks[name] = 'fail';
+        const msg = (e?.message || 'failed').slice(0, 300);
+        details[name] = `${url} → ${msg}`;
+      }
     };
     await Promise.all([
       tryCheck('spark-standard', '/v1/chat/completions', { model: GATEWAY_MODELS.sparkStandard, messages: [{ role: 'user', content: 'ping' }], max_tokens: 1 }),
@@ -19,7 +29,7 @@ export async function POST(req: NextRequest) {
       tryCheck('sam', '/v1/sam/segment', { model: GATEWAY_MODELS.sam, image: 'ping' }),
       tryCheck('wonder', '/v1/video/generations', { model: GATEWAY_MODELS.wonder, prompt: 'ping' }),
     ]);
-    return NextResponse.json({ checks });
+    return NextResponse.json({ checks, details, baseUrl });
   } catch (e: any) {
     return NextResponse.json({ error: e?.message || 'Validation failed.' }, { status: 400 });
   }

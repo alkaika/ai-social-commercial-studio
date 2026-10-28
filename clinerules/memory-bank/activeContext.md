@@ -3,18 +3,19 @@
 > Living note — status as of last push. Durable architecture lives in `systemPatterns.md`; durable scope in `projectbrief.md`.
 
 ## Current Focus
-Motion flow LOCKED per user: [uploaded meta.ai clip] → Wonder → Ken Burns. Implemented, build-verified ✅, committed + pushed (`6facfa3`). Awaiting user's real Meta gateway sample to replace OpenAI-compatible assumptions in adapters.
+Key insight from user's live test: Gateway URL field matters. User pasted `https://api.meta.ai/v1` + key `LLM…4A` → 0/6 checks. App now (a) normalizes trailing `/v1` so both `…/api.meta.ai` and `…/api.meta.ai/v1` work, (b) returns per-model failure reasons + 0/6 explainer pointing at URL-not-key. Next: user retests and pastes the ACTUAL "Why did checks fail?" lines (expected: 401 vs 404 reveals whether this endpoint is an OpenAI-style gateway at all).
 
 ## Recent Changes
-- Motion update (2026-10-27, `6facfa3`): `ScriptScene` gains `motionSource/videoUrl/muteSourceAudio`; `resolveMotionTier()` + Wonder `generateMotion()`; Storyboard per-scene clip slot + Wonder button + badge; Export tier icons; `motionPlan()` render contract. `npm run build` ✅ (13 routes).
-- Earlier: scaffolded 41 files, `npm install` (140 pkgs), fixed 2 type errors, live smoke test `/api/muse/script` → 3 scenes.
-- Repo live: https://github.com/alkaika/ai-social-commercial-studio (public, `main` = `6facfa3`).
-- Docs decision: keep `clinerules/` in repo (no secrets inside) — freshened this file + `progress.md`.
+- Validate diagnostics: `validate/route.ts` returns `{checks, details, baseUrl}`; `KeySetup.tsx` expandable reasons + 0/6 URL-mismatch explainer.
+- URL normalization in `callMuse()` strips trailing `/v1`.
+- Earlier motion update (`6facfa3`) build-verified ✅, committed + pushed. Repo `main` = `6facfa3`.
 
 ## Next Steps
-1. Get gateway sample → update `client.ts/spark.ts/voice.ts/visual.ts` paths/payloads (Wonder quality test decides Seedance later).
-2. Wire FFmpeg.wasm (`lib/render/ffmpeg.ts` honoring `motionPlan()` + mute/dub).
-3. Build Advanced timeline UI; tests; Next upgrade past 14.2.5.
+1. User retests with fixed build → paste "Why did checks fail?" details.
+   - `401 invalid_api_key` on `…/api.meta.ai/v1/chat/completions` → URL IS an OpenAI gateway; key is wrong/type-mismatched. Get correct key.
+   - `404 / HTML` → NOT an OpenAI gateway (consumer meta.ai has no API). Need real gateway base URL from Meta provider docs.
+2. Once 6/6 (or N/6): wire real shapes into `spark/voice/visual` adapters.
+3. FFmpeg.wasm `motionPlan()` + mute/dub; Advanced timeline; tests; Next upgrade.
 
 ## Active Decisions
 - Motion locked: metai-upload → wonder → kenburns. No Seedance for now (user deferred).

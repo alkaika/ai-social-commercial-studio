@@ -4,12 +4,13 @@ import { useKeyStore, maskedKey } from '@/stores/keyStore';
 import { vaultEnroll, vaultUnlock, vaultHas, vaultForget, prfSupported } from '@/lib/vault/webauthn-prf';
 
 export default function KeySetup({ onDone }: { onDone: () => void }) {
-  const { key, baseUrl, setKey, setStatus, forget, modelStatus } = useKeyStore();
+  const { key, baseUrl, setKey, setStatus, forget, modelStatus } = useKeyStore() as any;
   const [k, setK] = useState(key);
   const [url, setUrl] = useState(baseUrl || process.env.NEXT_PUBLIC_META_GATEWAY || 'https://api.meta.example');
   const [msg, setMsg] = useState('');
   const [busy, setBusy] = useState(false);
   const [hasVault, setHasVault] = useState(false);
+  const [details, setDetails] = useState<Record<string, string>>({});
 
   useEffect(() => { vaultHas().then(setHasVault).catch(() => {}); }, []);
 
@@ -22,9 +23,14 @@ export default function KeySetup({ onDone }: { onDone: () => void }) {
       const j = await res.json();
       if (!res.ok) throw new Error(j.error || 'Key check failed.');
       Object.entries(j.checks || {}).forEach(([m, s]) => setStatus(m, s as any));
+      setDetails(j.details || {});
       setKey(kk, uu);
       const okCount = Object.values(j.checks || {}).filter((v) => v === 'ok').length;
-      setMsg(`Key works. ${okCount} of 6 model checks passed. Anything that failed will use a free preview instead.`);
+      if (okCount === 0) {
+        setMsg(`Heads up: 0 of 6 checks passed. This usually means the Gateway URL is wrong — not your key. This app expects an OpenAI-style gateway (…/v1/chat/completions). https://api.meta.ai/v1 is the consumer Meta AI app and has no API. See the per-model reasons below, or tap Continue to use free preview mode.`);
+      } else {
+        setMsg(`Key works. ${okCount} of 6 model checks passed. Anything that failed will use a free preview instead.`);
+      }
     } catch (e: any) { setMsg(e.message); } finally { setBusy(false); }
   }
 
@@ -56,7 +62,17 @@ export default function KeySetup({ onDone }: { onDone: () => void }) {
         <button className="btn-secondary" onClick={() => { forget(); vaultForget(); setHasVault(false); setK(''); setMsg('Forgotten — key wiped from memory and this device.'); }}>Forget key</button>
       </div>
       {Object.keys(modelStatus).length > 0 && (
-        <div className="flex flex-wrap gap-2 text-sm">{Object.entries(modelStatus).map(([m, s]) => <span key={m} className="badge">{m}: {s === 'ok' ? '✅' : '⚠️ preview mode'}</span>)}</div>
+        <div className="space-y-1 text-sm">
+          <div className="flex flex-wrap gap-2">{Object.entries(modelStatus).map(([m, s]) => <span key={m} className="badge">{m}: {s === 'ok' ? '✅' : '⚠️ preview mode'}</span>)}</div>
+          {Object.keys(details).length > 0 && (
+            <details className="border rounded-xl p-2 bg-neutral-50">
+              <summary className="cursor-pointer font-medium">Why did checks fail? (tap to see)</summary>
+              <ul className="mt-2 space-y-1 text-xs break-all">
+                {Object.entries(details).map(([m, d]) => <li key={m}><b>{m}:</b> {d}</li>)}
+              </ul>
+            </details>
+          )}
+        </div>
       )}
       {msg && <p className="text-sm bg-neutral-100 border rounded-xl p-3">{msg}</p>}
       <div className="flex justify-between items-center">

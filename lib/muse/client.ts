@@ -11,7 +11,10 @@ export async function callMuse<T = any>(opts: MuseCallOpts): Promise<T> {
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), opts.timeoutMs ?? 60000);
   try {
-    const res = await fetch(`${opts.baseUrl.replace(/\/$/, '')}${opts.path}`, {
+    // Normalize: strip trailing slashes AND a trailing /v1 so users can paste
+    // either https://api.meta.ai or https://api.meta.ai/v1 — paths below add /v1/...
+    const base = opts.baseUrl.replace(/\/+$/, '').replace(/\/v1$/, '');
+    const res = await fetch(`${base}${opts.path}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
