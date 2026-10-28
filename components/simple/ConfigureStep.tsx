@@ -2,7 +2,7 @@
 import { DURATIONS, PLATFORMS, TONES, type PlatformId } from '@/config/platforms';
 import { useProject } from '@/stores/projectStore';
 
-export default function ConfigureStep({ onDone }: { onDone: () => void }) {
+export default function ConfigureStep({ onDone, onBack }: { onDone: () => void; onBack?: () => void }) {
   const { durationSec, platform, tone, set } = useProject();
   return (
     <div className="card space-y-5">
@@ -38,7 +38,7 @@ export default function ConfigureStep({ onDone }: { onDone: () => void }) {
           ))}
         </div>
       </div>
-      <div className="text-right"><button className="btn-primary" onClick={onDone}>Generate my commercial →</button></div>
+      <div className="flex justify-between items-center"><button className="btn-secondary" onClick={onBack}>← Back</button><button className="btn-primary" onClick={onDone}>Generate my commercial →</button></div>
     </div>
   );
 }

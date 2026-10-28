@@ -4,7 +4,7 @@ import { useProject } from '@/stores/projectStore';
 import { usePrefs } from '@/stores/preferences';
 import { useKeyStore } from '@/stores/keyStore';
 
-export default function ModelPicker({ onDone }: { onDone: () => void }) {
+export default function ModelPicker({ onDone, onBack }: { onDone: () => void; onBack?: () => void }) {
   const { sparkModel, durationSec, set } = useProject();
   const { lastWriter, setLastWriter } = usePrefs();
   const { modelStatus } = useKeyStore();
@@ -55,7 +55,7 @@ export default function ModelPicker({ onDone }: { onDone: () => void }) {
           );
         })}
       </div>
-      <div className="text-right"><button className="btn-primary" onClick={onDone}>Continue →</button></div>
+      <div className="flex justify-between items-center"><button className="btn-secondary" onClick={onBack}>← Back</button><button className="btn-primary" onClick={onDone}>Continue →</button></div>
     </div>
   );
 }

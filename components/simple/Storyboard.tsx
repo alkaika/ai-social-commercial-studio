@@ -5,7 +5,7 @@ import { useKeyStore } from '@/stores/keyStore';
 import { fitsDuration, wordsToSec } from '@/lib/script-utils';
 import { PLATFORMS } from '@/config/platforms';
 
-export default function Storyboard({ onDone }: { onDone: () => void }) {
+export default function Storyboard({ onDone, onBack }: { onDone: () => void; onBack?: () => void }) {
   const { script, set, durationSec, brand, tone, platform, sparkModel, snippets, assets } = useProject();
   const { key, baseUrl } = useKeyStore();
   const [busy, setBusy] = useState(false);
@@ -82,6 +82,7 @@ export default function Storyboard({ onDone }: { onDone: () => void }) {
         <h2 className="text-xl font-bold">✨ Ready to generate</h2>
         <button className="btn-primary" disabled={busy} onClick={generate}>{busy ? 'Working…' : '✨ Generate my commercial'}</button>
         {msg && <p className="text-sm bg-neutral-100 border rounded-xl p-3 text-left">{msg}</p>}
+        <div className="flex justify-between items-center"><button className="btn-secondary" onClick={onBack}>← Back</button><span /></div>
       </div>
     );
   }
@@ -179,7 +180,7 @@ export default function Storyboard({ onDone }: { onDone: () => void }) {
         )}
         {msg && <p className="text-sm bg-neutral-100 border rounded-xl p-3">{msg}</p>}
       </div>
-      <div className="text-right"><button className="btn-primary" onClick={onDone}>Looks good — continue to export →</button></div>
+      <div className="flex justify-between items-center"><button className="btn-secondary" onClick={onBack}>← Back to story</button><button className="btn-primary" onClick={onDone}>Looks good — continue to export →</button></div>
     </div>
   );
 }

@@ -5,7 +5,7 @@
 ## What Works ✅
 - `npm run build` passes (13 routes: /, /studio, 8 APIs).
 - Landing + 8-step wizard renders; demo mode works keyless (`/studio?demo=1`).
-- Key validate: 6/6 ✅ live (2026-10-27, user's key, `https://api.meta.ai/v1`), writer table, scrape, uploads, snippets+pin, configure, script gen (real Spark now, mock fallback), quick buttons, Director's Notes, lock, fits-meter, SRT/txt/backup export.
+- Key validate: 6/6 ✅ live (2026-10-27, user's key, `https://api.meta.ai/v1`), writer table, scrape, uploads, snippets+pin, configure, script gen (real Spark now, mock fallback), quick buttons, Director's Notes, lock, fits-meter, SRT/txt/backup export, ← Back on every step + clickable breadcrumb (no state loss — Zustand).
 - SAM auto-discovery: validator enumerates the model catalog and fuzzy-matches SAM-like IDs (docs ID `sam-3-1` mismatched this key's catalog) — this is what flipped the 6th check ✅.
 - Motion flow: per-scene meta.ai clip slot (upload+preview+mute toggle+remove), Wonder animate button, Ken Burns fallback, tier badge + export icons, `motionPlan()` render contract.
 - Live smoke test: 15s script → 3 scenes (Hook…).

@@ -2,7 +2,7 @@
 import { useProject } from '@/stores/projectStore';
 import { PLATFORMS } from '@/config/platforms';
 
-export default function ExportStep() {
+export default function ExportStep({ onBack }: { onBack?: () => void }) {
   const { script, platform, brand, durationSec } = useProject();
 
   const download = (name: string, text: string, type = 'text/plain') => {
@@ -41,6 +41,7 @@ export default function ExportStep() {
         <button className="btn-secondary" onClick={() => download('script.txt', script.scenes.map((s) => `${s.heading}\nVO: ${s.voiceover}\nOn-screen: ${s.onScreenText}\nVisual: ${s.visualPrompt}\n`).join('\n'))}>Download script (.txt)</button>
         <button className="btn-secondary" onClick={() => download('project-backup.json', JSON.stringify({ script, brand, platform, durationSec }, null, 2), 'application/json')}>Download project backup</button>
       </div>
+      <div className="flex justify-between items-center"><button className="btn-secondary" onClick={onBack}>← Back to story</button><span className="text-sm text-neutral-500">Nothing is final — go back, tweak, re-export anytime.</span></div>
       <p className="text-sm text-neutral-600">Full MP4 rendering uses FFmpeg.wasm in your browser (no server upload). Wire <code>lib/render/ffmpeg.ts</code> to enable one-click MP4 — captions + script export work today.</p>
     </div>
   );

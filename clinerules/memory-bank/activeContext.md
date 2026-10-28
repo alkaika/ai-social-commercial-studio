@@ -3,7 +3,7 @@
 > Living note — status as of last push. Durable architecture lives in `systemPatterns.md`; durable scope in `projectbrief.md`.
 
 ## Current Focus
-MILESTONE 2026-10-27: user live test → **6/6 ✅** on `https://api.meta.ai/v1` (spark-standard, spark-contributor, image = inference OK; voice, sam, wonder = Model found). SAM auto-discovery resolved the catalog mismatch — the key's catalog now returns a SAM-like ID. App is fully keyed: script (Spark) + images (Image) + captions (Voice STT) + cutouts (SAM) + reasoning (Wonder) all live; VO/video via per-scene meta.ai clip slots + Ken Burns. Next: end-to-end project test (scrape → script → clips → export) and FFmpeg.wasm `motionPlan()` + VO assembly.
+MILESTONE 2026-10-27: user live test → **6/6 ✅** on `https://api.meta.ai/v1`. Now: Back navigation added — every step has ← Back, Story/Export label it "Back to story", and the step breadcrumb is clickable for visited steps (forward steps stay locked). No state loss: all inputs live in Zustand (`projectStore`) so going back never wipes key/brand/script/work. Build ✅, ready to commit.
 
 ## Recent Changes
 - MILESTONE: 6/6 ✅ — all models reachable with user's key (SAM auto-discovery worked).

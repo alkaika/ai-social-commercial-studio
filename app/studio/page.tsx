@@ -37,24 +37,53 @@ function StudioInner() {
   const idx = STEPS.findIndex((s) => s.id === step);
   const go = (s: Step) => set({ step: s });
 
+  // Previous-screen map (skips the unused 'brand' alias — it renders the same
+  // SourceHub as 'sources', so going back from Setup lands on Business).
+  const PREV: Partial<Record<Step, Step>> = {
+    writer: 'key',
+    sources: 'writer',
+    brand: 'sources',
+    configure: 'sources',
+    script: 'configure',
+    review: 'script',
+    export: 'script',
+  };
+
+  const goBack = () => {
+    const prev = PREV[step];
+    if (prev) go(prev);
+  };
+  const canGoBack = idx > 0 && !!PREV[step];
+
   return (
     <main className="max-w-3xl mx-auto px-4 py-8 space-y-6">
-      <div className="flex items-center gap-2 text-sm flex-wrap">
+      <div className="flex items-center gap-2 text-sm flex-wrap" role="navigation" aria-label="Studio steps">
         {STEPS.map((s, i) => (
           <span key={s.id} className="flex items-center gap-2">
-            <span className={`badge ${i <= idx ? '!bg-black !text-white' : ''}`}>{i + 1}. {s.label}</span>
+            {i <= idx ? (
+              <button onClick={() => go(s.id)} className={`badge hover:opacity-70 ${i === idx ? '!bg-black !text-white' : 'underline'}`} title={`Go back to ${s.label}`}>
+                {i + 1}. {s.label}{i < idx ? ' ✓' : ''}
+              </button>
+            ) : (
+              <span className="badge opacity-50">{i + 1}. {s.label}</span>
+            )}
             {i < STEPS.length - 1 && <span className="text-neutral-300">→</span>}
           </span>
         ))}
       </div>
       {step === 'key' && <KeySetup onDone={() => go('writer')} />}
-      {step === 'writer' && <ModelPicker onDone={() => go('sources')} />}
-      {step === 'sources' && <SourceHub onDone={() => go('configure')} />}
-      {step === 'brand' && <SourceHub onDone={() => go('configure')} />}
-      {step === 'configure' && <ConfigureStep onDone={() => go('script')} />}
-      {step === 'script' && <Storyboard onDone={() => go('export')} />}
-      {step === 'review' && <Storyboard onDone={() => go('export')} />}
-      {step === 'export' && <ExportStep />}
+      {step === 'writer' && <ModelPicker onDone={() => go('sources')} onBack={goBack} />}
+      {step === 'sources' && <SourceHub onDone={() => go('configure')} onBack={goBack} />}
+      {step === 'brand' && <SourceHub onDone={() => go('configure')} onBack={goBack} />}
+      {step === 'configure' && <ConfigureStep onDone={() => go('script')} onBack={goBack} />}
+      {step === 'script' && <Storyboard onDone={() => go('export')} onBack={goBack} />}
+      {step === 'review' && <Storyboard onDone={() => go('export')} onBack={goBack} />}
+      {step === 'export' && <ExportStep onBack={goBack} />}
+      {canGoBack && step !== 'script' && step !== 'review' && step !== 'export' && (
+        <div>
+          <button className="btn-secondary" onClick={goBack}>← Back</button>
+        </div>
+      )}
       <p className="text-center text-xs text-neutral-500">✓ Saved just now · Your key stays in this tab · Free platform — you pay Meta directly</p>
     </main>
   );
