@@ -33,6 +33,9 @@ export async function POST(req: NextRequest) {
     };
 
     // 1) Cheap catalog check for every model (no generation cost).
+    // For SAM we also enumerate GET /v1/models and fuzzy-match, because the
+    // docs ID may not match a given key's catalog (user live test: sam-3-1
+    // returned model_not_found while 5/6 others resolved).
     const catalog = async (name: string, modelId: string, note: string) => {
       const url = `${base}/v1/models/${modelId}`;
       try {
@@ -43,6 +46,41 @@ export async function POST(req: NextRequest) {
         const [s, d] = failFrom(e, url);
         checks[name] = s;
         details[name] = d;
+      }
+    };
+
+    const catalogSam = async () => {
+      const tried: string[] = [];
+      const mark = (s: 'ok' | 'fail' | 'auth', d: string) => {
+        checks['sam'] = s;
+        details['sam'] = d;
+      };
+      // a) Exact docs ID first.
+      try {
+        await callMuseGet({ key, baseUrl, path: `/v1/models/${GATEWAY_MODELS.sam}` });
+        mark('ok', `Model found (${base}/v1/models/${GATEWAY_MODELS.sam}). Segmentation via POST /v1/responses.`);
+        return;
+      } catch (e: any) {
+        tried.push(`${GATEWAY_MODELS.sam}: ${(e?.message || '').slice(0, 160)}`);
+        const status = e instanceof MuseGatewayError ? e.status : 0;
+        if (status === 401 || status === 403) {
+          mark('auth', `${base}/v1/models/${GATEWAY_MODELS.sam} → key rejected (wrong scope or plan).`);
+          return;
+        }
+      }
+      // b) Enumerate the catalog and fuzzy-match anything SAM-like.
+      try {
+        const list: any = await callMuseGet({ key, baseUrl, path: '/v1/models' });
+        const ids: string[] = (list?.data || []).map((m: any) => m?.id).filter(Boolean);
+        const hit = ids.find((id) => /sam/i.test(id));
+        if (hit) {
+          mark('ok', `Model catalog lists "${hit}" (docs ID "${GATEWAY_MODELS.sam}" returned model_not_found for this key — using "${hit}" instead). Segmentation via POST /v1/responses.`);
+        } else {
+          mark('fail', `Tried ${tried.join(' | ')}. Catalog (${ids.length} models) contains no SAM-like ID: [${ids.slice(0, 20).join(', ')}${ids.length > 20 ? ', …' : ''}]. SAM preview mode stays on — script, voice captions, and images are unaffected.`);
+        }
+      } catch (e: any) {
+        const [s, d] = failFrom(e, `${base}/v1/models`);
+        mark(s, `Tried ${tried.join(' | ')}. Catalog listing also failed: ${d}`);
       }
     };
 
@@ -86,7 +124,7 @@ export async function POST(req: NextRequest) {
       pingChat('spark-contributor', GATEWAY_MODELS.sparkContributor),
       pingImage(),
       catalog('voice', GATEWAY_MODELS.voice, 'Speech-to-text only (captions/QC) at POST /v1/asr/transcribe — no voice-over synthesis endpoint exists.'),
-      catalog('sam', GATEWAY_MODELS.sam, 'Segmentation via POST /v1/responses (model sam-3-1).'),
+      catalogSam(),
       catalog('wonder', GATEWAY_MODELS.wonder, 'Reasoning/coding model (text out) — NOT video generation. No video endpoint exists; motion uses uploaded meta.ai clips or Ken Burns.'),
     ]);
     return NextResponse.json({ checks, details, baseUrl: base });

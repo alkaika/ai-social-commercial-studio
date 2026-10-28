@@ -16,7 +16,7 @@ Web app that generates 5/10/15/30/60s social commercials from a company website 
 - Spark 1.3 Contributor (`muse-spark-1.3-contributor`) — scriptwriter option B
 - Voice Transcribe 1.0 (`muse-voice-transcribe-1.0`) — STT ONLY ($0.18/hr, POST /v1/asr/transcribe multipart) for captions/QC. NO TTS on Meta.
 - Image 1.0 (`muse-image-1.0`) — scene keyframes ($0.01/image, POST /v1/images/generations; edits via /v1/images/edits `images[]`, NOT `image`)
-- Sam 3.1 (`sam-3-1` — hyphens) — segmentation via POST /v1/responses
+- Sam 3.1 (`sam-3-1` per docs, hyphens) — segmentation via POST /v1/responses. Catalog-dependent: this key returned `model_not_found` for `sam-3-1`, so validate auto-discovers any SAM-like ID from GET /v1/models; SAM stays in preview mode if absent.
 - Wonder 1.0 (`muse-wonder-1.0`) — TEXT/reasoning model ($4/$20), NOT video. No video endpoint exists.
 
 ## Motion Flow (meta.ai clip → Ken Burns; Wonder is NOT video)

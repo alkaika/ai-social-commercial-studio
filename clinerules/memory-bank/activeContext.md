@@ -3,11 +3,7 @@
 > Living note — status as of last push. Durable architecture lives in `systemPatterns.md`; durable scope in `projectbrief.md`.
 
 ## Current Focus
-User live test #3 (after probing fix): still 3/6 ✅ (spark-standard, spark-contributor, image) but errors now DIAGNOSTIC:
-- voice → `/v1/audio/transcriptions` 404 (both TTS guesses dead — correct, no TTS exists)
-- sam → `/v1/images/edits` 400 reveals real format: JSON `images[]` with image_url/file_id (not `image`)
-- wonder → `/v1/videos/generations` 405 (path exists, wrong method/shape — but docs say no video gen at all)
-Verified vs https://dev.meta.ai/docs (2026-10-27): Voice = STT ONLY (`POST /v1/asr/transcribe`, multipart, $0.18/hr); SAM ID is `sam-3-1` (hyphens) via `POST /v1/responses`; Wonder `muse-wonder-1.0` is a TEXT/reasoning model ($4/$20) — NO video endpoint. Shipped: catalog-based validate (GET /v1/models/{id} + chat/image pings, no more dead probes), SAM adapter → /v1/responses sam-3-1, voice adapter → no-TTS seam, Animate button → Ken Burns, memory bank corrected. Awaiting user retest (expect voice/sam/wonder catalog checks to flip ✅ if key scope includes those models).
+User live test #4: **5/6 ✅** (spark×2, image, voice, wonder all Model-found/OK). Only SAM fails: `GET /v1/models/sam-3-1` → 404 `model_not_found` — docs ID doesn't match this key's catalog. Shipped: SAM fallback enumerates `GET /v1/models` and fuzzy-matches /sam/i; if found, uses the catalog ID automatically; if absent, SAM stays in preview mode (script/images/captions unaffected). Memory bank: SAM marked catalog-dependent, `activeContext` dupe-cleaned. Awaiting user retest — expect 6/6 ✅ if the key's catalog lists any SAM-like ID.
 
 ## Recent Changes
 - Validate v2 (`bb74b5e`): CANDIDATES map, normalizeBase() shared, MuseGatewayError with status, auth-vs-fail UI badge (🔑 endpoint exists, key rejected).
