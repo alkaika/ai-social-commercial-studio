@@ -14,16 +14,17 @@ Web app that generates 5/10/15/30/60s social commercials from a company website 
 ## Models & Roles (`lib/muse/`)
 - Spark 1.3 Standard (`muse-spark-1.3`) — scriptwriter option A
 - Spark 1.3 Contributor (`muse-spark-1.3-contributor`) — scriptwriter option B
-- Voice Transcribe 1.0 (`muse-voice-transcribe-1.0`) — TTS + transcribe for captions
-- Image 1.0 (`muse-image-1.0`) — scene keyframes
-- Sam 3.1 (`sam-3.1`) — segmentation / cutout
-- Wonder 1.0 (`muse-wonder-1.0`) — image-to-video tier 2 (gateway; test quality)
+- Voice Transcribe 1.0 (`muse-voice-transcribe-1.0`) — STT ONLY ($0.18/hr, POST /v1/asr/transcribe multipart) for captions/QC. NO TTS on Meta.
+- Image 1.0 (`muse-image-1.0`) — scene keyframes ($0.01/image, POST /v1/images/generations; edits via /v1/images/edits `images[]`, NOT `image`)
+- Sam 3.1 (`sam-3-1` — hyphens) — segmentation via POST /v1/responses
+- Wonder 1.0 (`muse-wonder-1.0`) — TEXT/reasoning model ($4/$20), NOT video. No video endpoint exists.
 
-## Motion Flow (LOCKED: meta.ai clip → Wonder → Ken Burns)
-1. `metai-upload` — user attaches MP4 made in consumer meta.ai app (no public API exists; manual import is the only legit path). Per-scene upload slot in Storyboard, inline preview, mute/dub toggle (default muted under our VO), remove option. Free (user's Meta account).
-2. `wonder` — Muse Wonder 1.0 via gateway (`POST /api/muse/motion` → `generateMotion()`). Per-scene `🎞 Animate (Wonder)` button.
-3. `kenburns` — always-available local fallback over stills. Free.
+## Motion Flow (meta.ai clip → Ken Burns; Wonder is NOT video)
+1. `metai-upload` — user attaches MP4 made in consumer meta.ai app (no public API exists; manual import is the only legit path). Per-scene upload slot in Storyboard, inline preview, mute/dub toggle (default muted under user voice-over), remove option. Free (user's Meta account).
+2. `kenburns` — always-available local fallback over stills. Free. (Storyboard button: `🎞 Ken Burns motion`.)
+- `wonder` value reserved in schema for a future Meta video API — today Muse Wonder is text-only, so no tier routes to it. Animate never promises API video.
 - Resolver: `resolveMotionTier()` in `lib/muse/visual.ts`. Scene fields: `motionSource`, `videoUrl`, `muteSourceAudio` (see `lib/script-utils.ts`). Render contract in `lib/render/ffmpeg.ts:motionPlan()`.
+- Voice-over: Meta has NO TTS. Real VO = user recording/upload or meta.ai clip audio; Voice Transcribe only makes captions from final audio (script-derived captions today, `/v1/asr/transcribe` later).
 
 ## Scope Locked
 - Writer choice at start of EVERY project: exact 3-row table (Input $1.25 vs $0.10 / Output $4.25 vs $0.20 / Data rights). No pros/cons. Source: `config/pricing.ts`.

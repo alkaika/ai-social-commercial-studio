@@ -25,9 +25,10 @@ export interface ScriptScene {
   locked?: boolean;
   voiceUrl?: string;
   imageUrl?: string;
-  // Motion flow: [uploaded meta.ai clip] -> Wonder -> Ken Burns (locked priority order)
+  // Motion flow: [uploaded meta.ai clip] -> Ken Burns.
+  // ('wonder' value is reserved — Meta has no video-generation endpoint today.)
   motionSource?: MotionSource;
-  videoUrl?: string; // object URL or remote URL for uploaded meta.ai clip / Wonder output
+  videoUrl?: string; // object URL or remote URL for uploaded meta.ai clip
   muteSourceAudio?: boolean; // strip/duck baked-in audio under our Voice-over (default true)
 }
 

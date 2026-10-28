@@ -14,39 +14,50 @@ export async function generateImage(opts: { key: string; baseUrl: string; prompt
   } catch { return { url: mockImage(opts.prompt, opts.aspect || ''), mock: true }; }
 }
 
-export async function segmentImage(opts: { key: string; baseUrl: string; imageUrl: string }) {
+export async function segmentImage(opts: { key: string; baseUrl: string; imageUrl: string; prompt?: string }) {
   if (!opts.key || opts.key === 'DEMO') return { maskUrl: '', mock: true };
   try {
+    // SAM 3.1 via Responses API (model sam-3-1), verified against dev.meta.ai docs:
+    // POST /v1/responses { model, input: [{ role:'user', content:[
+    //   {type:'input_text', text}, {type:'input_image', image_url} ] }] }
     const data: any = await callMuse({
-      key: opts.key, baseUrl: opts.baseUrl, path: '/v1/sam/segment',
-      body: { model: 'sam-3.1', image: opts.imageUrl },
+      key: opts.key, baseUrl: opts.baseUrl, path: '/v1/responses',
+      body: {
+        model: 'sam-3-1',
+        input: [{
+          role: 'user',
+          content: [
+            { type: 'input_text', text: opts.prompt || 'segment the main subject, return mask' },
+            { type: 'input_image', image_url: opts.imageUrl },
+          ],
+        }],
+      },
     });
-    return { maskUrl: data?.mask_url || '', mock: false, raw: data };
+    return { maskUrl: data?.output?.[0]?.content?.[0]?.mask_url || data?.mask_url || '', mock: false, raw: data };
   } catch { return { maskUrl: '', mock: true }; }
 }
 
 export type MotionTier = 'metai-upload' | 'wonder' | 'kenburns';
 
-// Locked motion flow: [uploaded meta.ai clip] -> Wonder -> Ken Burns.
+// Motion flow: [uploaded meta.ai clip] -> Ken Burns (current truth).
 // - 'metai-upload': user-made clip from the consumer meta.ai app (10s w/ audio).
 //   No API exists; the app accepts the upload and we mute/duck its baked-in
 //   audio under our own Voice-over at render time.
-// - 'wonder': Muse Wonder 1.0 image-to-video via gateway.
+// - 'wonder': RESERVED. Muse Wonder 1.0 (muse-wonder-1.0) is a reasoning/coding
+//   model — text output only. There is NO video-generation endpoint on Meta
+//   Model API (POST /v1/videos/generations returns 405; verified 2026-10-27).
+//   If Meta ships a real video API later, generateMotion() below is the seam.
 // - 'kenburns': always-available local fallback (slow zoom over the still).
 export function resolveMotionTier(scene: { videoUrl?: string; motionSource?: string }): MotionTier {
   if (scene.videoUrl && scene.motionSource !== 'wonder') return 'metai-upload';
-  if (scene.motionSource === 'wonder' || scene.videoUrl) return 'wonder';
+  // wonder has no live endpoint today — fall through to kenburns, never promise video
   return 'kenburns';
 }
 
 export async function generateMotion(opts: { key: string; baseUrl: string; imageUrl: string; prompt: string }) {
-  if (!opts.key || opts.key === 'DEMO') return { videoUrl: '', mock: true, fallback: 'kenburns' as const };
-  try {
-    const data: any = await callMuse({
-      key: opts.key, baseUrl: opts.baseUrl, path: '/v1/video/generations',
-      body: { model: 'muse-wonder-1.0', image: opts.imageUrl, prompt: opts.prompt },
-      timeoutMs: 180000,
-    });
-    return { videoUrl: data?.data?.[0]?.url || '', mock: false, motionSource: 'wonder' as const, fallback: 'kenburns' as const };
-  } catch { return { videoUrl: '', mock: true, fallback: 'kenburns' as const }; }
+  // No live video-generation endpoint exists on Meta Model API.
+  // Previously this POSTed to /v1/video/generations (405 Method Not Allowed).
+  // Kept as a seam: if Meta ships video creation, wire the real path here.
+  void opts;
+  return { videoUrl: '', mock: true, fallback: 'kenburns' as const, reason: 'no-video-endpoint' as const };
 }

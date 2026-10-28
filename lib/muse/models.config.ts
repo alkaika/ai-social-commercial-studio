@@ -4,10 +4,27 @@ export const GATEWAY_MODELS = {
   sparkStandard: 'muse-spark-1.3',
   sparkContributor: 'muse-spark-1.3-contributor',
   wonder: 'muse-wonder-1.0',
-  sam: 'sam-3.1',
+  // NOTE: SAM model ID uses hyphens (sam-3-1), NOT dots (sam-3.1) — verified
+  // against Meta Model API docs/pricing tables 2026-10-27.
+  sam: 'sam-3-1',
   voice: 'muse-voice-transcribe-1.0',
   image: 'muse-image-1.0',
 } as const;
+
+// Verified against https://dev.meta.ai/docs (2026-10-27):
+// - Spark: POST /v1/chat/completions (or /v1/responses). IDs above are exact.
+//   Standard muse-spark-1.3 ($1.25/$4.25, data NOT used) vs
+//   Contributor muse-spark-1.3-contributor ($0.10/$0.20, data MAY be used).
+// - Image: POST /v1/images/generations with model muse-image-1.0 ($0.01/image);
+//   edits via POST /v1/images/edits with { images: [{ image_url }] } (NOT `image`).
+// - Voice Transcribe: SPEECH-TO-TEXT ONLY. POST /v1/asr/transcribe
+//   (multipart: request JSON + audio file). There is NO text-to-speech endpoint.
+//   $0.18/hour.
+// - SAM 3.1: segmentation via Responses API POST /v1/responses, model sam-3-1.
+// - Wonder: muse-wonder-1.0 is a reasoning/coding model (text out, $4/$20 per
+//   Mtok). It is NOT a video-generation model; no /v1/videos/generations
+//   creation endpoint exists on Meta Model API. Video motion in this app
+//   therefore comes from user-uploaded meta.ai clips or Ken Burns.
 
 export function endpointModelForSpark(id: SparkModelId) {
   return SPARK_MODELS[id].endpointModel;

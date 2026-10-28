@@ -45,6 +45,26 @@ export async function callMuse<T = any>(opts: MuseCallOpts): Promise<T> {
   }
 }
 
+// GET helper (e.g. GET /v1/models, GET /v1/models/{id}) for discovery checks.
+export async function callMuseGet<T = any>(opts: { key: string; baseUrl: string; path: string; timeoutMs?: number }): Promise<T> {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), opts.timeoutMs ?? 20000);
+  try {
+    const base = normalizeBase(opts.baseUrl);
+    const res = await fetch(`${base}${opts.path}`, {
+      headers: { Authorization: `Bearer ${opts.key}` },
+      signal: ctrl.signal,
+    });
+    if (!res.ok) {
+      const text = await res.text().catch(() => '');
+      throw new MuseGatewayError(res.status, `Meta gateway ${res.status}: ${text.slice(0, 500)}`);
+    }
+    return (await res.json()) as T;
+  } finally {
+    clearTimeout(t);
+  }
+}
+
 export function byokHeaders(req: Request): { key: string; baseUrl: string } {
   const key = req.headers.get('x-meta-key') ?? '';
   const baseUrl =

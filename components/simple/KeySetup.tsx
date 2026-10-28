@@ -31,7 +31,7 @@ export default function KeySetup({ onDone }: { onDone: () => void }) {
       const okCount = Object.values(j.checks || {}).filter((v) => v === 'ok').length;
       const authCount = Object.values(j.checks || {}).filter((v) => (v as any) === 'auth').length;
       if (okCount === 0 && authCount === 0) {
-        setMsg(`Heads up: 0 of 6 checks passed. This usually means the Gateway URL is wrong — not your key. This app expects an OpenAI-style gateway (…/v1/chat/completions). https://api.meta.ai/v1 is the consumer Meta AI app and has no API. See the per-model reasons below, or tap Continue to use free preview mode.`);
+        setMsg(`Heads up: 0 of 6 checks passed. This usually means the Gateway URL is wrong — not your key. This app expects the Meta Model API at https://api.meta.ai/v1 (…/v1/chat/completions). See the per-model reasons below, or tap Continue to use free preview mode.`);
       } else if (authCount > 0) {
         setMsg(`Key reaches Meta (${okCount} working, ${authCount} endpoint-exists-but-key-rejected). Those 'auth' models need a different key scope or plan — the app will use a free preview for them.`);
       } else {

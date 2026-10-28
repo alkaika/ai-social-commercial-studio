@@ -3,7 +3,11 @@
 > Living note — status as of last push. Durable architecture lives in `systemPatterns.md`; durable scope in `projectbrief.md`.
 
 ## Current Focus
-User live test #2: `https://api.meta.ai/v1` + key `LLM…4A` → **3/6 ✅** (spark-standard, spark-contributor, image) + 404 on voice/wonder/sam. Conclusion: gateway IS a real OpenAI-style API; 3 failing paths are MY guesses (`/v1/audio/speech`, `/v1/sam/segment`, `/v1/video/generations`), not user's fault. Shipped (`bb74b5e`): multi-candidate probing + 401/403='auth' vs 404-try-next distinction. Probe confirmed all 6 endpoints EXIST (all 401 with bad key = auth-shaped, not missing). So with the REAL key: Spark/Image should go ✅; voice/sam/wonder outcome depends on whether candidates match real paths — retest needed.
+User live test #3 (after probing fix): still 3/6 ✅ (spark-standard, spark-contributor, image) but errors now DIAGNOSTIC:
+- voice → `/v1/audio/transcriptions` 404 (both TTS guesses dead — correct, no TTS exists)
+- sam → `/v1/images/edits` 400 reveals real format: JSON `images[]` with image_url/file_id (not `image`)
+- wonder → `/v1/videos/generations` 405 (path exists, wrong method/shape — but docs say no video gen at all)
+Verified vs https://dev.meta.ai/docs (2026-10-27): Voice = STT ONLY (`POST /v1/asr/transcribe`, multipart, $0.18/hr); SAM ID is `sam-3-1` (hyphens) via `POST /v1/responses`; Wonder `muse-wonder-1.0` is a TEXT/reasoning model ($4/$20) — NO video endpoint. Shipped: catalog-based validate (GET /v1/models/{id} + chat/image pings, no more dead probes), SAM adapter → /v1/responses sam-3-1, voice adapter → no-TTS seam, Animate button → Ken Burns, memory bank corrected. Awaiting user retest (expect voice/sam/wonder catalog checks to flip ✅ if key scope includes those models).
 
 ## Recent Changes
 - Validate v2 (`bb74b5e`): CANDIDATES map, normalizeBase() shared, MuseGatewayError with status, auth-vs-fail UI badge (🔑 endpoint exists, key rejected).

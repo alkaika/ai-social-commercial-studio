@@ -19,4 +19,4 @@ Next.js App Router. Client wizard (`app/studio/page.tsx` + `stores/projectStore.
 ## Critical Paths
 - `POST /api/muse/script` → `generateScript()` → Spark chat → strict JSON parse → fallback mock.
 - `POST /api/muse/revise` →Spark→ EditPlan {summary,steps,targets,estCost}; locked scenes excluded upstream.
-- `POST /api/muse/validate` → 6 parallel tiny checks → per-model ok/fail.
+- `POST /api/muse/validate` → GET /v1/models/{id} catalog checks + 1-token chat pings (Spark×2) + image ping → per-model ok/auth/fail. Never probes dead paths (/v1/audio/speech, /v1/sam/segment, /v1/video(s)/generations).
