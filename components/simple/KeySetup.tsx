@@ -29,8 +29,11 @@ export default function KeySetup({ onDone }: { onDone: () => void }) {
       setDetails(j.details || {});
       setKey(kk, uu);
       const okCount = Object.values(j.checks || {}).filter((v) => v === 'ok').length;
-      if (okCount === 0) {
+      const authCount = Object.values(j.checks || {}).filter((v) => (v as any) === 'auth').length;
+      if (okCount === 0 && authCount === 0) {
         setMsg(`Heads up: 0 of 6 checks passed. This usually means the Gateway URL is wrong — not your key. This app expects an OpenAI-style gateway (…/v1/chat/completions). https://api.meta.ai/v1 is the consumer Meta AI app and has no API. See the per-model reasons below, or tap Continue to use free preview mode.`);
+      } else if (authCount > 0) {
+        setMsg(`Key reaches Meta (${okCount} working, ${authCount} endpoint-exists-but-key-rejected). Those 'auth' models need a different key scope or plan — the app will use a free preview for them.`);
       } else {
         setMsg(`Key works. ${okCount} of 6 model checks passed. Anything that failed will use a free preview instead.`);
       }
@@ -66,7 +69,7 @@ export default function KeySetup({ onDone }: { onDone: () => void }) {
       </div>
       {Object.keys(modelStatus).length > 0 && (
         <div className="space-y-1 text-sm">
-          <div className="flex flex-wrap gap-2">{Object.entries(modelStatus).map(([m, s]) => <span key={m} className="badge">{m}: {s === 'ok' ? '✅' : '⚠️ preview mode'}</span>)}</div>
+          <div className="flex flex-wrap gap-2">{Object.entries(modelStatus).map(([m, s]) => <span key={m} className="badge">{m}: {s === 'ok' ? '✅' : s === 'auth' ? '🔑 endpoint exists, key rejected' : '⚠️ preview mode'}</span>)}</div>
           {Object.keys(details).length > 0 && (
             <details className="border rounded-xl p-2 bg-neutral-50">
               <summary className="cursor-pointer font-medium">Why did checks fail? (tap to see)</summary>

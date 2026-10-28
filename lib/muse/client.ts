@@ -1,19 +1,31 @@
 // Stateless BYOK client. Key arrives per-request, is forwarded to Meta, never stored/logged.
 export interface MuseCallOpts {
   key: string;
-  baseUrl: string; // e.g. https://your-meta-gateway.example
+  baseUrl: string; // e.g. https://your-meta-gateway.example (with or without trailing /v1)
   path: string;    // e.g. /v1/chat/completions
   body: unknown;
   timeoutMs?: number;
+}
+
+// Strip trailing slashes AND a trailing /v1 so users can paste either
+// https://host or https://host/v1 — paths below always add /v1/...
+export function normalizeBase(baseUrl: string) {
+  return baseUrl.replace(/\/+$/, '').replace(/\/v1$/, '');
+}
+
+export class MuseGatewayError extends Error {
+  status: number;
+  constructor(status: number, message: string) {
+    super(message);
+    this.status = status;
+  }
 }
 
 export async function callMuse<T = any>(opts: MuseCallOpts): Promise<T> {
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), opts.timeoutMs ?? 60000);
   try {
-    // Normalize: strip trailing slashes AND a trailing /v1 so users can paste
-    // either https://api.meta.ai or https://api.meta.ai/v1 — paths below add /v1/...
-    const base = opts.baseUrl.replace(/\/+$/, '').replace(/\/v1$/, '');
+    const base = normalizeBase(opts.baseUrl);
     const res = await fetch(`${base}${opts.path}`, {
       method: 'POST',
       headers: {
@@ -25,7 +37,7 @@ export async function callMuse<T = any>(opts: MuseCallOpts): Promise<T> {
     });
     if (!res.ok) {
       const text = await res.text().catch(() => '');
-      throw new Error(`Meta gateway ${res.status}: ${text.slice(0, 500)}`);
+      throw new MuseGatewayError(res.status, `Meta gateway ${res.status}: ${text.slice(0, 500)}`);
     }
     return (await res.json()) as T;
   } finally {
