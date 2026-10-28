@@ -53,7 +53,6 @@ function StudioInner() {
     const prev = PREV[step];
     if (prev) go(prev);
   };
-  const canGoBack = idx > 0 && !!PREV[step];
 
   return (
     <main className="max-w-3xl mx-auto px-4 py-8 space-y-6">
@@ -79,11 +78,6 @@ function StudioInner() {
       {step === 'script' && <Storyboard onDone={() => go('export')} onBack={goBack} />}
       {step === 'review' && <Storyboard onDone={() => go('export')} onBack={goBack} />}
       {step === 'export' && <ExportStep onBack={goBack} />}
-      {canGoBack && step !== 'script' && step !== 'review' && step !== 'export' && (
-        <div>
-          <button className="btn-secondary" onClick={goBack}>← Back</button>
-        </div>
-      )}
       <p className="text-center text-xs text-neutral-500">✓ Saved just now · Your key stays in this tab · Free platform — you pay Meta directly</p>
     </main>
   );
