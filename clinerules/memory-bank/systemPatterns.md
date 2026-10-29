@@ -8,7 +8,7 @@ Next.js App Router. Client wizard (`app/studio/page.tsx` + `stores/projectStore.
 - Single project object in Zustand (`projectStore.ts`) = source of truth for preview/autosave/undo/render.
 - Model adapters isolated in `lib/muse/{spark,voice,visual,mocks}.ts` — only files needing change for real gateway shapes.
 - `lib/muse/models.config.ts` + `config/pricing.ts` single source for model IDs, costs, table copy.
-- Vault: `lib/vault/webauthn-prf.ts` (register/authenticate with PRF extension, `as any` casts for v9 browser API) + `lib/vault/crypto.ts` (HKDF→AES-GCM, IndexedDB `meta-studio-vault` stores ONLY {credId,iv,ct,baseUrl}).
+- Vault: `lib/vault/webauthn-prf.ts` (register/authenticate with PRF extension, raw-bytes `eval.first`, `as any` casts for v9 browser API; two slots: device-bound biometrics + synced passkey, export/import of encrypted-only bundle) + `lib/vault/crypto.ts` (HKDF→AES-GCM, IndexedDB slots `vault`/`vault-passkey` storing ONLY {credId,iv,ct,baseUrl,kind}).
 - Scraper: `lib/scraper.ts` — URL validate, 15s timeout, 2MB cap, cheerio, OG/logo/colors/testimonials/CTA.
 - Duration math: `WORDS_PER_SEC=2.5`, `fitsDuration()` gates storyboard meter.
 - DEMO mode: `key==='DEMO'` → deterministic mock script/images; `?demo=1` enters without key.
