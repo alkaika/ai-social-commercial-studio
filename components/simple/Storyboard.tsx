@@ -48,9 +48,13 @@ export default function Storyboard({ onDone, onBack }: { onDone: () => void; onB
       const j = await res.json();
       if (!res.ok) throw new Error(j.error);
       const imgs = assets.map((a) => a.url);
-      j.script.scenes = j.script.scenes.map((s: any, i: number) => ({ ...s, imageUrl: s.imageUrl || imgs[i % Math.max(1, imgs.length)] || '' }));
-      set({ script: j.script });
-      setMsg(masterApproved ? 'Organized from your approved script — review each card, then edit or approve revisions per scene.' : 'Done! Review each card below.');
+      const withImages = j.script.scenes.map((s: any, i: number) => ({ ...s, imageUrl: s.imageUrl || imgs[i % Math.max(1, imgs.length)] || '' }));
+      const tmp = { ...j.script, scenes: withImages };
+      // Auto-apply the slowest cadence that fits, so the user lands on working timing.
+      const best = bestCadence(tmp, durationSec);
+      const organized = best.fits ? { ...tmp, scenes: withImages.map((s: any) => ({ ...s, cadence: best.cadence })) } : tmp;
+      set({ script: organized });
+      setMsg(masterApproved ? (best.fits ? `Organized from your approved script — fits at ${best.cadence}x cadence. Review each card.` : `Organized from your approved script — it's long for a ${durationSec}s slot even at ${MAX_CADENCE}x. Either pick a longer slot or review the trim suggestion below.`) : 'Done! Review each card below.');
     } catch (e: any) { setMsg(e.message); } finally { setBusy(false); }
   }
 
@@ -110,18 +114,18 @@ export default function Storyboard({ onDone, onBack }: { onDone: () => void; onB
   return (
     <div className="space-y-4">
       <div className="card flex flex-wrap items-center justify-between gap-2">
-        <div className="text-sm">🃏 Your story · {script.scenes.length} scenes · entire approved script, every word kept {fit?.ok ? <span className="badge">✅ Fits at natural pace</span> : pace?.fits ? <span className="badge">⚡ Fits at {pace.cadence}x cadence</span> : <span className="badge">⚠️ Too long even at {MAX_CADENCE}x — see trim suggestion</span>}</div>
+        <div className="text-sm">🃏 Your story · {script.scenes.length} scenes · playing at {effectiveCadence.toFixed(2)}x {fit?.ok ? <span className="badge">✅ Fits the {durationSec}s slot</span> : <span className="badge">⚠️ Over the {durationSec}s slot — adjust below</span>}</div>
         <button className="btn-secondary" onClick={generate} disabled={busy}>🔄 Re-organize</button>
       </div>
       <div className="card space-y-2">
-        <h3 className="font-semibold">🎙 Voice cadence — speed up or slow down delivery to fit {durationSec}s</h3>
-        <p className="text-xs text-neutral-600">Your full script always plays — nothing is cut. {pace?.fits ? `Best fit: ${pace.cadence}x (${MIN_CADENCE}x slow · ${MAX_CADENCE}x brisk).` : `Even ${MAX_CADENCE}x can't fit it — use the trim suggestion below instead.`}</p>
+        <h3 className="font-semibold">🎙 Voice cadence — delivery speed for this {durationSec}s slot</h3>
+        <p className="text-xs text-neutral-600">{pace?.fits ? <>All {script.scenes.length} scenes play in full at <b>{effectiveCadence.toFixed(2)}x</b>. Slide to taste ({MIN_CADENCE}x slow · {MAX_CADENCE}x brisk) — timing updates live. {fit?.ok ? 'Nothing to fix.' : 'You are over the slot: speed up, or approve a trim below.'}</> : <>Even at {MAX_CADENCE}x (fastest natural delivery) the full script runs ~{pace?.spokenAtMax.toFixed(0)}s in a {durationSec}s slot. Nothing is cut automatically — pick a longer slot, or approve a shorter cut per scene below.</>}</p>
         <div className="flex items-center gap-3">
           <span className="text-xs">🐢 {MIN_CADENCE}x</span>
           <input type="range" min={MIN_CADENCE} max={MAX_CADENCE} step={0.05} value={effectiveCadence}
             onChange={(e) => applyCadence(Math.round(Number(e.target.value) * 100) / 100)} className="w-full" />
           <span className="text-xs">🐇 {MAX_CADENCE}x</span>
-          <span className="badge">{effectiveCadence.toFixed(2)}x</span>
+          <span className="badge">{effectiveCadence.toFixed(2)}x · ~{script.scenes.reduce((a, s) => a + wordsToSec(s.voiceover, s.cadence ?? 1), 0).toFixed(1)}s</span>
         </div>
         <div className="flex flex-wrap gap-2">
           <button className="btn-secondary" disabled={!pace?.fits} onClick={() => pace && applyCadence(pace.cadence)}>✨ Auto-fit ({pace?.cadence ?? '—'}x)</button>

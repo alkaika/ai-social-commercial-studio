@@ -3,7 +3,7 @@
 > Living note — status as of last push. Durable architecture lives in `systemPatterns.md`; durable scope in `projectbrief.md`.
 
 ## Current Focus
-Wonder fully retired per user (Spark Contributor praised for script quality): all text/reasoning — master draft, organize, revision plans — runs on the user's CHOSEN Spark writer (`sparkModel` threaded through script + revise). Key check is now 5 real capabilities (spark x2 inference, image, voice catalog, SAM auto-discovery). Motion = metai-upload clips or Ken Burns (dead /api/muse/motion returns retired stub; Animate button marks kenburns locally, no fetch). MotionSource union narrowed ('wonder' removed; old saves fall through to kenburns). Build ✅, ready to commit + push.
+Messaging fix (user-caught contradiction): Story header/cadence card now speak with one voice — badges report the CURRENT slider state (fits/over the slot at Nx), organize auto-applies the slowest fitting cadence, trim cards only appear when even 1.2x is insufficient. No more "every word kept" vs "too long" on the same screen. Build ✅, ready to commit + push.
 
 ## Recent Changes
 - Wonder RETIRED: all reasoning on chosen Spark; 5-check validate; Animate marks kenburns locally (no API fetch); 'wonder' removed from MotionSource union.
