@@ -52,6 +52,21 @@ export interface ScriptScene {
   storyBeat?: string; // which brand truth this scene dramatizes
 }
 
+/** Live timing readout for the Business page master editor. */
+export function masterFit(masterScript: string, durationSec: number) {
+  const wc = countWords(masterScript || '');
+  const { target, max, hardMax } = targetWordRange(durationSec);
+  const atMax = Math.round((wc / 2.5 / 1.2) * 10) / 10;
+  return {
+    wordCount: wc,
+    targetWords: target,
+    targetSec: durationSec,
+    secAtNatural: Math.round((wc / 2.5) * 10) / 10,
+    secAtMax: atMax,
+    fitsNatural: wc <= max,
+    fitsWithCadence: wc <= hardMax,
+  };
+}
 export interface AdScript {
   scenes: ScriptScene[];
   totalSec: number;
@@ -88,13 +103,40 @@ export function bestCadence(script: AdScript, targetSec: number): { cadence: num
   return { cadence: MAX_CADENCE, fits: false, spokenAtMax };
 }
 
+export function countWords(text: string) {
+  return text.trim().split(/\s+/).filter(Boolean).length;
+}
+
+/** Natural-pace word budget for a slot. Drafts aim inside [min, max] at 1.0x. */
+export function targetWordRange(durationSec: number): { target: number; min: number; max: number; hardMax: number } {
+  const target = Math.round(durationSec * WORDS_PER_SEC);
+  return {
+    target,
+    min: Math.max(5, Math.floor(target * 0.85)),
+    max: target + 2,
+    // Fastest natural cadence ceiling — beyond this even 1.2x cannot fit.
+    hardMax: Math.floor(durationSec * WORDS_PER_SEC * MAX_CADENCE),
+  };
+}
+
+/** Guarantee a draft fits the slot before approval: trim (hook + CTA preserved) only when over the natural max. */
+export function constrainToWordRange(text: string, durationSec: number): { text: string; wordCount: number; targetWords: number; adjusted: boolean } {
+  const range = targetWordRange(durationSec);
+  const wc = countWords(text);
+  if (wc <= range.max) return { text: text.trim(), wordCount: wc, targetWords: range.target, adjusted: false };
+  const trimmed = trimWords(text, range.target);
+  return { text: trimmed, wordCount: countWords(trimmed), targetWords: range.target, adjusted: true };
+}
+
 export function trimWords(masterScript: string, targetWords: number) {
   const words = masterScript.trim().split(/\s+/).filter(Boolean);
   if (words.length <= targetWords) return masterScript.trim();
-  // Keep hook (first 20%) + offer/CTA (last 15%), trim the middle proof section.
-  const head = Math.max(10, Math.round(targetWords * 0.35));
-  const tail = Math.max(8, Math.round(targetWords * 0.25));
-  const mid = Math.max(0, targetWords - head - tail);
-  const midWords = words.slice(head, head + Math.max(20, mid * 2)).slice(0, mid);
-  return [...words.slice(0, head), ...midWords, ...words.slice(-tail)].join(' ');
+  if (targetWords <= 0) return '';
+  // Keep hook (first 45%) + offer/CTA (last 30%), sample the middle proof
+  // section — preserves the story arc while hitting the exact budget.
+  const headCount = Math.min(words.length, Math.floor(targetWords * 0.45));
+  const tailCount = Math.min(words.length - headCount, Math.floor(targetWords * 0.3));
+  const midCount = Math.max(0, targetWords - headCount - tailCount);
+  const midStart = Math.max(headCount, Math.floor((words.length - midCount) / 2));
+  return [...words.slice(0, headCount), ...words.slice(midStart, midStart + midCount), ...words.slice(words.length - tailCount)].join(' ');
 }

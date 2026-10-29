@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import type { AdScript, BrandKit } from '@/lib/script-utils';
+import { countWords, targetWordRange } from '@/lib/script-utils';
 import type { SparkModelId } from '@/config/pricing';
 import type { PlatformId } from '@/config/platforms';
 

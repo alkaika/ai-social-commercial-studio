@@ -2,6 +2,7 @@ import { callMuse } from './client';
 import { endpointModelForSpark } from './models.config';
 import type { SparkModelId } from '@/config/pricing';
 import type { AdScript, BrandKit } from '@/lib/script-utils';
+import { countWords, targetWordRange, constrainToWordRange } from '@/lib/script-utils';
 import { mockScript, mockMasterScript } from './mocks';
 
 export interface MasterScriptInput {
@@ -13,11 +14,11 @@ export interface MasterScriptInput {
   platform?: string;
 }
 
-/** Draft the cohesive master narrative from homepage + about story. No duration math here. */
+/** Draft the master narrative sized to the selected slot, then machine-enforced to fit it. */
 export function buildMasterScriptPrompt(i: MasterScriptInput) {
-  const setting = i.durationSec
-    ? `SETTINGS THIS SCRIPT IS WRITTEN FOR: ${i.durationSec}s cut${i.platform ? ` for ${i.platform}` : ''}, ${i.tone} vibe. Size the story to fit naturally — ~${Math.round(i.durationSec * 2.5)} spoken words, hook first, offer near the end.`
-    : `Tone: ${i.tone}.`;
+  const dSec = i.durationSec && i.durationSec > 0 ? i.durationSec : 30;
+  const { target, min, max } = targetWordRange(dSec);
+  const setting = `SETTINGS THIS SCRIPT IS WRITTEN FOR: ${dSec}s cut${i.platform ? ` for ${i.platform}` : ''}, ${i.tone} vibe at a natural speaking pace (~2.5 words/sec). Write the master at ~${target} words — acceptable ${min}-${max} words. This length IS the product: it must be deliverable in ${dSec}s at 1.0x without cutting a word. Hook first, offer near the end, CTA last. Shorter is better than longer — never exceed ${max} words.`;
   const story = i.brand.aboutStory
     ? `BRAND STORY (from about page ${i.brand.aboutSource || ''}):\n${i.brand.aboutStory}\nStory beats: ${(i.brand.aboutPoints || []).join(' | ') || 'none'}`
     : 'BRAND STORY: none found (homepage only). Lean on homepage description + offer.';
@@ -31,24 +32,47 @@ Offer: ${i.brand.offer || 'none'} | CTA: ${i.brand.cta}
 Must-use-verbatim lines: ${(i.brand.pinned || []).join(' | ') || 'none'}
 Avoid words: ${(i.brand.avoidWords || []).join(', ') || 'none'}
 Extra: ${i.extraContext || 'none'}
-RULES: Write 150–220 words as flowing paragraphs (hook, story, proof, offer, CTA). ONE cohesive narrative — no scene breaks, no timestamps, no slogans list. Ground every claim in the story above.
+RULES: Write ${min}-${max} words (≈${target}) as flowing paragraphs (hook, story, proof, offer, CTA). ONE cohesive narrative — no scene breaks, no timestamps, no slogans list. Every word must be speakable in ${dSec}s at 1.0x. Ground every claim in the story above — never invent dates, awards, or stats.
 Return STRICT JSON: {"masterScript": "..."} (paragraphs separated by \\n\\n).`;
 }
 
+// Machine-enforce the slot: if Spark overruns, re-ask ONCE tighter.
+// The returned draft is guaranteed to fit the slot at natural pace
+// (constrainToWordRange as a final backstop) so Story starts clean.
 export async function generateMasterScript(opts: { key: string; baseUrl: string } & MasterScriptInput): Promise<string> {
-  if (!opts.key || opts.key === 'DEMO') return mockMasterScript(opts.brand.brandName || 'this business');
+  const dSec = opts.durationSec && opts.durationSec > 0 ? opts.durationSec : 30;
+  const { target, max } = targetWordRange(dSec);
+  const finish = (draft: string) => constrainToWordRange(draft, dSec).text;
+  if (!opts.key || opts.key === 'DEMO') return mockMasterScript(opts.brand.brandName || 'this business', dSec);
   const data: any = await callMuse({
     key: opts.key, baseUrl: opts.baseUrl, path: '/v1/chat/completions',
     body: { model: endpointModelForSpark(opts.sparkModel), messages: [{ role: 'user', content: buildMasterScriptPrompt(opts) }], temperature: 0.8 },
   });
   const text: string = data?.choices?.[0]?.message?.content ?? '';
+  let draft = '';
   try {
     const parsed = JSON.parse(text.slice(text.indexOf('{'), text.lastIndexOf('}') + 1));
-    if (typeof parsed.masterScript === 'string' && parsed.masterScript.length > 40) return parsed.masterScript;
+    if (typeof parsed.masterScript === 'string' && parsed.masterScript.length > 40) draft = parsed.masterScript;
   } catch {}
-  // Fallback: raw text if the model skipped JSON.
-  if (text.trim().length > 40) return text.trim().slice(0, 2000);
-  return mockMasterScript(opts.brand.brandName || 'this business');
+  if (!draft && text.trim().length > 40) draft = text.trim().slice(0, 2000);
+  if (!draft) return mockMasterScript(opts.brand.brandName || 'this business', dSec);
+  if (countWords(draft) <= max) return draft;
+  // Over budget: one tighter retry so the edit is Spark's wording, not a slice.
+  try {
+    const retry: any = await callMuse({
+      key: opts.key, baseUrl: opts.baseUrl, path: '/v1/chat/completions',
+      body: {
+        model: endpointModelForSpark(opts.sparkModel), temperature: 0.6,
+        messages: [{ role: 'user', content: `Rewrite this into a tight ~${target}-word commercial master for a ${dSec}-second slot. Keep hook, one proof beat, offer, CTA. Never exceed ${max} words. Return STRICT JSON {"masterScript":"..."}.\n\n${draft.slice(0, 1800)}` }],
+      },
+    });
+    const rText: string = retry?.choices?.[0]?.message?.content ?? '';
+    try {
+      const rp = JSON.parse(rText.slice(rText.indexOf('{'), rText.lastIndexOf('}') + 1));
+      if (typeof rp.masterScript === 'string' && rp.masterScript.length > 20) return finish(rp.masterScript);
+    } catch {}
+  } catch {}
+  return finish(draft);
 }
 
 export interface ScriptInput {

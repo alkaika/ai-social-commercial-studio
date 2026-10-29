@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { useProject } from '@/stores/projectStore';
 import { useKeyStore } from '@/stores/keyStore';
+import { masterFit } from '@/lib/script-utils';
 
 export default function SourceHub({ onDone, onBack }: { onDone: () => void; onBack?: () => void }) {
   const { urls, set, snippets, assets, brand, durationSec, platform, tone, sparkModel, masterScript, masterApproved } = useProject();
@@ -177,7 +178,7 @@ export default function SourceHub({ onDone, onBack }: { onDone: () => void; onBa
           <>
             <textarea className="input" rows={8} value={masterScript} onChange={(e) => set({ masterScript: e.target.value, masterApproved: false })} />
             <div className="flex justify-between items-center text-xs text-neutral-500">
-              <span>{wordCount} words · approval resets when you edit (re-approve before continuing)</span>
+              <span>{(() => { const f = masterFit(masterScript, durationSec); return `${f.wordCount} words · target ~${f.targetWords} for ${durationSec}s · runs ~${f.secAtNatural}s at natural pace${f.fitsNatural ? ' ✅ fits' : f.fitsWithCadence ? ' · fits with cadence' : ` · needs cadence or trim (~${f.secAtMax}s even at 1.2x)`}`; })()}</span>
               <button className="underline" onClick={() => { set({ masterScript: '', masterApproved: false }); }}>Clear draft</button>
             </div>
           </>

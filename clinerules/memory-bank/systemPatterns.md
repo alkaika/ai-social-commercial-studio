@@ -10,7 +10,7 @@ Next.js App Router. Client wizard (`app/studio/page.tsx` + `stores/projectStore.
 - `lib/muse/models.config.ts` + `config/pricing.ts` single source for model IDs, costs, table copy.
 - Vault: `lib/vault/webauthn-prf.ts` (register/authenticate with PRF extension, raw-bytes `eval.first`, `as any` casts for v9 browser API; two slots: device-bound biometrics + synced passkey, export/import of encrypted-only bundle) + `lib/vault/crypto.ts` (HKDF→AES-GCM, IndexedDB slots `vault`/`vault-passkey` storing ONLY {credId,iv,ct,baseUrl,kind}).
 - Scraper: homepage + 8 de-duped about candidates, JS-shell detection (`needsJs`) with honest fallback message, story beats into `aboutSummary`/`aboutPoints`/`aboutSource`, merges across URLs.
-- Duration math: `WORDS_PER_SEC=2.5`, `fitsDuration()` gates storyboard meter.
+- Duration math: `WORDS_PER_SEC=2.5`, `targetWordRange(duration)` gives target/min/max/hardMax; master draft is sized to the slot (buildMasterScriptPrompt + retry + `constrainToWordRange` backstop), so Story starts fitting and `fitsDuration()`/cadence are only safety nets.
 - DEMO mode: `key==='DEMO'` → deterministic mock script/images; `?demo=1` enters without key.
 
 ## Component Map
