@@ -1,4 +1,5 @@
 'use client';
+import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Suspense, useEffect } from 'react';
 import { useProject, type Step } from '@/stores/projectStore';
@@ -56,6 +57,9 @@ function StudioInner() {
 
   return (
     <main className="max-w-3xl mx-auto px-4 py-8 space-y-6">
+      <div>
+        <Link href="/" className="btn-secondary">← Back to home</Link>
+      </div>
       <div className="flex items-center gap-2 text-sm flex-wrap" role="navigation" aria-label="Studio steps">
         {STEPS.map((s, i) => (
           <span key={s.id} className="flex items-center gap-2">
