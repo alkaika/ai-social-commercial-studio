@@ -3,7 +3,7 @@
 > Living note — status as of last push. Durable architecture lives in `systemPatterns.md`; durable scope in `projectbrief.md`.
 
 ## Current Focus
-vibepilot.dev case (user report): about page EXISTS at /about but is a JS SPA shell — scraper found nothing and wrongly said "no about page". Fixed: `isJsShell()` detects tiny-body+JS-bundle, probes up to 8 de-duped candidates (was 5, trailing-slash dupes wasted budget), returns `needsJs` flag; Business page now says honestly that JS blocks the read and asks for a 2–3 sentence paste instead of claiming the page is missing. Live probe: needsJs=True, aboutLen=0 (confirmed shell). Build ✅, ready to commit + push.
+Universal shell reader shipped: scraper now extracts words for ANY stack (React/Vue/Svelte/Angular/plain) via 3 layers — embedded state/JSON-LD/noscript, same-origin JS bundle string literals (capped, no execution), rendered DOM. Verified live on vibepilot.dev: was aboutLen=0/needsJs=True, now aboutLen=215/needsJs=False with brand+desc extracted. Build ✅, ready to commit + push.
 
 ## Recent Changes
 - Wonder RETIRED: all reasoning on chosen Spark; 5-check validate; Animate marks kenburns locally (no API fetch); 'wonder' removed from MotionSource union.
