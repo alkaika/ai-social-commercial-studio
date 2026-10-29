@@ -3,7 +3,7 @@
 > Living note — status as of last push. Durable architecture lives in `systemPatterns.md`; durable scope in `projectbrief.md`.
 
 ## Current Focus
-MILESTONE 2026-10-27: user live test → **6/6 ✅** on `https://api.meta.ai/v1`. Now: Back navigation added — every step has ← Back, Story/Export label it "Back to story", and the step breadcrumb is clickable for visited steps (forward steps stay locked). No state loss: all inputs live in Zustand (`projectStore`) so going back never wipes key/brand/script/work. Build ✅, ready to commit.
+MILESTONE 2026-10-27: **6/6 ✅** on `https://api.meta.ai/v1` (validated live). Follow-ups shipped: Back navigation (single in-card Back + clickable breadcrumb), per-scene meta.ai voice clips, and this PRF vault fix — `extensions.prf.eval.first` must be a raw Uint8Array (b64url string threw "not of type ArrayBufferView"). Restart dev + hard refresh, then retry 💾 Save with biometrics.
 
 ## Recent Changes
 - MILESTONE: 6/6 ✅ — all models reachable with user's key (SAM auto-discovery worked).
