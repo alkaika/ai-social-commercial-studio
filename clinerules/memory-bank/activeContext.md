@@ -3,7 +3,7 @@
 > Living note — status as of last push. Durable architecture lives in `systemPatterns.md`; durable scope in `projectbrief.md`.
 
 ## Current Focus
-Messaging fix (user-caught contradiction): Story header/cadence card now speak with one voice — badges report the CURRENT slider state (fits/over the slot at Nx), organize auto-applies the slowest fitting cadence, trim cards only appear when even 1.2x is insufficient. No more "every word kept" vs "too long" on the same screen. Build ✅, ready to commit + push.
+Voice Transcribe KEPT for auto-captions only (user decision — relabeled, not removed): `voice` check badge renders as `voice-captions`, route returns `{captions:true, synthesis:false}`, Story quick button is `📝 Captions info`, `synthesizeVoice` kept as deprecated alias of `checkCaptionsAvailability`. Messaging fix also shipped (single-voice cadence copy). Build ✅, ready to commit + push.
 
 ## Recent Changes
 - Wonder RETIRED: all reasoning on chosen Spark; 5-check validate; Animate marks kenburns locally (no API fetch); 'wonder' removed from MotionSource union.

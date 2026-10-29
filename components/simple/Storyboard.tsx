@@ -68,10 +68,8 @@ export default function Storyboard({ onDone, onBack }: { onDone: () => void; onB
         const j = await res.json();
         set({ script: { ...script, scenes: script.scenes.map((s) => (s.id === sceneId ? { ...s, imageUrl: j.url } : s)) } });
       } else if (action === 'new-voice') {
-        // Meta Model API has NO text-to-speech endpoint (Voice Transcribe is
-        // speech-to-text only). Route the user to the two real options:
-        // (1) meta.ai text-to-voice video clip, or (2) their own recording/upload.
-        setMsg(`🎙 For ${sceneId}: Meta has no voice-over API. Best option: go to meta.ai and paste "Make a video of a [warm female / energetic / calm] voice saying: '${script.scenes.find((s) => s.id === sceneId)?.voiceover || ''}'" — download the ~10s clip, then use "🎙 Use a Meta AI voice clip" below. Or record/upload your own voice. Captions come from your script.`);
+        // Captions info: Voice Transcribe is STT-only, kept for auto-captions.
+        setMsg(`Captions for ${sceneId}: auto-generated from your script lines. Voice-over audio comes from your meta.ai clip.`);
       } else if (action === 'animate') {
         // Ken Burns is the motion for stills (no video-generation endpoint
         // exists). All reasoning already runs on the user's chosen Spark
@@ -181,7 +179,7 @@ export default function Storyboard({ onDone, onBack }: { onDone: () => void; onB
             <div className="flex flex-wrap gap-2 pt-1">
               <button className="btn-secondary" disabled={busy} onClick={() => quick(s.id, 'rewrite')}>✍️ Rewrite</button>
               <button className="btn-secondary" disabled={busy} onClick={() => quick(s.id, 'new-image')}>🖼 New picture</button>
-              <button className="btn-secondary" disabled={busy} onClick={() => quick(s.id, 'new-voice')}>🎙 New voice</button>
+              <button className="btn-secondary" disabled={busy} onClick={() => quick(s.id, 'new-voice')}>📝 Captions info</button>
               <button className="btn-secondary" disabled={busy} onClick={() => quick(s.id, 'animate')}>🎞 Ken Burns motion</button>
             </div>
             <div className="border-t pt-2 mt-2 space-y-2">

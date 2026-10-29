@@ -18,9 +18,10 @@ export const GATEWAY_MODELS = {
 //   Contributor muse-spark-1.3-contributor ($0.10/$0.20, data MAY be used).
 // - Image: POST /v1/images/generations with model muse-image-1.0 ($0.01/image);
 //   edits via POST /v1/images/edits with { images: [{ image_url }] } (NOT `image`).
-// - Voice Transcribe: SPEECH-TO-TEXT ONLY. POST /v1/asr/transcribe
-//   (multipart: request JSON + audio file). There is NO text-to-speech endpoint.
-//   $0.18/hour.
+// - Captions (KEEP — user decision 2026-10-27): Muse Voice Transcribe is
+//   SPEECH-TO-TEXT ONLY for auto-captions/QC. POST /v1/asr/transcribe
+//   (multipart: request JSON + audio file). There is NO text-to-speech
+//   endpoint — voice-over comes from meta.ai clips. $0.18/hour.
 // - SAM 3.1: segmentation via Responses API POST /v1/responses, model sam-3-1.
 // - Text/reasoning (script, organize, revision planning): the user's CHOSEN
 //   Spark writer (standard or contributor). Wonder retired 2026-10-27.

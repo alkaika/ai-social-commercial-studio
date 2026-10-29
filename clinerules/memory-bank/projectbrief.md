@@ -13,7 +13,7 @@ Web app that generates 5/10/15/30/60s social commercials from a company website 
 
 ## Models & Roles (`lib/muse/`): Spark does EVERYTHING textual
 - Spark 1.3 Standard (`muse-spark-1.3`) OR Contributor (`muse-spark-1.3-contributor`) — user's chosen writer handles master script, timed organize, and Director's Notes revision planning.
-- Voice Transcribe 1.0 (`muse-voice-transcribe-1.0`) — STT ONLY ($0.18/hr, POST /v1/asr/transcribe multipart) for captions/QC. NO TTS on Meta.
+- Voice Transcribe 1.0 (`muse-voice-transcribe-1.0`) — KEPT for auto-captions/QC ONLY (user decision 2026-10-27). STT at POST /v1/asr/transcribe, $0.18/hr. NO synthesis — Key badge reads `voice-captions`, route returns `{captions:true, synthesis:false}`.
 - Image 1.0 (`muse-image-1.0`) — scene keyframes ($0.01/image, POST /v1/images/generations; edits via /v1/images/edits `images[]`, NOT `image`)
 - SAM (`sam-3-1` per docs, hyphens) — segmentation via POST /v1/responses. Catalog-dependent: validate auto-discovers SAM-like IDs; preview mode if absent.
 - Wonder RETIRED 2026-10-27 (user request — Contributor praised): no code references it at runtime; Key check = 5 real capabilities.

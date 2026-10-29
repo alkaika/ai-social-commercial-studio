@@ -90,7 +90,7 @@ export default function KeySetup({ onDone }: { onDone: () => void }) {
       </div>
       {Object.keys(modelStatus).length > 0 && (
         <div className="space-y-1 text-sm">
-          <div className="flex flex-wrap gap-2">{Object.entries(modelStatus).map(([m, s]) => <span key={m} className="badge">{m}: {s === 'ok' ? '✅' : s === 'auth' ? '🔑 endpoint exists, key rejected' : '⚠️ preview mode'}</span>)}</div>
+          <div className="flex flex-wrap gap-2">{Object.entries(modelStatus).map(([m, s]) => <span key={m} className="badge">{m === 'voice' ? 'voice-captions' : m}: {s === 'ok' ? '✅' : s === 'auth' ? '🔑 endpoint exists, key rejected' : '⚠️ preview mode'}</span>)}</div>
           {Object.keys(details).length > 0 && (
             <details className="border rounded-xl p-2 bg-neutral-50">
               <summary className="cursor-pointer font-medium">Why did checks fail? (tap to see)</summary>
