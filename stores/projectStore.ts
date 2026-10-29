@@ -22,6 +22,9 @@ interface ProjectState {
   // The timed Storyboard script is ORGANIZED from this — never reinvented.
   masterScript: string;
   masterApproved: boolean;
+  // Guidance chat: what the user wants the script to focus on / exclude.
+  // Sent to Spark with every master draft; editable before each re-draft.
+  scriptGuidance: string;
   set: (p: Partial<ProjectState>) => void;
 }
 
@@ -43,5 +46,6 @@ export const useProject = create<ProjectState>((set) => ({
   script: null,
   masterScript: '',
   masterApproved: false,
+  scriptGuidance: '',
   set: (p) => set(p),
 }));

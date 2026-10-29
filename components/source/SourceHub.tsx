@@ -5,7 +5,7 @@ import { useKeyStore } from '@/stores/keyStore';
 import { masterFit } from '@/lib/script-utils';
 
 export default function SourceHub({ onDone, onBack }: { onDone: () => void; onBack?: () => void }) {
-  const { urls, set, snippets, assets, brand, durationSec, platform, tone, sparkModel, masterScript, masterApproved } = useProject();
+  const { urls, set, snippets, assets, brand, durationSec, platform, tone, sparkModel, masterScript, masterApproved, scriptGuidance } = useProject();
   const { key, baseUrl } = useKeyStore() as any;
   const [urlInput, setUrlInput] = useState('');
   const [busy, setBusy] = useState(false);
@@ -78,7 +78,7 @@ export default function SourceHub({ onDone, onBack }: { onDone: () => void; onBa
       const extra = snippets.map((s) => `${s.kind}${s.pinned ? ' (MUST USE VERBATIM)' : ''}: ${s.text}`).join('\n');
       const res = await fetch('/api/muse/script', {
         method: 'POST', headers: hdr(),
-        body: JSON.stringify({ mode: 'master', brand, durationSec, platform, tone, sparkModel, extraContext: extra }),
+        body: JSON.stringify({ mode: 'master', brand, durationSec, platform, tone, sparkModel, extraContext: extra, guidance: scriptGuidance }),
       });
       const j = await res.json();
       if (!res.ok) throw new Error(j.error || 'Draft failed');
@@ -162,6 +162,12 @@ export default function SourceHub({ onDone, onBack }: { onDone: () => void; onBa
             ))}
           </ul>
         )}
+      </div>
+
+      <div className="card space-y-3">
+        <h3 className="font-semibold">💬 Guide the script — what should it focus on or leave out?</h3>
+        <p className="text-sm text-neutral-600">Tell the app in your own words. It is read before every draft — e.g. “Focus on family-owned mornings, skip pricing” or “Leave out the delivery angle, end on the BOGO offer”. Saved with your project; edit it any time and re-draft.</p>
+        <textarea className="input" rows={2} value={scriptGuidance} onChange={(e) => set({ scriptGuidance: e.target.value })} placeholder='e.g. "Focus on the morning ritual and neighbors, leave out delivery…"' />
       </div>
 
       <div className="card space-y-3">

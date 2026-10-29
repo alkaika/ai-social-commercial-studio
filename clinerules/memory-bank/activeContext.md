@@ -3,7 +3,7 @@
 > Living note — status as of last push. Durable architecture lives in `systemPatterns.md`; durable scope in `projectbrief.md`.
 
 ## Current Focus
-Duration-fit fix (user report: 30s pick landed at ~60s on Story): root cause was buildMasterScriptPrompt hard-coding "150-220 words" (2.5 w/s => 60-88s) regardless of slot. Now sized per slot: targetWordRange (30s≈75w, max≈77w), hard instruction "never exceed max", one tighter Spark retry if over, constrainToWordRange backstop (hook+CTA preserved). Demo mocks sized per duration too. Business editor shows live fit (words·target·runs ~Ns). Story starts clean; cadence/trim remain only for manual over-edits. Build ✅, ready to commit + push.
+Guidance box shipped on the Business Final-script card: free-text focus/exclude notes (`scriptGuidance` in store, sent as `guidance` on every master draft, honored over defaults in the Spark prompt). Build ✅, ready to commit + push.
 
 ## Recent Changes
 - Wonder RETIRED: all reasoning on chosen Spark; 5-check validate; Animate marks kenburns locally (no API fetch); 'wonder' removed from MotionSource union.

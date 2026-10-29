@@ -12,6 +12,7 @@ export interface MasterScriptInput {
   extraContext?: string;
   durationSec?: number;
   platform?: string;
+  guidance?: string; // user focus/exclude notes from the Business page box
 }
 
 /** Draft the master narrative sized to the selected slot, then machine-enforced to fit it. */
@@ -32,6 +33,7 @@ Offer: ${i.brand.offer || 'none'} | CTA: ${i.brand.cta}
 Must-use-verbatim lines: ${(i.brand.pinned || []).join(' | ') || 'none'}
 Avoid words: ${(i.brand.avoidWords || []).join(', ') || 'none'}
 Extra: ${i.extraContext || 'none'}
+USER GUIDANCE (what to focus on / exclude — honor this over defaults): ${i.guidance?.trim() || 'none given'}
 RULES: Write ${min}-${max} words (≈${target}) as flowing paragraphs (hook, story, proof, offer, CTA). ONE cohesive narrative — no scene breaks, no timestamps, no slogans list. Every word must be speakable in ${dSec}s at 1.0x. Ground every claim in the story above — never invent dates, awards, or stats.
 Return STRICT JSON: {"masterScript": "..."} (paragraphs separated by \\n\\n).`;
 }
