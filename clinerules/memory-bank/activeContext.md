@@ -3,7 +3,7 @@
 > Living note — status as of last push. Durable architecture lives in `systemPatterns.md`; durable scope in `projectbrief.md`.
 
 ## Current Focus
-Master-script flow shipped: Business page drafts the cohesive narrative from the website scan (`mode:'master'` → `generateMasterScript`, `masterScript` + `masterApproved` in store, gated Continue), Story step ORGANIZES the approved wording into timed scenes (Spark prompt takes `masterScript` as single source, no new claims). Demo works keyless via `mockMasterScript`. Build ✅, ready to commit + push.
+Master-script flow shipped + Setup now starts a FRESH cut: Generate clears previously organized scenes (`script: null`) so the Story step always re-organizes the untouched approved master for the newly picked duration/platform/vibe. Build ✅, ready to commit + push.
 
 ## Recent Changes
 - MILESTONE: 6/6 ✅ — all models reachable with user's key (SAM auto-discovery worked).
