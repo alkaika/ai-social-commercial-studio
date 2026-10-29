@@ -9,20 +9,25 @@ export interface MasterScriptInput {
   tone: string;
   sparkModel: SparkModelId;
   extraContext?: string;
+  durationSec?: number;
+  platform?: string;
 }
 
 /** Draft the cohesive master narrative from homepage + about story. No duration math here. */
 export function buildMasterScriptPrompt(i: MasterScriptInput) {
+  const setting = i.durationSec
+    ? `SETTINGS THIS SCRIPT IS WRITTEN FOR: ${i.durationSec}s cut${i.platform ? ` for ${i.platform}` : ''}, ${i.tone} vibe. Size the story to fit naturally — ~${Math.round(i.durationSec * 2.5)} spoken words, hook first, offer near the end.`
+    : `Tone: ${i.tone}.`;
   const story = i.brand.aboutStory
     ? `BRAND STORY (from about page ${i.brand.aboutSource || ''}):\n${i.brand.aboutStory}\nStory beats: ${(i.brand.aboutPoints || []).join(' | ') || 'none'}`
     : 'BRAND STORY: none found (homepage only). Lean on homepage description + offer.';
   return `You are an expert brand storyteller writing the MASTER script for a business — the single source of truth every ad cut will be organized from.
+${setting}
 Brand: ${i.brand.brandName} — ${i.brand.tagline}
 Homepage pitch: ${i.brand.description}
 ${story}
 Social proof: ${(i.brand.testimonials || []).slice(0, 3).join(' | ') || 'none'}
 Offer: ${i.brand.offer || 'none'} | CTA: ${i.brand.cta}
-Tone: ${i.tone}
 Must-use-verbatim lines: ${(i.brand.pinned || []).join(' | ') || 'none'}
 Avoid words: ${(i.brand.avoidWords || []).join(', ') || 'none'}
 Extra: ${i.extraContext || 'none'}

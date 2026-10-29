@@ -4,7 +4,7 @@ import { useProject } from '@/stores/projectStore';
 import { useKeyStore } from '@/stores/keyStore';
 
 export default function SourceHub({ onDone, onBack }: { onDone: () => void; onBack?: () => void }) {
-  const { urls, set, snippets, assets, brand, tone, sparkModel, masterScript, masterApproved } = useProject();
+  const { urls, set, snippets, assets, brand, durationSec, platform, tone, sparkModel, masterScript, masterApproved } = useProject();
   const { key, baseUrl } = useKeyStore() as any;
   const [urlInput, setUrlInput] = useState('');
   const [busy, setBusy] = useState(false);
@@ -67,12 +67,12 @@ export default function SourceHub({ onDone, onBack }: { onDone: () => void; onBa
       setMsg('Add a website, photos, or pasted text first — then I can draft your script.');
       return;
     }
-    setDrafting(true); setMsg('Drafting your final script from the website + story…');
+    setDrafting(true); setMsg('Drafting your script with your settings (length, platform, vibe) + website story…');
     try {
       const extra = snippets.map((s) => `${s.kind}${s.pinned ? ' (MUST USE VERBATIM)' : ''}: ${s.text}`).join('\n');
       const res = await fetch('/api/muse/script', {
         method: 'POST', headers: hdr(),
-        body: JSON.stringify({ mode: 'master', brand, tone, sparkModel, extraContext: extra }),
+        body: JSON.stringify({ mode: 'master', brand, durationSec, platform, tone, sparkModel, extraContext: extra }),
       });
       const j = await res.json();
       if (!res.ok) throw new Error(j.error || 'Draft failed');
@@ -159,8 +159,8 @@ export default function SourceHub({ onDone, onBack }: { onDone: () => void; onBa
       </div>
 
       <div className="card space-y-3">
-        <h3 className="font-semibold">📜 Final script — the story your commercial will tell</h3>
-        <p className="text-sm text-neutral-600">Drafted from your website + about page after scanning. Edit it freely — this exact wording is what the app will organize into your 5–60s cut. Nothing downstream runs until you approve it.</p>
+        <h3 className="font-semibold">📜 Final script — written for your {durationSec}s {platform} cut</h3>
+        <p className="text-sm text-neutral-600">Drafted from your website + about page with your Setup picks (length, platform, vibe) already in mind. Edit it freely — this exact wording is what the app will organize into scenes. Nothing downstream runs until you approve it.</p>
         <div className="flex flex-wrap gap-2">
           <button className="btn-secondary" disabled={drafting} onClick={draftMaster}>{drafting ? 'Drafting…' : masterScript ? '🔄 Re-draft from sources' : '✨ Draft my script from website'}</button>
           {masterScript && !masterApproved && (

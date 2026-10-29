@@ -3,7 +3,7 @@
 > Living note — status as of last push. Durable architecture lives in `systemPatterns.md`; durable scope in `projectbrief.md`.
 
 ## Current Focus
-Full-script + cadence flow shipped: Story organizes EVERY word of the approved master (Spark told never to trim). New cadence slider (0.85x–1.2x) + ✨ Auto-fit uses `bestCadence()` (slowest natural fit); if even 1.2x can't fit, amber per-scene trim cards propose `trimSuggestion` (hook+CTA preserved) for explicit approve/keep. `motionPlan()` carries cadence for the final mix. Build ✅, ready to commit + push.
+Order flipped per user: Setup (duration/platform/vibe) now comes BEFORE Business, so the master script is drafted with the settings in mind and the Story step just organizes (no re-fit). Flow: Key → Writer → Setup → Business → Story → Review → Export. Setup's Generate became a plain Continue (fresh-cut clearing moved to draft time); Business draft sends durationSec + platform + tone. Build ✅, ready to commit + push.
 
 ## Recent Changes
 - MILESTONE: 6/6 ✅ — all models reachable with user's key (SAM auto-discovery worked).

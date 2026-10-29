@@ -7,7 +7,7 @@ export default function ConfigureStep({ onDone, onBack }: { onDone: () => void; 
   return (
     <div className="card space-y-5">
       <h2 className="text-xl font-bold">🎬 Pick your style</h2>
-      <p className="text-sm text-neutral-600">Changing anything here starts a fresh cut on the next screen — your approved Business script stays untouched.</p>
+      <p className="text-sm text-neutral-600">Your script will be written with these settings in mind — length, platform, and vibe shape the draft from the start.</p>
       <div>
         <p className="font-medium mb-2">How long?</p>
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
@@ -39,13 +39,7 @@ export default function ConfigureStep({ onDone, onBack }: { onDone: () => void; 
           ))}
         </div>
       </div>
-      <div className="flex justify-between items-center"><button className="btn-secondary" onClick={onBack}>← Back</button><button className="btn-primary" onClick={() => {
-        // Fresh cut: drop any previously organized scenes. The approved
-        // master script is untouched — the Story step re-organizes it
-        // for the newly picked duration/platform/vibe.
-        set({ script: null });
-        onDone();
-      }}>Generate my commercial →</button></div>
+      <div className="flex justify-between items-center"><button className="btn-secondary" onClick={onBack}>← Back</button><button className="btn-primary" onClick={onDone}>Continue →</button></div>
     </div>
   );
 }

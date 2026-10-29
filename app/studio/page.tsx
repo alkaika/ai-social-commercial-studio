@@ -14,9 +14,9 @@ import ExportStep from '@/components/simple/ExportStep';
 const STEPS: { id: Step; label: string }[] = [
   { id: 'key', label: 'Key' },
   { id: 'writer', label: 'Writer' },
+  { id: 'configure', label: 'Setup' },
   { id: 'sources', label: 'Business' },
   { id: 'brand', label: 'Style' },
-  { id: 'configure', label: 'Setup' },
   { id: 'script', label: 'Story' },
   { id: 'review', label: 'Review' },
   { id: 'export', label: 'Export' },
@@ -38,14 +38,14 @@ function StudioInner() {
   const idx = STEPS.findIndex((s) => s.id === step);
   const go = (s: Step) => set({ step: s });
 
-  // Previous-screen map (skips the unused 'brand' alias — it renders the same
-  // SourceHub as 'sources', so going back from Setup lands on Business).
+  // Flow: Key → Writer → Setup → Business → Story → Review → Export.
+  // ('brand' renders the same SourceHub as 'sources'; kept as an alias.)
   const PREV: Partial<Record<Step, Step>> = {
     writer: 'key',
-    sources: 'writer',
+    configure: 'writer',
+    sources: 'configure',
     brand: 'sources',
-    configure: 'sources',
-    script: 'configure',
+    script: 'sources',
     review: 'script',
     export: 'script',
   };
@@ -75,10 +75,10 @@ function StudioInner() {
         ))}
       </div>
       {step === 'key' && <KeySetup onDone={() => go('writer')} />}
-      {step === 'writer' && <ModelPicker onDone={() => go('sources')} onBack={goBack} />}
-      {step === 'sources' && <SourceHub onDone={() => go('configure')} onBack={goBack} />}
-      {step === 'brand' && <SourceHub onDone={() => go('configure')} onBack={goBack} />}
-      {step === 'configure' && <ConfigureStep onDone={() => go('script')} onBack={goBack} />}
+      {step === 'writer' && <ModelPicker onDone={() => go('configure')} onBack={goBack} />}
+      {step === 'configure' && <ConfigureStep onDone={() => go('sources')} onBack={goBack} />}
+      {step === 'sources' && <SourceHub onDone={() => go('script')} onBack={goBack} />}
+      {step === 'brand' && <SourceHub onDone={() => go('script')} onBack={goBack} />}
       {step === 'script' && <Storyboard onDone={() => go('export')} onBack={goBack} />}
       {step === 'review' && <Storyboard onDone={() => go('export')} onBack={goBack} />}
       {step === 'export' && <ExportStep onBack={goBack} />}
