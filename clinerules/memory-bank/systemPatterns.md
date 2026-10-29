@@ -9,7 +9,7 @@ Next.js App Router. Client wizard (`app/studio/page.tsx` + `stores/projectStore.
 - Model adapters isolated in `lib/muse/{spark,voice,visual,mocks}.ts` — only files needing change for real gateway shapes.
 - `lib/muse/models.config.ts` + `config/pricing.ts` single source for model IDs, costs, table copy.
 - Vault: `lib/vault/webauthn-prf.ts` (register/authenticate with PRF extension, raw-bytes `eval.first`, `as any` casts for v9 browser API; two slots: device-bound biometrics + synced passkey, export/import of encrypted-only bundle) + `lib/vault/crypto.ts` (HKDF→AES-GCM, IndexedDB slots `vault`/`vault-passkey` storing ONLY {credId,iv,ct,baseUrl,kind}).
-- Scraper: `lib/scraper.ts` — `scrapeSite()` reads homepage + follows in-page /about links and 8 known about variants (same-origin only, 15s timeout, 2MB cap), extracts story beats (founded/mission/craft keywords) into `aboutSummary`/`aboutPoints`/`aboutSource`, merges across URLs. Cheerio + OG/logo/colors/testimonials/CTA.
+- Scraper: homepage + 8 de-duped about candidates, JS-shell detection (`needsJs`) with honest fallback message, story beats into `aboutSummary`/`aboutPoints`/`aboutSource`, merges across URLs.
 - Duration math: `WORDS_PER_SEC=2.5`, `fitsDuration()` gates storyboard meter.
 - DEMO mode: `key==='DEMO'` → deterministic mock script/images; `?demo=1` enters without key.
 

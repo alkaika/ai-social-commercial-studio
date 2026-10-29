@@ -9,6 +9,8 @@ export interface ScrapeResult {
   aboutSummary?: string;   // cohesive 2–4 sentence story (Spark-ready)
   aboutPoints?: string[];  // founding, mission, differentiators, milestones
   aboutSource?: string;    // which about URL actually worked
+  needsJs?: boolean;       // true when pages render in a browser but serve an
+                           // empty JS shell to the scraper (e.g. SPA)
 }
 
 const TIMEOUT = Number(process.env.SCRAPE_TIMEOUT_MS || 15000);
@@ -18,6 +20,15 @@ const ABOUT_PATHS = ['/about', '/about-us', '/our-story', '/story', '/mission', 
 
 function cleanText(t: string, max = 2000) {
   return t.replace(/\s+/g, ' ').replace(/(cookie|privacy policy|terms of service|subscribe|newsletter).{0,80}/gi, '').trim().slice(0, max);
+}
+
+function isJsShell($: cheerio.CheerioAPI) {
+  // SPAs (React/Vite/etc.) serve an almost-empty body plus a bundle script.
+  // If the visible text is tiny but a JS bundle exists, the real content
+  // needs a browser — flag it instead of claiming "no about page".
+  const textLen = $('body').text().replace(/\s+/g, ' ').trim().length;
+  const hasBundle = $('script[src]').length > 0;
+  return textLen < 300 && hasBundle;
 }
 
 function extractAbout($: cheerio.CheerioAPI, base: URL) {
@@ -80,6 +91,7 @@ export async function scrapeSite(rawUrl: string): Promise<ScrapeResult> {
     let aboutSummary = '';
     let aboutPoints: string[] = [];
     let aboutSource = '';
+    let needsJs = isJsShell($);
     const linked = new Set<string>();
     $('a[href]').each((_, e) => {
       const href = ($(e).attr('href') || '').toLowerCase();
@@ -91,7 +103,21 @@ export async function scrapeSite(rawUrl: string): Promise<ScrapeResult> {
     for (const p of ABOUT_PATHS) {
       try { candidates.push(new URL(p, u).toString()); } catch {}
     }
-    for (const c of candidates.slice(0, 5)) {
+    // De-dupe candidates (user case: vibepilot.dev + trailing-slash duplicate
+    // wasted the 5-fetch budget on the same empty JS shell twice).
+    const seen = new Set<string>();
+    const uniqueCandidates = candidates.filter((c) => {
+      try {
+        const key = new URL(c).pathname.replace(/\/+$/, '') || '/';
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      } catch { return true; }
+    });
+    // Probe more candidates when pages are JS shells (each fetch is cheap;
+    // the story is worth it). Cap total about-fetches at 8.
+    const budget = needsJs ? 8 : 5;
+    for (const c of uniqueCandidates.slice(0, budget)) {
       try {
         const au = new URL(c);
         if (au.origin !== u.origin) continue;
@@ -114,7 +140,7 @@ export async function scrapeSite(rawUrl: string): Promise<ScrapeResult> {
       } catch { /* try next candidate */ }
     }
 
-    return { brandName: title.split('|')[0].split('—')[0].trim() || u.hostname, tagline, description: desc, colors, logoUrl: abs(logo || undefined), heroImages, cta, testimonials, aboutSummary, aboutPoints, aboutSource };
+    return { brandName: title.split('|')[0].split('—')[0].trim() || u.hostname, tagline, description: desc, colors, logoUrl: abs(logo || undefined), heroImages, cta, testimonials, aboutSummary, aboutPoints, aboutSource, needsJs };
   } catch (e: any) {
     if (e?.name === 'AbortError') throw new Error('That website took too long to respond. Try pasting your text instead.');
     throw e instanceof Error ? e : new Error('Could not read that website. Paste your text instead.');

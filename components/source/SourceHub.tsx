@@ -32,12 +32,17 @@ export default function SourceHub({ onDone, onBack }: { onDone: () => void; onBa
         const points = Array.from(new Set<string>(good.flatMap((r: any) => r.data?.aboutPoints || []))).slice(0, 8);
         const aboutStory = stories.join(' ').slice(0, 1200);
         const aboutSource = good.map((r: any) => r.data?.aboutSource).filter(Boolean).join(', ') || '';
+        const needsJs = good.some((r: any) => r.data?.needsJs);
         set({ brand: { brandName: first.brandName || '', tagline: first.tagline || '', description: first.description || '', colors: first.colors || ['#111111'], logoUrl: first.logoUrl, cta: first.cta || 'Shop now', offer: '', testimonials: good.flatMap((r: any) => r.data?.testimonials || []).slice(0, 5), pinned: [], avoidWords: [], aboutStory, aboutPoints: points, aboutSource } });
         const imgs = good.flatMap((r: any) => r.data?.heroImages || []).map((u: string, i: number) => ({ id: `web-${i}`, name: 'Website image', url: u, tag: 'Website' }));
         set({ assets: [...assets, ...imgs] });
-        setMsg(aboutStory
-          ? `Found “${first.brandName}” + brand story from about page (${aboutSource}). Your script will be built around it.`
-          : `Found “${first.brandName}”. No about page found — add your story below or the script leans on the homepage.`);
+        if (aboutStory) {
+          setMsg(`Found “${first.brandName}” + brand story from about page (${aboutSource}). Your script will be built around it.`);
+        } else if (needsJs) {
+          setMsg(`Found “${first.brandName}”, but its pages load content with JavaScript — I can see the shell but not the words (this includes the about page). Paste 2–3 sentences about your story below, or open the about page in your browser and copy the text — then tap “Draft my script”.`);
+        } else {
+          setMsg(`Found “${first.brandName}”. No about page found — add your story below or the script leans on the homepage.`);
+        }
       } else {
         setMsg('That website would not let us read it. No problem — paste your text below or upload photos instead.');
       }

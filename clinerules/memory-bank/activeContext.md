@@ -3,7 +3,7 @@
 > Living note — status as of last push. Durable architecture lives in `systemPatterns.md`; durable scope in `projectbrief.md`.
 
 ## Current Focus
-5/5 checks live (Wonder retired — Key screen counts dynamically: spark-standard, spark-contributor, image, voice-captions, sam). Voice Transcribe KEPT for auto-captions only (relabeled `voice-captions`, route returns `{captions:true, synthesis:false}`). Messaging fix also shipped (single-voice cadence copy). Build ✅, ready to commit + push.
+vibepilot.dev case (user report): about page EXISTS at /about but is a JS SPA shell — scraper found nothing and wrongly said "no about page". Fixed: `isJsShell()` detects tiny-body+JS-bundle, probes up to 8 de-duped candidates (was 5, trailing-slash dupes wasted budget), returns `needsJs` flag; Business page now says honestly that JS blocks the read and asks for a 2–3 sentence paste instead of claiming the page is missing. Live probe: needsJs=True, aboutLen=0 (confirmed shell). Build ✅, ready to commit + push.
 
 ## Recent Changes
 - Wonder RETIRED: all reasoning on chosen Spark; 5-check validate; Animate marks kenburns locally (no API fetch); 'wonder' removed from MotionSource union.
