@@ -3,10 +3,11 @@
 > Living note — status as of last push. Durable architecture lives in `systemPatterns.md`; durable scope in `projectbrief.md`.
 
 ## Current Focus
-MILESTONE 2026-10-27: **6/6 ✅** on `https://api.meta.ai/v1` (validated live). Follow-ups shipped: Back navigation (in-card Back + clickable breadcrumb; ← Back to home on the studio shell), per-scene meta.ai voice clips, PRF raw-bytes fix, passkey vault option, removable URLs + photos on Business page (✕ on chips and thumbnails, revokes blob URLs). Build ✅, ready to commit + push.
+MILESTONE 2026-10-27: **6/6 ✅** on `https://api.meta.ai/v1` (validated live). Follow-ups shipped: Back navigation, per-scene meta.ai voice clips, PRF fix, passkey vault, removable URLs/photos, and now about-page story scraping — scraper follows /about links + 8 known variants, extracts founding/mission/craft beats, merges multi-site stories, and Spark builds the script's hook→proof→offer→CTA arc around it (storyBeat per scene). Build ✅, ready to commit + push.
 
 ## Recent Changes
 - MILESTONE: 6/6 ✅ — all models reachable with user's key (SAM auto-discovery worked).
+- About-page stories: `scrapeSite()` follows in-page /about links + 8 variants, merges stories across URLs, Spark prompt weaves story into cohesive arc with `storyBeat` per scene (visible as 📖 on cards).
 - Vault: biometrics (device-bound) + passkey (synced) options, both PRF-encrypted, export/import of encrypted bundle, raw-bytes PRF fix, duplicate-Back fix.
 - meta.ai clips: per-scene 🎙 voice slot + motion slot, prompt routing, `motionPlan()` carries VO + tier.
 

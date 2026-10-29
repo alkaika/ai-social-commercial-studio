@@ -11,6 +11,9 @@ export interface BrandKit {
   testimonials: string[];
   pinned: string[]; // must-use-verbatim snippets
   avoidWords: string[];
+  aboutStory?: string;   // cohesive brand story (homepage + about page merged)
+  aboutPoints?: string[]; // story beats: founding, mission, differentiators
+  aboutSource?: string;   // which about URL it came from
 }
 
 export type MotionSource = 'metai-upload' | 'wonder' | 'kenburns';
@@ -39,6 +42,7 @@ export interface ScriptScene {
   //   from it until final-mix transcription via /v1/asr/transcribe.
   voiceSource?: 'metai-clip' | 'upload' | 'record';
   voiceClipUrl?: string; // audio or video URL used as the actual VO audio
+  storyBeat?: string; // which brand truth this scene dramatizes
 }
 
 export interface AdScript {

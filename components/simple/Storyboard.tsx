@@ -101,6 +101,7 @@ export default function Storyboard({ onDone, onBack }: { onDone: () => void; onB
               <h3 className="font-semibold">{s.heading}</h3>
               <button className="text-xs underline" onClick={() => set({ script: { ...script, scenes: script.scenes.map((x) => x.id === s.id ? { ...x, locked: !x.locked } : x) } })}>{s.locked ? '🔒 Locked (AI will skip)' : 'Lock this scene'}</button>
             </div>
+            {s.storyBeat && <p className="text-xs text-neutral-500">📖 Story beat: {s.storyBeat}</p>}
             <label className="text-sm font-medium">💬 Words spoken (~{sec.toFixed(1)}s)</label>
             {s.voiceSource === 'metai-clip' && s.voiceClipUrl && (
               <div className="flex items-center gap-2 text-sm bg-neutral-50 border rounded-xl p-2">

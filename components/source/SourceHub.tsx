@@ -16,17 +16,25 @@ export default function SourceHub({ onDone, onBack }: { onDone: () => void; onBa
   };
 
   async function scrape() {
-    setBusy(true); setMsg('Reading your website…');
+    setBusy(true); setMsg('Reading your website + about page…');
     try {
       const res = await fetch('/api/scrape', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ urls }) });
       const j = await res.json();
       if (!res.ok) throw new Error(j.error || 'Scrape failed');
-      const first = (j.results || []).find((r: any) => r.ok)?.data;
+      const good = (j.results || []).filter((r: any) => r.ok);
+      const first = good[0]?.data;
       if (first) {
-        set({ brand: { brandName: first.brandName || '', tagline: first.tagline || '', description: first.description || '', colors: first.colors || ['#111111'], logoUrl: first.logoUrl, cta: first.cta || 'Shop now', offer: '', testimonials: first.testimonials || [], pinned: [], avoidWords: [] } });
-        const imgs = (first.heroImages || []).map((u: string, i: number) => ({ id: `web-${i}`, name: 'Website image', url: u, tag: 'Website' }));
+        // Merge about stories across all scraped sites into one cohesive source.
+        const stories = good.map((r: any) => r.data?.aboutSummary).filter(Boolean);
+        const points = Array.from(new Set<string>(good.flatMap((r: any) => r.data?.aboutPoints || []))).slice(0, 8);
+        const aboutStory = stories.join(' ').slice(0, 1200);
+        const aboutSource = good.map((r: any) => r.data?.aboutSource).filter(Boolean).join(', ') || '';
+        set({ brand: { brandName: first.brandName || '', tagline: first.tagline || '', description: first.description || '', colors: first.colors || ['#111111'], logoUrl: first.logoUrl, cta: first.cta || 'Shop now', offer: '', testimonials: good.flatMap((r: any) => r.data?.testimonials || []).slice(0, 5), pinned: [], avoidWords: [], aboutStory, aboutPoints: points, aboutSource } });
+        const imgs = good.flatMap((r: any) => r.data?.heroImages || []).map((u: string, i: number) => ({ id: `web-${i}`, name: 'Website image', url: u, tag: 'Website' }));
         set({ assets: [...assets, ...imgs] });
-        setMsg(`Found “${first.brandName}”. You can edit everything on the next screen.`);
+        setMsg(aboutStory
+          ? `Found “${first.brandName}” + brand story from about page (${aboutSource}). Your script will be built around it.`
+          : `Found “${first.brandName}”. No about page found — add your story below or the script leans on the homepage.`);
       } else {
         setMsg('That website would not let us read it. No problem — paste your text below or upload photos instead.');
       }
