@@ -3,9 +3,10 @@ import { SPARK_MODELS, type SparkModelId } from '@/config/pricing';
 export const GATEWAY_MODELS = {
   sparkStandard: 'muse-spark-1.3',
   sparkContributor: 'muse-spark-1.3-contributor',
-  wonder: 'muse-wonder-1.0',
-  // NOTE: SAM model ID uses hyphens (sam-3-1), NOT dots (sam-3.1) — verified
-  // against Meta Model API docs/pricing tables 2026-10-27.
+  // Wonder REMOVED 2026-10-27 (user request): all text/reasoning now runs on
+  // the user's CHOSEN Spark writer instead of muse-wonder-1.0. Spark handles
+  // script + organize + revision planning; Wonder's catalog check and the
+  // dead video stub are gone.
   sam: 'sam-3-1',
   voice: 'muse-voice-transcribe-1.0',
   image: 'muse-image-1.0',
@@ -21,10 +22,10 @@ export const GATEWAY_MODELS = {
 //   (multipart: request JSON + audio file). There is NO text-to-speech endpoint.
 //   $0.18/hour.
 // - SAM 3.1: segmentation via Responses API POST /v1/responses, model sam-3-1.
-// - Wonder: muse-wonder-1.0 is a reasoning/coding model (text out, $4/$20 per
-//   Mtok). It is NOT a video-generation model; no /v1/videos/generations
-//   creation endpoint exists on Meta Model API. Video motion in this app
-//   therefore comes from user-uploaded meta.ai clips or Ken Burns.
+// - Text/reasoning (script, organize, revision planning): the user's CHOSEN
+//   Spark writer (standard or contributor). Wonder retired 2026-10-27.
+//   Video motion in this app comes from user-uploaded meta.ai clips or
+//   Ken Burns.
 
 export function endpointModelForSpark(id: SparkModelId) {
   return SPARK_MODELS[id].endpointModel;

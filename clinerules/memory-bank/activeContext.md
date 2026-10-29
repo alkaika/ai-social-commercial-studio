@@ -3,10 +3,11 @@
 > Living note — status as of last push. Durable architecture lives in `systemPatterns.md`; durable scope in `projectbrief.md`.
 
 ## Current Focus
-Order flipped per user: Setup (duration/platform/vibe) now comes BEFORE Business, so the master script is drafted with the settings in mind and the Story step just organizes (no re-fit). Flow: Key → Writer → Setup → Business → Story → Review → Export. Setup's Generate became a plain Continue (fresh-cut clearing moved to draft time); Business draft sends durationSec + platform + tone. Build ✅, ready to commit + push.
+Wonder fully retired per user (Spark Contributor praised for script quality): all text/reasoning — master draft, organize, revision plans — runs on the user's CHOSEN Spark writer (`sparkModel` threaded through script + revise). Key check is now 5 real capabilities (spark x2 inference, image, voice catalog, SAM auto-discovery). Motion = metai-upload clips or Ken Burns (dead /api/muse/motion returns retired stub; Animate button marks kenburns locally, no fetch). MotionSource union narrowed ('wonder' removed; old saves fall through to kenburns). Build ✅, ready to commit + push.
 
 ## Recent Changes
-- MILESTONE: 6/6 ✅ — all models reachable with user's key (SAM auto-discovery worked).
+- Wonder RETIRED: all reasoning on chosen Spark; 5-check validate; Animate marks kenburns locally (no API fetch); 'wonder' removed from MotionSource union.
+- MILESTONE: 6/6 ✅ — was all models reachable with user's key (SAM auto-discovery worked).
 - Full-script timing: cadence controls (`bestCadence`, 0.85–1.2x, auto-fit) + trim recommendations (`trimWords`, per-scene approve/keep) so the entire approved script always plays; Spark prompt forbidden from trimming.
 - Master script: Business page drafts/edits/approves the final narrative (`/api/muse/script` mode master → `generateMasterScript`); Story organizes it to duration (`buildScriptPrompt` takes `masterScript`, `storyBeat` traces scenes to brand truth).
 

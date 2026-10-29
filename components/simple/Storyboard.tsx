@@ -69,16 +69,11 @@ export default function Storyboard({ onDone, onBack }: { onDone: () => void; onB
         // (1) meta.ai text-to-voice video clip, or (2) their own recording/upload.
         setMsg(`🎙 For ${sceneId}: Meta has no voice-over API. Best option: go to meta.ai and paste "Make a video of a [warm female / energetic / calm] voice saying: '${script.scenes.find((s) => s.id === sceneId)?.voiceover || ''}'" — download the ~10s clip, then use "🎙 Use a Meta AI voice clip" below. Or record/upload your own voice. Captions come from your script.`);
       } else if (action === 'animate') {
-        const sc2 = script.scenes.find((s) => s.id === sceneId);
-        const res = await fetch('/api/muse/motion', { method: 'POST', headers: hdr(), body: JSON.stringify({ imageUrl: sc2?.imageUrl || '', prompt: `${brand.brandName}: ${sc2?.visualPrompt || sc2?.heading}` }) });
-        const j = await res.json();
-        if (j.videoUrl) {
-          set({ script: { ...script, scenes: script.scenes.map((s) => (s.id === sceneId ? { ...s, videoUrl: j.videoUrl, motionSource: 'wonder' as const } : s)) } });
-          setMsg(`Motion ready for ${sceneId}.`);
-        } else {
-          set({ script: { ...script, scenes: script.scenes.map((s) => (s.id === sceneId ? { ...s, motionSource: 'kenburns' as const } : s)) } });
-          setMsg(`No video-generation endpoint exists on Meta Model API (Wonder is a text/reasoning model). ${sceneId} will use Ken Burns motion (free) — or attach a meta.ai clip below for real motion.`);
-        }
+        // Ken Burns is the motion for stills (no video-generation endpoint
+        // exists). All reasoning already runs on the user's chosen Spark
+        // writer — this just marks the scene; render applies the zoom.
+        set({ script: { ...script, scenes: script.scenes.map((s) => (s.id === sceneId ? { ...s, motionSource: 'kenburns' as const } : s)) } });
+        setMsg(`${sceneId} will use Ken Burns motion (free) — or attach a meta.ai clip below for real motion.`);
       } else {
         const res = await fetch('/api/muse/revise', { method: 'POST', headers: hdr(), body: JSON.stringify({ script, instruction: `Rewrite scene ${sceneId} punchier, same length or shorter.`, sparkModel }) });
         const j = await res.json();
@@ -189,7 +184,7 @@ export default function Storyboard({ onDone, onBack }: { onDone: () => void; onB
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-sm font-medium">🎬 Motion: {s.motionSource === 'metai-upload' ? <span className="badge">Meta AI clip ✅</span> : <span className="badge">Ken Burns (free)</span>}</span>
               </div>
-              {s.videoUrl && s.motionSource !== 'wonder' && (
+              {s.videoUrl && s.motionSource === 'metai-upload' && (
                 <video src={s.videoUrl} controls muted playsInline className="w-full max-h-56 rounded-xl border bg-black" />
               )}
               <div className="flex flex-wrap gap-2 items-center">

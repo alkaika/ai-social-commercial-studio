@@ -16,7 +16,7 @@ export interface BrandKit {
   aboutSource?: string;   // which about URL it came from
 }
 
-export type MotionSource = 'metai-upload' | 'wonder' | 'kenburns';
+export type MotionSource = 'metai-upload' | 'kenburns';
 
 export interface ScriptScene {
   id: string;
@@ -34,7 +34,9 @@ export interface ScriptScene {
   trimSuggestion?: string;
   trimApproved?: boolean;
   // Motion flow: [uploaded meta.ai clip] -> Ken Burns.
-  // ('wonder' value is reserved — Meta has no video-generation endpoint today.)
+  // (Old saved projects may still carry motionSource 'wonder' — treated as
+  // kenburns everywhere. Wonder retired 2026-10-27; all reasoning runs on
+  // the user's chosen Spark writer.)
   motionSource?: MotionSource;
   videoUrl?: string; // object URL or remote URL for uploaded meta.ai clip
   muteSourceAudio?: boolean; // strip/duck baked-in motion-clip audio when layering VO (default true)

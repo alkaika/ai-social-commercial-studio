@@ -1,14 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { byokHeaders } from '@/lib/muse/client';
-import { generateMotion } from '@/lib/muse/visual';
 
 export async function POST(req: NextRequest) {
-  try {
-    let key = 'DEMO', baseUrl = '';
-    try { ({ key, baseUrl } = byokHeaders(req)); } catch {}
-    const { imageUrl, prompt } = await req.json();
-    return NextResponse.json(await generateMotion({ key, baseUrl, imageUrl, prompt }));
-  } catch (e: any) {
-    return NextResponse.json({ error: e?.message || 'Motion failed.' }, { status: 500 });
-  }
+  // Retired: Wonder was never a video model and all reasoning now runs on
+  // the user's chosen Spark writer. Motion = uploaded meta.ai clips or
+  // Ken Burns (see resolveMotionTier). Keep the route (200, not 404) so old
+  // clients degrade gracefully.
+  try { byokHeaders(req); } catch {}
+  return NextResponse.json({ videoUrl: '', mock: true, fallback: 'kenburns' as const, retired: 'wonder-replaced-by-spark' as const });
 }

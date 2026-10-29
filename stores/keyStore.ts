@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 
 // Memory-only. Never persisted. Tab close / refresh clears (unless sessionStorage opt-in elsewhere).
+// modelStatus: spark-standard, spark-contributor, image = inference-capable;
+// voice, sam = catalog-found. (Wonder retired — all reasoning runs on Spark.)
 interface KeyState {
   key: string;
   baseUrl: string;

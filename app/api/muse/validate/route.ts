@@ -8,9 +8,9 @@ import { GATEWAY_MODELS } from '@/lib/muse/models.config';
 // - Voice Transcribe: model muse-voice-transcribe-1.0, SPEECH-TO-TEXT ONLY at
 //   POST /v1/asr/transcribe (multipart). There is NO TTS endpoint, so we never
 //   probe /v1/audio/speech again (404).
-// - Wonder: muse-wonder-1.0 is a reasoning/coding model (text out). There is NO
-//   video-generation endpoint (POST /v1/videos/generations → 405), so we never
-//   probe it as video. We only check the model exists in the catalog.
+// - Text/reasoning (script, organize, Director's Notes planning) always uses
+//   the user's CHOSEN Spark writer (Wonder retired — all 5 checks are real
+//   capabilities now: spark x2 inference + image + voice catalog + SAM).
 // Strategy: GET /v1/models + GET /v1/models/{id} for existence (cheap, no
 // generation cost), plus a 1-token chat ping for the two Spark writers to
 // prove inference actually works. 401/403 = 'auth' (endpoint exists, key
@@ -125,7 +125,6 @@ export async function POST(req: NextRequest) {
       pingImage(),
       catalog('voice', GATEWAY_MODELS.voice, 'Speech-to-text only (captions/QC) at POST /v1/asr/transcribe — no voice-over synthesis endpoint exists.'),
       catalogSam(),
-      catalog('wonder', GATEWAY_MODELS.wonder, 'Reasoning/coding model (text out) — NOT video generation. No video endpoint exists; motion uses uploaded meta.ai clips or Ken Burns.'),
     ]);
     return NextResponse.json({ checks, details, baseUrl: base });
   } catch (e: any) {

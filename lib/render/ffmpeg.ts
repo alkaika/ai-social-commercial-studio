@@ -8,7 +8,6 @@
 //      lay user voice-over (recorded/uploaded) on top, re-sync captions.
 //      (Meta has NO TTS endpoint; captions come from the approved script.)
 //   2. 'kenburns' — slow zoom over scene.imageUrl (always available, free).
-//   Note: Muse Wonder 1.0 is a text/reasoning model — no video endpoint exists.
 //   If Meta ships one, resolveMotionTier gains the tier back here.
 //   Voice: Meta has NO TTS; per-scene VO comes from s.voiceClipUrl
 //   (meta.ai text-to-voice clip) or stays script-only. Cadence (0.85–1.2)

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { byokHeaders } from '@/lib/muse/client';
-import { segmentImage, generateMotion } from '@/lib/muse/visual';
+import { segmentImage } from '@/lib/muse/visual';
 
 export async function POST(req: NextRequest) {
   try {

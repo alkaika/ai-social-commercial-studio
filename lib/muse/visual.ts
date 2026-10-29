@@ -37,27 +37,23 @@ export async function segmentImage(opts: { key: string; baseUrl: string; imageUr
   } catch { return { maskUrl: '', mock: true }; }
 }
 
-export type MotionTier = 'metai-upload' | 'wonder' | 'kenburns';
+export type MotionTier = 'metai-upload' | 'kenburns';
 
 // Motion flow: [uploaded meta.ai clip] -> Ken Burns (current truth).
 // - 'metai-upload': user-made clip from the consumer meta.ai app (10s w/ audio).
 //   No API exists; the app accepts the upload and we mute/duck its baked-in
-//   audio under our own Voice-over at render time.
-// - 'wonder': RESERVED. Muse Wonder 1.0 (muse-wonder-1.0) is a reasoning/coding
-//   model — text output only. There is NO video-generation endpoint on Meta
-//   Model API (POST /v1/videos/generations returns 405; verified 2026-10-27).
-//   If Meta ships a real video API later, generateMotion() below is the seam.
+//   audio under real Voice-over at render time.
 // - 'kenburns': always-available local fallback (slow zoom over the still).
+// (Wonder retired 2026-10-27: muse-wonder-1.0 was text-only, never video;
+// all reasoning — script, organize, revision planning — runs on the user's
+// chosen Spark writer.)
 export function resolveMotionTier(scene: { videoUrl?: string; motionSource?: string }): MotionTier {
-  if (scene.videoUrl && scene.motionSource !== 'wonder') return 'metai-upload';
-  // wonder has no live endpoint today — fall through to kenburns, never promise video
+  if (scene.videoUrl && scene.motionSource === 'metai-upload') return 'metai-upload';
   return 'kenburns';
 }
 
+/** Retired stub — Wonder was text-only, never video. Motion = clips/Ken Burns. */
 export async function generateMotion(opts: { key: string; baseUrl: string; imageUrl: string; prompt: string }) {
-  // No live video-generation endpoint exists on Meta Model API.
-  // Previously this POSTed to /v1/video/generations (405 Method Not Allowed).
-  // Kept as a seam: if Meta ships video creation, wire the real path here.
   void opts;
-  return { videoUrl: '', mock: true, fallback: 'kenburns' as const, reason: 'no-video-endpoint' as const };
+  return { videoUrl: '', mock: true, fallback: 'kenburns' as const, reason: 'wonder-retired-use-spark' as const };
 }
