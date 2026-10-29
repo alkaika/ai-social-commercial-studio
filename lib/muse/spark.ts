@@ -59,11 +59,11 @@ export interface ScriptInput {
 export function buildScriptPrompt(i: ScriptInput) {
   const words = Math.round(i.durationSec * 2.5);
   const master = i.masterScript?.trim()
-    ? `FINAL APPROVED MASTER SCRIPT (the single source of truth — organize THIS into scenes, do not invent new claims):\n${i.masterScript.trim().slice(0, 2000)}`
+    ? `FINAL APPROVED MASTER SCRIPT — USE EVERY WORD of it, organized across scenes. Do NOT summarize, shorten, or drop lines to hit the time slot. If the words exceed ~${words} spoken words, still emit scenes covering the ENTIRE script in order (hook first, CTA last) and flag the overflow in storyBeat — timing will be handled with voice cadence (0.85x–1.2x), never by cutting your output:\n${i.masterScript.trim().slice(0, 2500)}`
     : (i.brand.aboutStory
       ? `BRAND STORY (from about page ${i.brand.aboutSource || ''} — weave this into the arc, don't just list facts):\n${i.brand.aboutStory}\nStory beats to dramatize across scenes: ${(i.brand.aboutPoints || []).join(' | ') || 'none'}`
       : 'BRAND STORY: none found (homepage only). Lean on homepage description + offer.');
-  return `You are an expert social-media commercial organizer. The user already approved a final master script — your job is to ORGANIZE it into a ${i.durationSec}-second vertical video ad (~${words} spoken words total), not to write a new story.
+  return `You are an expert social-media commercial organizer. The user already approved a final master script — your job is to ORGANIZE its every word into a ${i.durationSec}-second vertical video ad (~${words} spoken words at natural pace), not to write a new story or trim to fit.
 ${master}
 Brand: ${i.brand.brandName} — ${i.brand.tagline}
 Homepage pitch: ${i.brand.description}
@@ -73,8 +73,8 @@ Tone: ${i.tone} | Platform: ${i.platform}
 Must-use-verbatim lines: ${(i.brand.pinned || []).join(' | ') || 'none'}
 Avoid words: ${(i.brand.avoidWords || []).join(', ') || 'none'}
 Extra: ${i.extraContext || 'none'}
-RULES: Tell ONE cohesive story from hook -> proof -> offer -> CTA using ONLY the approved master wording (you may trim for time, never add new claims, dates, or stats). Every scene's voiceover must connect to the next (no isolated slogans). Put the strongest emotional beat first, the offer near the end.
-Return STRICT JSON: {"scenes":[{"id":"s1","heading":"...","voiceover":"...","onScreenText":"...","visualPrompt":"...","durationSec":5,"storyBeat":"which brand truth this scene dramatizes"}]}. Keep total spoken words near ${words}.`;
+RULES: Cover the ENTIRE master script in scene order (hook -> proof -> offer -> CTA), using ONLY the approved wording — never add claims, dates, or stats, and never drop or summarize lines. Every scene's voiceover must connect to the next. If the script is long for the slot, split into MORE scenes (one idea each) rather than cutting words — cadence will compress timing later.
+Return STRICT JSON: {"scenes":[{"id":"s1","heading":"...","voiceover":"...","onScreenText":"...","visualPrompt":"...","durationSec":5,"storyBeat":"which brand truth this scene dramatizes"}]}. Keep total spoken words equal to the full master.`;
 }
 
 export async function generateScript(opts: { key: string; baseUrl: string } & ScriptInput): Promise<AdScript> {
@@ -91,7 +91,7 @@ export async function generateScript(opts: { key: string; baseUrl: string } & Sc
       id: s.id || `s${idx + 1}`, heading: s.heading || `Scene ${idx + 1}`,
       voiceover: s.voiceover || '', onScreenText: s.onScreenText || '',
       visualPrompt: s.visualPrompt || '', durationSec: Number(s.durationSec) || 5,
-      storyBeat: s.storyBeat || '',
+      storyBeat: s.storyBeat || '', cadence: 1,
     }));
     return { scenes, totalSec: opts.durationSec, sparkModel: opts.sparkModel };
   } catch { return mockScript(opts.durationSec, opts.sparkModel); }

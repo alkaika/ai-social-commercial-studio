@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { useProject } from '@/stores/projectStore';
 import { useKeyStore } from '@/stores/keyStore';
-import { fitsDuration, wordsToSec } from '@/lib/script-utils';
+import { fitsDuration, bestCadence, trimWords, wordsToSec, MIN_CADENCE, MAX_CADENCE } from '@/lib/script-utils';
 import { PLATFORMS } from '@/config/platforms';
 
 export default function Storyboard({ onDone, onBack }: { onDone: () => void; onBack?: () => void }) {
@@ -13,8 +13,32 @@ export default function Storyboard({ onDone, onBack }: { onDone: () => void; onB
   const [note, setNote] = useState('');
   const [plan, setPlan] = useState<any>(null);
 
-  const fit = script ? fitsDuration(script, durationSec) : null;
+  const fit = script ? fitsDuration(script, durationSec, 1) : null;
+  // Best cadence across ALL scenes (single voice delivery speed).
+  const pace = script ? bestCadence(script, durationSec) : null;
+  const effectiveCadence = script ? Math.min(...script.scenes.map((s) => s.cadence ?? 1)) : 1;
   const hdr = () => ({ 'Content-Type': 'application/json', 'x-meta-key': key, 'x-meta-base-url': baseUrl });
+
+  const applyCadence = (c: number) => {
+    if (!script) return;
+    set({ script: { ...script, scenes: script.scenes.map((s) => ({ ...s, cadence: c })) } });
+  };
+
+  const suggestTrim = () => {
+    if (!script) return;
+    const perSceneWords = Math.max(6, Math.round((durationSec * 2.5 * MAX_CADENCE) / script.scenes.length));
+    set({
+      script: {
+        ...script,
+        scenes: script.scenes.map((s) => ({
+          ...s,
+          trimSuggestion: trimWords(s.voiceover, perSceneWords),
+          trimApproved: false,
+        })),
+      },
+    });
+    setMsg(`Even at ${MAX_CADENCE}x (fastest natural delivery) the full script runs ~${pace?.spokenAtMax.toFixed(0)}s in a ${durationSec}s slot. Review the suggested shorter wording under each scene — approve the ones you like, or edit freely. Nothing changes until you approve.`);
+  };
 
   async function generate() {
     setBusy(true); setMsg('Organizing your approved script into timed scenes…');
@@ -91,11 +115,26 @@ export default function Storyboard({ onDone, onBack }: { onDone: () => void; onB
   return (
     <div className="space-y-4">
       <div className="card flex flex-wrap items-center justify-between gap-2">
-        <div className="text-sm">🃏 Your story · {script.scenes.length} scenes · ~{fit?.spoken.toFixed(0)}s of words for a {durationSec}s video {fit?.ok ? <span className="badge">✅ Fits perfectly</span> : <span className="badge">⚠️ A bit long — tap Rewrite</span>}</div>
+        <div className="text-sm">🃏 Your story · {script.scenes.length} scenes · entire approved script, every word kept {fit?.ok ? <span className="badge">✅ Fits at natural pace</span> : pace?.fits ? <span className="badge">⚡ Fits at {pace.cadence}x cadence</span> : <span className="badge">⚠️ Too long even at {MAX_CADENCE}x — see trim suggestion</span>}</div>
         <button className="btn-secondary" onClick={generate} disabled={busy}>🔄 Re-organize</button>
       </div>
+      <div className="card space-y-2">
+        <h3 className="font-semibold">🎙 Voice cadence — speed up or slow down delivery to fit {durationSec}s</h3>
+        <p className="text-xs text-neutral-600">Your full script always plays — nothing is cut. {pace?.fits ? `Best fit: ${pace.cadence}x (${MIN_CADENCE}x slow · ${MAX_CADENCE}x brisk).` : `Even ${MAX_CADENCE}x can't fit it — use the trim suggestion below instead.`}</p>
+        <div className="flex items-center gap-3">
+          <span className="text-xs">🐢 {MIN_CADENCE}x</span>
+          <input type="range" min={MIN_CADENCE} max={MAX_CADENCE} step={0.05} value={effectiveCadence}
+            onChange={(e) => applyCadence(Math.round(Number(e.target.value) * 100) / 100)} className="w-full" />
+          <span className="text-xs">🐇 {MAX_CADENCE}x</span>
+          <span className="badge">{effectiveCadence.toFixed(2)}x</span>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <button className="btn-secondary" disabled={!pace?.fits} onClick={() => pace && applyCadence(pace.cadence)}>✨ Auto-fit ({pace?.cadence ?? '—'}x)</button>
+          {!pace?.fits && <button className="btn-primary" onClick={suggestTrim}>✂️ Recommend a shorter cut</button>}
+        </div>
+      </div>
       {script.scenes.map((s) => {
-        const sec = wordsToSec(s.voiceover);
+        const sec = wordsToSec(s.voiceover, s.cadence ?? 1);
         return (
           <div key={s.id} className="card space-y-2">
             <div className="flex justify-between items-center">
@@ -103,7 +142,18 @@ export default function Storyboard({ onDone, onBack }: { onDone: () => void; onB
               <button className="text-xs underline" onClick={() => set({ script: { ...script, scenes: script.scenes.map((x) => x.id === s.id ? { ...x, locked: !x.locked } : x) } })}>{s.locked ? '🔒 Locked (AI will skip)' : 'Lock this scene'}</button>
             </div>
             {s.storyBeat && <p className="text-xs text-neutral-500">📖 Story beat: {s.storyBeat}</p>}
-            <label className="text-sm font-medium">💬 Words spoken (~{sec.toFixed(1)}s)</label>
+            <label className="text-sm font-medium">💬 Words spoken (~{sec.toFixed(1)}s at {(s.cadence ?? 1).toFixed(2)}x)</label>
+            {s.trimSuggestion && !s.trimApproved && (
+              <div className="border border-amber-300 bg-amber-50 rounded-xl p-2 text-sm space-y-1">
+                <p className="font-medium">✂️ Suggested shorter cut (full script is too long for {durationSec}s even at {MAX_CADENCE}x):</p>
+                <p className="italic">“{s.trimSuggestion}”</p>
+                <div className="flex gap-2">
+                  <button className="btn-primary" onClick={() => set({ script: { ...script, scenes: script.scenes.map((x) => x.id === s.id ? { ...x, voiceover: s.trimSuggestion || x.voiceover, trimApproved: true } : x) } })}>Use this cut</button>
+                  <button className="text-xs underline" onClick={() => set({ script: { ...script, scenes: script.scenes.map((x) => x.id === s.id ? { ...x, trimSuggestion: undefined, trimApproved: false } : x) } })}>Keep full wording</button>
+                </div>
+              </div>
+            )}
+            {s.trimApproved && <p className="text-xs"><span className="badge">✂️ Trimmed cut approved — full original kept on Business page</span></p>}
             {s.voiceSource === 'metai-clip' && s.voiceClipUrl && (
               <div className="flex items-center gap-2 text-sm bg-neutral-50 border rounded-xl p-2">
                 <span className="badge">🎙 Meta AI voice ✅</span>

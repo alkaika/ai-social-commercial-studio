@@ -3,14 +3,12 @@
 > Living note — status as of last push. Durable architecture lives in `systemPatterns.md`; durable scope in `projectbrief.md`.
 
 ## Current Focus
-Master-script flow shipped + Setup now starts a FRESH cut: Generate clears previously organized scenes (`script: null`) so the Story step always re-organizes the untouched approved master for the newly picked duration/platform/vibe. Build ✅, ready to commit + push.
+Full-script + cadence flow shipped: Story organizes EVERY word of the approved master (Spark told never to trim). New cadence slider (0.85x–1.2x) + ✨ Auto-fit uses `bestCadence()` (slowest natural fit); if even 1.2x can't fit, amber per-scene trim cards propose `trimSuggestion` (hook+CTA preserved) for explicit approve/keep. `motionPlan()` carries cadence for the final mix. Build ✅, ready to commit + push.
 
 ## Recent Changes
 - MILESTONE: 6/6 ✅ — all models reachable with user's key (SAM auto-discovery worked).
+- Full-script timing: cadence controls (`bestCadence`, 0.85–1.2x, auto-fit) + trim recommendations (`trimWords`, per-scene approve/keep) so the entire approved script always plays; Spark prompt forbidden from trimming.
 - Master script: Business page drafts/edits/approves the final narrative (`/api/muse/script` mode master → `generateMasterScript`); Story organizes it to duration (`buildScriptPrompt` takes `masterScript`, `storyBeat` traces scenes to brand truth).
-- About-page stories: `scrapeSite()` follows in-page /about links + 8 variants, merges stories across URLs.
-- Vault: biometrics (device-bound) + passkey (synced) options, both PRF-encrypted, export/import of encrypted bundle, raw-bytes PRF fix, duplicate-Back fix.
-- meta.ai clips: per-scene 🎙 voice slot + motion slot, prompt routing, `motionPlan()` carries VO + tier.
 
 ## Next Steps
 1. End-to-end test: scrape → generate script (real Spark) → attach meta.ai voice + motion clips → export SRT/txt.
