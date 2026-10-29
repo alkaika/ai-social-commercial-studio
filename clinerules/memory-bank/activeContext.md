@@ -3,7 +3,7 @@
 > Living note — status as of last push. Durable architecture lives in `systemPatterns.md`; durable scope in `projectbrief.md`.
 
 ## Current Focus
-Voice Transcribe KEPT for auto-captions only (user decision — relabeled, not removed): `voice` check badge renders as `voice-captions`, route returns `{captions:true, synthesis:false}`, Story quick button is `📝 Captions info`, `synthesizeVoice` kept as deprecated alias of `checkCaptionsAvailability`. Messaging fix also shipped (single-voice cadence copy). Build ✅, ready to commit + push.
+5/5 checks live (Wonder retired — Key screen counts dynamically: spark-standard, spark-contributor, image, voice-captions, sam). Voice Transcribe KEPT for auto-captions only (relabeled `voice-captions`, route returns `{captions:true, synthesis:false}`). Messaging fix also shipped (single-voice cadence copy). Build ✅, ready to commit + push.
 
 ## Recent Changes
 - Wonder RETIRED: all reasoning on chosen Spark; 5-check validate; Animate marks kenburns locally (no API fetch); 'wonder' removed from MotionSource union.

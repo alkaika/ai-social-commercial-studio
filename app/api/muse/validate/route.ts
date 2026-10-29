@@ -123,7 +123,7 @@ export async function POST(req: NextRequest) {
       pingChat('spark-standard', GATEWAY_MODELS.sparkStandard),
       pingChat('spark-contributor', GATEWAY_MODELS.sparkContributor),
       pingImage(),
-      catalog('voice', GATEWAY_MODELS.voice, 'Speech-to-text only (captions/QC) at POST /v1/asr/transcribe — no voice-over synthesis endpoint exists.'),
+      catalog('voice-captions', GATEWAY_MODELS.voice, 'Speech-to-text only (captions/QC) at POST /v1/asr/transcribe — no voice-over synthesis endpoint exists.'),
       catalogSam(),
     ]);
     return NextResponse.json({ checks, details, baseUrl: base });
