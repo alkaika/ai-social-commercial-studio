@@ -3,7 +3,7 @@
 > Living note — status as of last push. Durable architecture lives in `systemPatterns.md`; durable scope in `projectbrief.md`.
 
 ## Current Focus
-MILESTONE 2026-10-27: **6/6 ✅** on `https://api.meta.ai/v1` (validated live). Follow-ups shipped: Back navigation (in-card Back + clickable breadcrumb; ← Back to home on the studio shell over every step), per-scene meta.ai voice clips, PRF raw-bytes fix, passkey vault option (synced slot + encrypted export/import). Build ✅, ready to commit + push.
+MILESTONE 2026-10-27: **6/6 ✅** on `https://api.meta.ai/v1` (validated live). Follow-ups shipped: Back navigation (in-card Back + clickable breadcrumb; ← Back to home on the studio shell), per-scene meta.ai voice clips, PRF raw-bytes fix, passkey vault option, removable URLs + photos on Business page (✕ on chips and thumbnails, revokes blob URLs). Build ✅, ready to commit + push.
 
 ## Recent Changes
 - MILESTONE: 6/6 ✅ — all models reachable with user's key (SAM auto-discovery worked).

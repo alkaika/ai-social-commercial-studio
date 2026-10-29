@@ -59,7 +59,23 @@ export default function SourceHub({ onDone, onBack }: { onDone: () => void; onBa
           <input className="input" placeholder="https://yourbusiness.com" value={urlInput} onChange={(e) => setUrlInput(e.target.value)} />
           <button className="btn-secondary" onClick={addUrl}>Add</button>
         </div>
-        {urls.length > 0 && <div className="flex flex-wrap gap-2">{urls.map((u) => <span key={u} className="badge">{u}</span>)}</div>}
+        {urls.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {urls.map((u) => (
+              <span key={u} className="badge flex items-center gap-1">
+                {u}
+                <button
+                  className="ml-1 underline hover:opacity-70"
+                  title={`Remove ${u}`}
+                  onClick={() => {
+                    set({ urls: urls.filter((x) => x !== u) });
+                    setMsg(`Removed ${u}.`);
+                  }}
+                >✕</button>
+              </span>
+            ))}
+          </div>
+        )}
         <button className="btn-secondary" disabled={busy || urls.length === 0} onClick={scrape}>{busy ? 'Reading…' : 'Read my website(s)'}</button>
         {msg && <p className="text-sm bg-neutral-100 border rounded-xl p-3">{msg}</p>}
       </div>
@@ -70,7 +86,15 @@ export default function SourceHub({ onDone, onBack }: { onDone: () => void; onBa
         {assets.length > 0 && (
           <div className="grid grid-cols-3 gap-2">
             {assets.map((a) => (
-              <div key={a.id} className="border rounded-xl overflow-hidden">
+              <div key={a.id} className="border rounded-xl overflow-hidden relative">
+                <button
+                  className="absolute top-1 right-1 bg-black/70 text-white text-xs rounded-full w-6 h-6 leading-none"
+                  title={`Remove ${a.name}`}
+                  onClick={() => {
+                    if (a.url.startsWith('blob:')) { try { URL.revokeObjectURL(a.url); } catch {} }
+                    set({ assets: assets.filter((x) => x.id !== a.id) });
+                  }}
+                >✕</button>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={a.url} alt={a.name} className="w-full h-24 object-cover" />
                 <p className="text-xs p-1 truncate">{a.tag}: {a.name}</p>
