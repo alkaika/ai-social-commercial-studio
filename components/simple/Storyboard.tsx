@@ -6,7 +6,7 @@ import { fitsDuration, wordsToSec } from '@/lib/script-utils';
 import { PLATFORMS } from '@/config/platforms';
 
 export default function Storyboard({ onDone, onBack }: { onDone: () => void; onBack?: () => void }) {
-  const { script, set, durationSec, brand, tone, platform, sparkModel, snippets, assets } = useProject();
+  const { script, set, durationSec, brand, tone, platform, sparkModel, snippets, assets, masterScript, masterApproved } = useProject();
   const { key, baseUrl } = useKeyStore();
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState('');
@@ -17,16 +17,16 @@ export default function Storyboard({ onDone, onBack }: { onDone: () => void; onB
   const hdr = () => ({ 'Content-Type': 'application/json', 'x-meta-key': key, 'x-meta-base-url': baseUrl });
 
   async function generate() {
-    setBusy(true); setMsg('Writing your script…');
+    setBusy(true); setMsg('Organizing your approved script into timed scenes…');
     try {
       const extra = snippets.map((s) => `${s.kind}${s.pinned ? ' (MUST USE VERBATIM)' : ''}: ${s.text}`).join('\n');
-      const res = await fetch('/api/muse/script', { method: 'POST', headers: hdr(), body: JSON.stringify({ brand: { ...brand, pinned: [...brand.pinned, ...snippets.filter((s) => s.pinned).map((s) => s.text)] }, durationSec, tone, platform: PLATFORMS[platform].label, sparkModel, extraContext: extra }) });
+      const res = await fetch('/api/muse/script', { method: 'POST', headers: hdr(), body: JSON.stringify({ brand: { ...brand, pinned: [...brand.pinned, ...snippets.filter((s) => s.pinned).map((s) => s.text)] }, durationSec, tone, platform: PLATFORMS[platform].label, sparkModel, extraContext: extra, masterScript: masterApproved ? masterScript : '' }) });
       const j = await res.json();
       if (!res.ok) throw new Error(j.error);
       const imgs = assets.map((a) => a.url);
       j.script.scenes = j.script.scenes.map((s: any, i: number) => ({ ...s, imageUrl: s.imageUrl || imgs[i % Math.max(1, imgs.length)] || '' }));
       set({ script: j.script });
-      setMsg('Done! Review each card below.');
+      setMsg(masterApproved ? 'Organized from your approved script — review each card, then edit or approve revisions per scene.' : 'Done! Review each card below.');
     } catch (e: any) { setMsg(e.message); } finally { setBusy(false); }
   }
 
@@ -79,8 +79,9 @@ export default function Storyboard({ onDone, onBack }: { onDone: () => void; onB
   if (!script) {
     return (
       <div className="card space-y-4 text-center">
-        <h2 className="text-xl font-bold">✨ Ready to generate</h2>
-        <button className="btn-primary" disabled={busy} onClick={generate}>{busy ? 'Working…' : '✨ Generate my commercial'}</button>
+        <h2 className="text-xl font-bold">✨ Organize your script for {durationSec}s</h2>
+        <p className="text-sm text-neutral-600">{masterApproved ? 'Your approved script will be organized into timed scenes — no new story, just arranged to fit.' : 'No approved script yet — go back to Business and approve one, or generate freely below.'}</p>
+        <button className="btn-primary" disabled={busy} onClick={generate}>{busy ? 'Working…' : masterApproved ? '✨ Organize my approved script' : '✨ Generate my commercial'}</button>
         {msg && <p className="text-sm bg-neutral-100 border rounded-xl p-3 text-left">{msg}</p>}
         <div className="flex justify-between items-center"><button className="btn-secondary" onClick={onBack}>← Back</button><span /></div>
       </div>
@@ -91,7 +92,7 @@ export default function Storyboard({ onDone, onBack }: { onDone: () => void; onB
     <div className="space-y-4">
       <div className="card flex flex-wrap items-center justify-between gap-2">
         <div className="text-sm">🃏 Your story · {script.scenes.length} scenes · ~{fit?.spoken.toFixed(0)}s of words for a {durationSec}s video {fit?.ok ? <span className="badge">✅ Fits perfectly</span> : <span className="badge">⚠️ A bit long — tap Rewrite</span>}</div>
-        <button className="btn-secondary" onClick={generate} disabled={busy}>🔄 Start over</button>
+        <button className="btn-secondary" onClick={generate} disabled={busy}>🔄 Re-organize</button>
       </div>
       {script.scenes.map((s) => {
         const sec = wordsToSec(s.voiceover);

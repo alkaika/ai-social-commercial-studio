@@ -16,6 +16,11 @@ interface ProjectState {
   snippets: { id: string; kind: string; text: string; pinned: boolean }[];
   assets: { id: string; name: string; url: string; tag: string }[];
   script: AdScript | null;
+  // Master (final) script: cohesive brand narrative drafted on the Business
+  // page right after the website scan, edited + approved by the user.
+  // The timed Storyboard script is ORGANIZED from this — never reinvented.
+  masterScript: string;
+  masterApproved: boolean;
   set: (p: Partial<ProjectState>) => void;
 }
 
@@ -35,5 +40,7 @@ export const useProject = create<ProjectState>((set) => ({
   snippets: [],
   assets: [],
   script: null,
+  masterScript: '',
+  masterApproved: false,
   set: (p) => set(p),
 }));

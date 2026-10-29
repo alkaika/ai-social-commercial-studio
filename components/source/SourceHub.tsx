@@ -1,13 +1,16 @@
 'use client';
 import { useState } from 'react';
 import { useProject } from '@/stores/projectStore';
+import { useKeyStore } from '@/stores/keyStore';
 
 export default function SourceHub({ onDone, onBack }: { onDone: () => void; onBack?: () => void }) {
-  const { urls, set, snippets, assets } = useProject();
+  const { urls, set, snippets, assets, brand, tone, sparkModel, masterScript, masterApproved } = useProject();
+  const { key, baseUrl } = useKeyStore() as any;
   const [urlInput, setUrlInput] = useState('');
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState('');
   const [paste, setPaste] = useState('');
+  const [drafting, setDrafting] = useState(false);
 
   const addUrl = () => {
     if (!urlInput.trim()) return;
@@ -56,6 +59,29 @@ export default function SourceHub({ onDone, onBack }: { onDone: () => void; onBa
     set({ snippets: [...snippets, { id: `${Date.now()}`, kind, text: paste.trim(), pinned: false }] });
     setPaste('');
   };
+
+  const hdr = () => ({ 'Content-Type': 'application/json', 'x-meta-key': key || 'DEMO', 'x-meta-base-url': baseUrl || '' });
+
+  async function draftMaster() {
+    if (!brand.brandName && !brand.description && !brand.aboutStory && snippets.length === 0) {
+      setMsg('Add a website, photos, or pasted text first — then I can draft your script.');
+      return;
+    }
+    setDrafting(true); setMsg('Drafting your final script from the website + story…');
+    try {
+      const extra = snippets.map((s) => `${s.kind}${s.pinned ? ' (MUST USE VERBATIM)' : ''}: ${s.text}`).join('\n');
+      const res = await fetch('/api/muse/script', {
+        method: 'POST', headers: hdr(),
+        body: JSON.stringify({ mode: 'master', brand, tone, sparkModel, extraContext: extra }),
+      });
+      const j = await res.json();
+      if (!res.ok) throw new Error(j.error || 'Draft failed');
+      set({ masterScript: j.masterScript || '', masterApproved: false, script: null });
+      setMsg('Draft ready below. Edit it however you like — nothing downstream uses it until you approve it.');
+    } catch (e: any) { setMsg(e.message); } finally { setDrafting(false); }
+  }
+
+  const wordCount = masterScript.trim() ? masterScript.trim().split(/\s+/).length : 0;
 
   return (
     <div className="space-y-4">
@@ -132,7 +158,33 @@ export default function SourceHub({ onDone, onBack }: { onDone: () => void; onBa
         )}
       </div>
 
-      <div className="flex justify-between items-center"><button className="btn-secondary" onClick={onBack}>← Back</button><button className="btn-primary" onClick={onDone}>Continue →</button></div>
+      <div className="card space-y-3">
+        <h3 className="font-semibold">📜 Final script — the story your commercial will tell</h3>
+        <p className="text-sm text-neutral-600">Drafted from your website + about page after scanning. Edit it freely — this exact wording is what the app will organize into your 5–60s cut. Nothing downstream runs until you approve it.</p>
+        <div className="flex flex-wrap gap-2">
+          <button className="btn-secondary" disabled={drafting} onClick={draftMaster}>{drafting ? 'Drafting…' : masterScript ? '🔄 Re-draft from sources' : '✨ Draft my script from website'}</button>
+          {masterScript && !masterApproved && (
+            <button className="btn-primary" onClick={() => set({ masterApproved: true })}>Approve this script →</button>
+          )}
+          {masterApproved && <span className="badge">✅ Approved — Story step will organize this</span>}
+        </div>
+        {masterScript ? (
+          <>
+            <textarea className="input" rows={8} value={masterScript} onChange={(e) => set({ masterScript: e.target.value, masterApproved: false })} />
+            <div className="flex justify-between items-center text-xs text-neutral-500">
+              <span>{wordCount} words · approval resets when you edit (re-approve before continuing)</span>
+              <button className="underline" onClick={() => { set({ masterScript: '', masterApproved: false }); }}>Clear draft</button>
+            </div>
+          </>
+        ) : (
+          <p className="text-sm text-neutral-500 border border-dashed rounded-xl p-3">No script yet — scan a website above, then tap “Draft my script from website”. You can also just type/paste your own script here.</p>
+        )}
+        {!masterScript && (
+          <textarea className="input" rows={4} placeholder="Or write/paste your final script here…" onChange={(e) => set({ masterScript: e.target.value, masterApproved: false })} />
+        )}
+      </div>
+
+      <div className="flex justify-between items-center"><button className="btn-secondary" onClick={onBack}>← Back</button><button className="btn-primary" disabled={!masterScript.trim() || !masterApproved} title={!masterScript.trim() ? 'Draft or paste your script first' : !masterApproved ? 'Approve the script to continue' : ''} onClick={onDone}>Continue →</button></div>
     </div>
   );
 }

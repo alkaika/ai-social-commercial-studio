@@ -1,5 +1,9 @@
 import type { AdScript } from '@/lib/script-utils';
 
+export function mockMasterScript(brandName: string) {
+  return `${brandName} started with a simple promise: make something worth coming back for. Every morning starts early, every batch is made with care, and every customer is treated like a neighbor.\n\nNeighbors noticed. Word spread about the quality, the warmth, and the little details that turn a first visit into a habit. It is the kind of place people recommend without being asked.\n\nThis week there is one more reason to come by: a special offer for new and returning customers. Come taste the difference, bring someone you like, and see why this place earned its reputation.\n\nTap Shop Now and make it happen today.`;
+}
+
 export function mockScript(durationSec: number, sparkModel: any): AdScript {
   const counts: Record<number, number> = { 5: 1, 10: 2, 15: 3, 30: 5, 60: 7 };
   const n = counts[durationSec] ?? 3;
