@@ -3,7 +3,7 @@
 > Living note — status as of last push. Durable architecture lives in `systemPatterns.md`; durable scope in `projectbrief.md`.
 
 ## Current Focus
-Export "Stitch my parts" shipped (2026-10-30, user request — stitch meta.ai 10s MP4s in-app): open-source FFmpeg.wasm joins Part uploads in-browser (stream-copy, re-encode fallback) → preview + `commercial-{platform}-{duration}s-final.mp4` download. No server upload, no cost. Build ✅ 13 routes, tsc clean.
+Stitch failure fixed (2026-10-30, user hit bare "Stitch failed" on 3 landscape parts): root causes were (1) FFmpeg worker rejects with PLAIN STRING so old `instanceof Error` catch hid the cause, (2) Next.js `new URL("./worker.js")` bundling pitfall, (3) CDN-only core load. Now: self-hosted core in `public/ffmpeg/` (copied via `scripts/copy-ffmpeg-core.mjs` + postinstall, git-ignored except .gitkeep) with CDN fallback, explicit `classWorkerURL`, `errText()` everywhere, per-stage errors + technical-log display, Retry resets worker. tsc clean.
 
 ## Recent Changes
 - Export stitch (2026-10-30): `ExportStep.tsx` gains "Stitch my parts" — upload N Part MP4s (numeric-name sort, ≤8), `stitchParts()` in `lib/render/ffmpeg.ts` (FFmpeg.wasm single-thread via unpkg blob URLs, concat demuxer stream-copy first, scale/crop+libx264 re-encode fallback to Setup WxH), live % bar, inline preview, `commercial-{platform}-{duration}s-final.mp4` download + manual CLI fallback. Deps: @ffmpeg/ffmpeg+util+core. Build ✅ 13 routes.

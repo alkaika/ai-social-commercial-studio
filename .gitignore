@@ -3,5 +3,7 @@ node_modules/
 out/
 public/outputs/*
 !.gitkeep
+public/ffmpeg/*
+!.gitkeep
 .env*.local
 *.tsbuildinfo

@@ -2,7 +2,7 @@
 import { useMemo, useRef, useState } from 'react';
 import { useProject } from '@/stores/projectStore';
 import { PLATFORMS } from '@/config/platforms';
-import { stitchParts } from '@/lib/render/ffmpeg';
+import { stitchParts, resetFFmpeg, errText } from '@/lib/render/ffmpeg';
 
 export default function ExportStep({ onBack }: { onBack?: () => void }) {
   const { script, platform, brand, durationSec } = useProject();
@@ -10,6 +10,9 @@ export default function ExportStep({ onBack }: { onBack?: () => void }) {
   const [parts, setParts] = useState<File[]>([]);
   const [busy, setBusy] = useState(false);
   const [pct, setPct] = useState(0);
+  const [step, setStep] = useState('');
+  const [failed, setFailed] = useState(false);
+  const [showTech, setShowTech] = useState(false);
   const [outUrl, setOutUrl] = useState('');
   const [outMB, setOutMB] = useState('');
   const [msg, setMsg] = useState('');
@@ -40,12 +43,18 @@ export default function ExportStep({ onBack }: { onBack?: () => void }) {
   };
   const stitch = async () => {
     if (!parts.length) { setMsg(`Upload your Part MP4s first (need ${need} for ${durationSec}s).`); return; }
-    setBusy(true); setPct(0); setMsg('Loading stitcher (~30MB first time)…');
+    if (failed) { resetFFmpeg(); setFailed(false); setShowTech(false); }
+    setBusy(true); setPct(0); setStep('Starting…'); setMsg('Loading stitcher (~30MB first time)…');
     try {
-      const r = await stitchParts(parts, { width: pf.width, height: pf.height, onProgress: setPct });
-      setOutUrl(r.url); setOutMB(`${(r.sizeBytes / 1048576).toFixed(1)} MB`);
-      setMsg(r.usedRecode ? 'Joined with re-encode (clips differed).' : 'Joined losslessly — preview + download below.');
-    } catch (e: unknown) { setMsg(e instanceof Error ? e.message : 'Stitch failed.'); }
+      const r = await stitchParts(parts, { width: pf.width, height: pf.height, onProgress: setPct, onStep: setStep });
+      setOutUrl(r.url); setOutMB(`${(r.sizeBytes / 1048576).toFixed(1)} MB`); setStep('');
+      setMsg((r.usedRecode ? 'Joined with re-encode (clips differed). ' : 'Joined losslessly — preview + download below. ') + (r.log ? 'Tap "what happened" for the technical log.' : ''));
+      if (r.log) setShowTech(true);
+    } catch (e: unknown) {
+      setFailed(true);
+      const detail = errText(e);
+      setMsg(detail === 'Stitch failed.' || !detail ? 'Stitch failed with no detail — press Retry once (log below), or use the manual command.' : detail);
+    }
     finally { setBusy(false); }
   };
   if (!script) return <div className="card">Generate your commercial first.</div>;
@@ -70,11 +79,15 @@ export default function ExportStep({ onBack }: { onBack?: () => void }) {
           {parts.length > 0 && <button className="btn-secondary" onClick={() => { setParts([]); setOutUrl(''); setMsg(''); }}>Clear</button>}
         </div>
         {parts.length > 0 && <ol className="list-decimal ml-5 text-sm text-neutral-700">{parts.map((f, i) => <li key={i}>{f.name} · {(f.size / 1048576).toFixed(1)} MB</li>)}</ol>}
-        <button className="btn-primary" disabled={busy || !parts.length} onClick={stitch}>{busy ? `Stitching… ${pct}%` : `Stitch ${parts.length || need} part(s) → final MP4`}</button>
+        <button className="btn-primary" disabled={busy || !parts.length} onClick={stitch}>{busy ? `Stitching… ${pct}%${step ? ` — ${step}` : ''}` : failed ? '🔁 Retry stitch' : `Stitch ${parts.length || need} part(s) → final MP4`}</button>
         {busy && <div className="h-2 bg-neutral-200 rounded-full overflow-hidden"><div className="h-full bg-black transition-all" style={{ width: `${pct}%` }} /></div>}
+        {busy && step && <p className="text-xs text-neutral-500">{step}</p>}
         {outUrl && <div className="space-y-2"><video src={outUrl} controls playsInline className="w-full max-w-sm mx-auto rounded-xl border" style={{ aspectRatio: pf.aspect.replace(':', '/') }} /><p className="text-xs text-neutral-500 text-center">{finalName} · {outMB}</p><div className="flex justify-center"><a className="btn-primary" href={outUrl} download={finalName}>Download final MP4</a></div></div>}
         <details className="text-xs text-neutral-600"><summary className="cursor-pointer underline">Manual fallback (ffmpeg CLI)</summary><pre className="whitespace-pre-wrap bg-neutral-100 rounded-xl p-3 mt-2">{`ffmpeg -f concat -safe 0 -i list.txt -c copy ${finalName}`}</pre></details>
-        {msg && <p className="text-sm bg-neutral-100 border rounded-xl p-3">{msg}</p>}
+        {msg && <p className="text-sm bg-neutral-100 border rounded-xl p-3 whitespace-pre-wrap">{msg}</p>}
+        {msg && msg.includes('Technical detail') && (
+          <details className="text-xs text-neutral-600"><summary className="cursor-pointer underline">Copy technical detail for me</summary><pre className="whitespace-pre-wrap bg-neutral-100 rounded-xl p-3 mt-2">{msg}</pre></details>
+        )}
       </div>
       <div className="card space-y-3">
         <h3 className="font-semibold">Captions + backup</h3>
