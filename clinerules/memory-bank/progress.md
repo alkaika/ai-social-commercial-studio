@@ -4,6 +4,7 @@
 
 ## What Works ✅
 - `npm run build` passes (13 routes: /, /studio, 8 APIs).
+- Story = ONE meta.ai prompt (2026-10-30): single copy-paste prompt with video + voice + timing + full script; voice dropdown (warm female/male) + Mobile phone/PC monitor toggle; auto-includes Setup ratio (9:16, 4:5, 1:1, 16:9), platform (TikTok, Instagram, YT Short, Instagram, Square, YouTube/LinkedIn), vibe (fun, professional, bold, friendly, premium). User attaches screenshots at meta.ai. tsc clean.
 - Landing + 8-step wizard renders; demo mode works keyless (`/studio?demo=1`).
 - Key validate: 5/5 ✅ live (Wonder retired — spark-standard, spark-contributor, image, voice-captions, sam), writer table, scrape (homepage + about-page story, removable chips, multi-site merge) + Business-page master script — drafted with Setup settings (duration/platform/vibe) in mind, free edit, gated Approve → Continue + uploads (removable thumbnails) + snippets+pin, configure FIRST (duration/platform/vibe shape the draft; Story just organizes, no re-fit needed), timed organize from approved master (Spark organizes, never reinvents; storyBeat per scene), quick buttons, Director's Notes, lock, fits-meter, SRT/txt/backup export, ← Back on every step + clickable breadcrumb + ← Back to home (no state loss — Zustand), vault: biometrics + synced passkey + encrypted export/import, raw-bytes PRF fix.
 - Known vault gotcha (fixed): `eval.first` must be Uint8Array, not b64url — browser type-checks extension inputs strictly.
