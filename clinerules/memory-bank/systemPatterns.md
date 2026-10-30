@@ -5,7 +5,8 @@ Next.js App Router. Client wizard (`app/studio/page.tsx` + `stores/projectStore.
 
 ## Key Decisions
 - `byokHeaders(req)`: reads `x-meta-key`/`x-meta-base-url`; throws if missing → routes fall back to DEMO mocks.
-- Single project object in Zustand (`projectStore.ts`) = source of truth for preview/autosave/undo/render.
+- Project state: single Zustand object (`projectStore.ts`) + `projectId/projectName/newFreshProject/openProject`. NO autosave — studio boots fresh; explicit Save/Open only via `ProjectBar`.
+- Library: text/config in localStorage `meta-studio-projects-v1` ({id,name,updatedAt,savedAt} + PersistedProject; blob: URLs stripped on save); footage in Dexie `meta-studio-clips` v3 (`blobs: key,projectId,sceneId,kind,assetId` + `prefs: key`). Keys `blobKeyForScene(pid,s,k)` / `blobKeyForAsset(pid,id)`. Open revokes live blob URLs first (leak/bleed guard), loads text, then re-attaches this project's Dexie blobs (assets → `getBlobsForProject` + URL map; scenes → `hydrateForProject`). Delete removes entry + `removeBlobsForProject`. One-time migration: legacy `meta-studio-project-v1` → "Recovered project" + `migrateLegacyBlobsToProject`, legacy slot cleared.
 - Model adapters isolated in `lib/muse/{spark,voice,visual,mocks}.ts` — only files needing change for real gateway shapes.
 - `lib/muse/models.config.ts` + `config/pricing.ts` single source for model IDs, costs, table copy.
 - Vault: `lib/vault/webauthn-prf.ts` (register/authenticate with PRF extension, raw-bytes `eval.first`, `as any` casts for v9 browser API; two slots: device-bound biometrics + synced passkey, export/import of encrypted-only bundle) + `lib/vault/crypto.ts` (HKDF→AES-GCM, IndexedDB slots `vault`/`vault-passkey` storing ONLY {credId,iv,ct,baseUrl,kind}).
@@ -14,7 +15,7 @@ Next.js App Router. Client wizard (`app/studio/page.tsx` + `stores/projectStore.
 - DEMO mode: `key==='DEMO'` → deterministic mock script/images; `?demo=1` enters without key.
 
 ## Component Map
-`KeySetup` → `ModelPicker` → `SourceHub` → `ConfigureStep` → `Storyboard` (generate/quick/revise/lock + `WebsiteShots` website-shot picker per scene via `ShotImg` auto-retry) → `ExportStep` (SRT/txt/backup). `lib/screenshots.ts` (mShots/thum.io/microlink candidates) + `lib/render/ffmpeg.ts` stub for Phase-2 MP4.
+`KeySetup` → `ModelPicker` → `SourceHub` → `ConfigureStep` → `Storyboard` (generate/quick/revise/lock + `WebsiteShots` website-shot picker per scene via `ShotImg` auto-retry) → `ExportStep` (SRT/txt/backup). `lib/screenshots.ts` (mShots/thum.io/microlink candidates) + `lib/render/ffmpeg.ts` stub for Phase-2 MP4. Studio header: `ProjectBar` (New / Save+name / Open(n) / Delete + amber unsaved warning) — the ONLY persistence UI; studio boots fresh, PersistGate is migration-only.
 
 ## Critical Paths
 - `POST /api/muse/script` → `generateScript()` → Spark chat → strict JSON parse → fallback mock.

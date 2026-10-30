@@ -11,7 +11,7 @@ import PreviewVoiceButton from '@/components/voice/PreviewVoiceButton';
 import { useClipJobs } from '@/stores/clipJobsStore';
 
 export default function Storyboard({ onDone, onBack }: { onDone: () => void; onBack?: () => void }) {
-  const { script, set, durationSec, brand, tone, platform, sparkModel, snippets, assets, masterScript, masterApproved, urls } = useProject();
+  const { script, set, durationSec, brand, tone, platform, sparkModel, snippets, assets, masterScript, masterApproved, urls, projectId } = useProject();
   const { key, baseUrl } = useKeyStore();
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState('');
@@ -181,15 +181,16 @@ export default function Storyboard({ onDone, onBack }: { onDone: () => void; onB
                   const f = e.target.files?.[0];
                   (e.target as HTMLInputElement).value = '';
                   if (!f || !script) return;
+                  const pid = projectId || 'unassigned';
                   const url = URL.createObjectURL(f);
-                  try { const { saveStoredBlob } = await import('@/lib/clips/db'); await saveStoredBlob({ key: `scene:${s.id}:voice`, sceneId: s.id, kind: 'voice', blob: f, name: f.name, mime: f.type || 'video/mp4', updatedAt: Date.now() }); } catch {}
+                  try { const { saveStoredBlob, blobKeyForScene } = await import('@/lib/clips/db'); await saveStoredBlob({ key: blobKeyForScene(pid, s.id, 'voice'), projectId: pid, sceneId: s.id, kind: 'voice', blob: f, name: f.name, mime: f.type || 'video/mp4', updatedAt: Date.now() }); } catch {}
                   try { const st = useClipJobs.getState(); const hit = st.jobs.find((j) => j.sceneId === s.id && j.kind === 'voice' && j.status !== 'attached'); if (hit) st.setStatus(hit.id, 'attached', { fileName: f.name, objectUrl: url }); } catch {}
                   set({ script: { ...script, scenes: script.scenes.map((x) => x.id === s.id ? { ...x, voiceSource: 'metai-clip' as const, voiceClipUrl: url, voiceUrl: url } : x) } });
-                  setMsg(`🎙 Voice clip attached to ${s.id} + saved locally — survives refresh. This audio WILL play in your commercial.`);
+                  setMsg(`🎙 Voice clip attached to ${s.id} + saved with this project — Open restores it. This audio WILL play in your commercial.`);
                 }} />
               </label>
               {s.voiceSource === 'metai-clip' && (
-                <button className="text-xs underline" onClick={() => { try { import('@/lib/clips/db').then(({ removeStoredBlob }) => removeStoredBlob(`scene:${s.id}:voice`)); } catch {} set({ script: { ...script!, scenes: script!.scenes.map((x) => x.id === s.id ? { ...x, voiceSource: undefined, voiceClipUrl: undefined, voiceUrl: undefined } : x) } }) }}>Remove voice</button>
+                <button className="text-xs underline" onClick={() => { try { import('@/lib/clips/db').then(({ removeStoredBlob, blobKeyForScene }) => { removeStoredBlob(blobKeyForScene(projectId || 'unassigned', s.id, 'voice')); removeStoredBlob(`scene:${s.id}:voice`); }); } catch {} set({ script: { ...script!, scenes: script!.scenes.map((x) => x.id === s.id ? { ...x, voiceSource: undefined, voiceClipUrl: undefined, voiceUrl: undefined } : x) } }) }}>Remove voice</button>
               )}
             </div>
             <p className="text-xs text-neutral-500">How to get voice: go to meta.ai and paste: Make a video of a warm, female, energetic voice saying, then your line above in quotes. Download the clip and attach it here. One clip per scene keeps timing tight.</p>
@@ -215,17 +216,18 @@ export default function Storyboard({ onDone, onBack }: { onDone: () => void; onB
                     const f = e.target.files?.[0];
                     (e.target as HTMLInputElement).value = '';
                     if (!f || !script) return;
+                    const pid = projectId || 'unassigned';
                     const url = URL.createObjectURL(f);
-                    try { const { saveStoredBlob } = await import('@/lib/clips/db'); await saveStoredBlob({ key: `scene:${s.id}:video`, sceneId: s.id, kind: 'video', blob: f, name: f.name, mime: f.type || 'video/mp4', updatedAt: Date.now() }); } catch {}
+                    try { const { saveStoredBlob, blobKeyForScene } = await import('@/lib/clips/db'); await saveStoredBlob({ key: blobKeyForScene(pid, s.id, 'video'), projectId: pid, sceneId: s.id, kind: 'video', blob: f, name: f.name, mime: f.type || 'video/mp4', updatedAt: Date.now() }); } catch {}
                     try { const st = useClipJobs.getState(); const hit = st.jobs.find((j) => j.sceneId === s.id && j.kind === 'video' && j.status !== 'attached'); if (hit) st.setStatus(hit.id, 'attached', { fileName: f.name, objectUrl: url }); } catch {}
                     set({ script: { ...script, scenes: script.scenes.map((x) => x.id === s.id ? { ...x, videoUrl: url, motionSource: 'metai-upload' as const, muteSourceAudio: x.muteSourceAudio ?? true } : x) } });
-                    setMsg('Meta AI clip attached to ' + s.id + ' + saved locally.');
+                    setMsg('Meta AI clip attached to ' + s.id + ' + saved with this project.');
                   }} />
                 </label>
                 {s.motionSource === 'metai-upload' && (
                   <>
                     <button className="text-xs underline" onClick={() => set({ script: { ...script!, scenes: script!.scenes.map((x) => x.id === s.id ? { ...x, muteSourceAudio: !(x.muteSourceAudio ?? true) } : x) } })}>{(s.muteSourceAudio ?? true) ? 'Clip muted (VO on top)' : 'Clip sound on'}</button>
-                    <button className="text-xs underline" onClick={() => { set({ script: { ...script!, scenes: script!.scenes.map((x) => x.id === s.id ? { ...x, videoUrl: undefined, motionSource: 'kenburns' as const } : x) } }); try { import('@/lib/clips/db').then(({ removeStoredBlob }) => removeStoredBlob(`scene:${s.id}:video`)); } catch {} }}>Remove clip</button>
+                    <button className="text-xs underline" onClick={() => { set({ script: { ...script!, scenes: script!.scenes.map((x) => x.id === s.id ? { ...x, videoUrl: undefined, motionSource: 'kenburns' as const } : x) } }); try { import('@/lib/clips/db').then(({ removeStoredBlob, blobKeyForScene }) => { removeStoredBlob(blobKeyForScene(projectId || 'unassigned', s.id, 'video')); removeStoredBlob(`scene:${s.id}:video`); }); } catch {} }}>Remove clip</button>
                   </>
                 )}
               </div>

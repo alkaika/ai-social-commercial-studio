@@ -17,4 +17,4 @@ Key → Writer (factual table) → Sources (scrape/uploads/paste) → Configure 
 - One main button per screen. Smart defaults (brand colors, captions ON, music ducked, 9:16).
 - Type minimum: tap cards. Words like picture/words spoken/seconds.
 - Manual edits free & instant; AI regen per-scene only; Approve cost BEFORE spend; Approve result AFTER preview.
-- Autosave + resume + undo + version snapshots + lock scene + pinned verbatim.
+- Fresh start every load; explicit Save/Open named library replaces autosave (unsaved = amber warning, refresh wipes).

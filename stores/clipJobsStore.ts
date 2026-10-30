@@ -13,14 +13,18 @@ const uid = () => `${Date.now().toString(36)}-${Math.random().toString(36).slice
 
 async function persistClip(sceneId: string, kind: ClipKind, file: Blob, name: string, durationSec?: number) {
   try {
-    const { saveStoredBlob } = await import('@/lib/clips/db');
-    await saveStoredBlob({ key: `scene:${sceneId}:${kind}`, sceneId, kind, blob: file, name, mime: (file as File).type || 'video/mp4', durationSec, updatedAt: Date.now() });
+    const { saveStoredBlob, blobKeyForScene } = await import('@/lib/clips/db');
+    const projectId = useProject.getState().projectId || 'unassigned';
+    await saveStoredBlob({ key: blobKeyForScene(projectId, sceneId, kind), projectId, sceneId, kind, blob: file, name, mime: (file as File).type || 'video/mp4', durationSec, updatedAt: Date.now() });
   } catch { /* best-effort */ }
 }
 
 async function forgetClip(sceneId: string, kind: ClipKind) {
   try {
-    const { removeStoredBlob } = await import('@/lib/clips/db');
+    const { removeStoredBlob, blobKeyForScene } = await import('@/lib/clips/db');
+    const projectId = useProject.getState().projectId || 'unassigned';
+    // Delete namespaced row; also try legacy un-namespaced key (pre-library).
+    await removeStoredBlob(blobKeyForScene(projectId, sceneId, kind));
     await removeStoredBlob(`scene:${sceneId}:${kind}`);
   } catch { /* ignore */ }
 }
@@ -35,6 +39,8 @@ interface ClipJobsState {
   ingestAndAttach: (jobId: string, file: File) => Promise<void>;
   autoAttachBatch: (files: File[]) => Promise<void>;
   hydrate: () => Promise<void>;
+  hydrateForProject: (projectId: string) => Promise<void>;
+  resetForProject: () => void;
   clear: () => void;
   removeJobClip: (id: string) => void;
 }
@@ -151,20 +157,24 @@ export const useClipJobs = create<ClipJobsState>((set, get) => ({
   hydrate: async () => {
     if (get().hydrated) return;
     set({ hydrated: true });
+    // Fresh-start behavior: nothing auto-loads. hydrate() is a no-op kept
+    // for back-compat; explicit opens go through hydrateForProject().
+  },
+
+  hydrateForProject: async (projectId: string) => {
     try {
-      const { getAllStoredBlobs } = await import('@/lib/clips/db');
-      const recs = await getAllStoredBlobs();
-      if (!recs.length) return;
+      const { getBlobsForProject, blobKeyForScene } = await import('@/lib/clips/db');
+      const recs = await getBlobsForProject(projectId);
       const proj = useProject.getState();
       if (proj.script) {
         const scenes = proj.script.scenes.map((s) => {
           let next = s;
-          const v = recs.find((r) => r.key === `scene:${s.id}:voice`);
+          const v = recs.find((r) => r.key === blobKeyForScene(projectId, s.id, 'voice'));
           if (v?.blob) {
             const u = URL.createObjectURL(v.blob);
             next = { ...next, voiceSource: 'metai-clip' as const, voiceClipUrl: u, voiceUrl: u };
           }
-          const m = recs.find((r) => r.key === `scene:${s.id}:video`);
+          const m = recs.find((r) => r.key === blobKeyForScene(projectId, s.id, 'video'));
           if (m?.blob) {
             const u = URL.createObjectURL(m.blob);
             next = { ...next, videoUrl: u, motionSource: 'metai-upload' as const, muteSourceAudio: next.muteSourceAudio ?? true };
@@ -173,15 +183,10 @@ export const useClipJobs = create<ClipJobsState>((set, get) => ({
         });
         proj.set({ script: { ...proj.script, scenes } });
       }
-      set((st) => ({
-        jobs: st.jobs.map((j) => {
-          const rec = recs.find((r) => r.key === `scene:${j.sceneId}:${j.kind}`);
-          if (!rec?.blob) return j;
-          return { ...j, status: 'attached' as ClipJobStatus, fileName: rec.name, objectUrl: URL.createObjectURL(rec.blob), durationSec: rec.durationSec, updatedAt: Date.now() };
-        }),
-      }));
     } catch { /* best-effort */ }
   },
+
+  resetForProject: () => set({ jobs: [], lastError: '', hydrated: true }),
 
   clear: () => set({ jobs: [], lastError: '' }),
 

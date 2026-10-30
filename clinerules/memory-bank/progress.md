@@ -10,13 +10,14 @@
 - SAM auto-discovery: validator enumerates the model catalog and fuzzy-matches SAM-like IDs (docs ID `sam-3-1` mismatched this key's catalog) — this is what flipped the 6th check ✅.
 - Motion flow: per-scene meta.ai clip slot (upload+preview+mute toggle+remove), website screenshot picker (free mShots/thum.io/microlink grid, placeholder auto-retry, landscape edge-to-edge, `motionSource='screenshot'`), Wonder animate button, Ken Burns fallback, tier badge + export icons, `motionPlan()` render contract.
 - Clip watcher: Downloads-folder auto-ingest (File System Access API, read-only, Chromium) — new byte-stable media files route through `autoAttachBatch`; folder handle persisted (Dexie v2 `prefs`) + auto-restored on reload when the grant survives; one-click `Copy + open meta.ai` row button; graceful Firefox/Safari fallback message.
+- Fresh-start + project library (2026-10-30): studio boots blank on Key step, no auto-load/autosave; `ProjectBar` header (📁 current-name, New / Save+name / Open(n) / Delete, amber unsaved warning); Open restores text + this project's Dexie footage (assets + voice/video clips) and lands on sources/story; Delete wipes entry + blobs; legacy autosave migrated once to "Recovered project".
 - Live smoke test: 15s script → 3 scenes (Hook…).
 - GitHub repo live: https://github.com/alkaika/ai-social-commercial-studio (public). Local git remote `origin` set, branch `main`.
 - Default gateway everywhere is the verified Meta Model API (`https://api.meta.ai/v1`), so the Key step comes prefilled — user only pastes their key.
 
 ## What's Left
-- End-to-end project run with the live key (script gen on real Spark — mocks are gone for chat/image now).
-- FFmpeg.wasm MP4 honoring `motionPlan()` + VO (stub), Advanced timeline UI, music/voice pickers, caption editor, BrandKit conflict UI, cost estimator totals, version history UI, tests, Next upgrade.
+- End-to-end project run with the live key (script gen on real Spark — mocks are gone for chat/image now). Verify: fresh boot blank → Save → refresh blank → Open restores text + footage; New wipes; Delete removes entry + blobs.
+- FFmpeg.wasm MP4 honoring `motionPlan()` + VO (stub), Advanced timeline UI, music/voice pickers, caption editor, BrandKit conflict UI, cost estimator totals, tests, Next upgrade.
 
 ## Known Issues
 - Next 14.2.5 security notice (build warns, runs fine).

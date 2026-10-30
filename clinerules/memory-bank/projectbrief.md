@@ -33,6 +33,8 @@ Web app that generates 5/10/15/30/60s social commercials from a company website 
 - Simple Mode default (storyboard cards), Advanced timeline hidden behind button.
 - Revision loop: manual edit + quick buttons + Director's Notes chat, preview-and-approve, locked scenes skipped, pinned preserved.
 - Exports: TikTok/Reels/Shorts 9:16, IG 4:5, Square 1:1, Landscape 16:9 + SRT + script.txt.
+- Fresh start EVERY load (2026-10-30, user request): studio boots blank on Key step, no auto-load, no silent autosave. Past work returns ONLY via explicit Save/Open in `ProjectBar` header (New / Save / Open(n) / Delete). Unsaved work shows amber warning; refresh wipes by design.
+- Named project library: text/config in localStorage `meta-studio-projects-v1` ({id,name,updatedAt} + PersistedProject, blob URLs stripped); footage in Dexie `meta-studio-clips` v3 namespaced `{projectId}:scene:{s}:voice|video`, `{projectId}:asset:{id}`. One-time migration: legacy `meta-studio-project-v1` autosave -> "Recovered project" + legacy blobs copied into its namespace.
 
 ## Non-Goals (MVP)
 - No server DB, no accounts. Projects in IndexedDB.

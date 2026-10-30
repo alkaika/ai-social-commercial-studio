@@ -11,6 +11,7 @@ import ConfigureStep from '@/components/simple/ConfigureStep';
 import Storyboard from '@/components/simple/Storyboard';
 import ExportStep from '@/components/simple/ExportStep';
 import PersistGate from '@/components/project/PersistGate';
+import ProjectBar from '@/components/project/ProjectBar';
 
 const STEPS: { id: Step; label: string }[] = [
   { id: 'key', label: 'Key' },
@@ -61,6 +62,7 @@ function StudioInner() {
       <div>
         <Link href="/" className="btn-secondary">← Back to home</Link>
       </div>
+      <ProjectBar />
       <div className="flex items-center gap-2 text-sm flex-wrap" role="navigation" aria-label="Studio steps">
         {STEPS.map((s, i) => (
           <span key={s.id} className="flex items-center gap-2">
@@ -83,7 +85,7 @@ function StudioInner() {
       {step === 'script' && <Storyboard onDone={() => go('export')} onBack={goBack} />}
       {step === 'review' && <Storyboard onDone={() => go('export')} onBack={goBack} />}
       {step === 'export' && <ExportStep onBack={goBack} />}
-      <p className="text-center text-xs text-neutral-500">✓ Saved just now · Your key stays in this tab · Free platform — you pay Meta directly</p>
+      <p className="text-center text-xs text-neutral-500">Your key stays in this tab · Free platform — you pay Meta directly</p>
     </main>
   );
 }

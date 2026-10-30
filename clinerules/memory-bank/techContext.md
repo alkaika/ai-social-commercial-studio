@@ -1,7 +1,7 @@
 # Tech Context
 
 ## Stack
-Next.js 14.2.5, React 18.3, TypeScript 5.4, Tailwind 3.4, Zustand 4.5, Dexie 4 (installed, unused yet), react-dropzone, wavesurfer.js, @simplewebauthn/browser ^9.0.1, cheerio, zod. Node 26.12.1, npm 11.20.0. Windows.
+Next.js 14.2.5, React 18.3, TypeScript 5.4, Tailwind 3.4, Zustand 4.5, Dexie 4 (clip blobs + watch-folder prefs, `meta-studio-clips` v3), react-dropzone, wavesurfer.js, @simplewebauthn/browser ^9.0.1, cheerio, zod. Node 26.12.1, npm 11.20.0. Windows.
 
 ## Setup
 ```

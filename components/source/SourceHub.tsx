@@ -5,7 +5,7 @@ import { useKeyStore } from '@/stores/keyStore';
 import { masterFit } from '@/lib/script-utils';
 
 export default function SourceHub({ onDone, onBack }: { onDone: () => void; onBack?: () => void }) {
-  const { urls, set, snippets, assets, brand, durationSec, platform, tone, sparkModel, masterScript, masterApproved, scriptGuidance } = useProject();
+  const { urls, set, snippets, assets, brand, durationSec, platform, tone, sparkModel, masterScript, masterApproved, scriptGuidance, projectId } = useProject();
   const { key, baseUrl } = useKeyStore() as any;
   const [urlInput, setUrlInput] = useState('');
   const [busy, setBusy] = useState(false);
@@ -52,14 +52,15 @@ export default function SourceHub({ onDone, onBack }: { onDone: () => void; onBa
 
   const onFiles = async (files: FileList | null) => {
     if (!files) return;
+    const pid = projectId || 'unassigned';
     const next = [...assets];
     for (const f of Array.from(files).slice(0, 12)) {
       const url = URL.createObjectURL(f);
       const id = `${Date.now()}-${f.name}`;
       next.push({ id, name: f.name, url, tag: 'Upload' });
       try {
-        const { saveStoredBlob } = await import('@/lib/clips/db');
-        await saveStoredBlob({ key: `asset:${id}`, kind: 'asset', assetId: id, blob: f, name: f.name, mime: f.type || 'application/octet-stream', updatedAt: Date.now() });
+        const { saveStoredBlob, blobKeyForAsset } = await import('@/lib/clips/db');
+        await saveStoredBlob({ key: blobKeyForAsset(pid, id), projectId: pid, kind: 'asset', assetId: id, blob: f, name: f.name, mime: f.type || 'application/octet-stream', updatedAt: Date.now() });
       } catch { /* best-effort */ }
     }
     set({ assets: next });
@@ -137,7 +138,12 @@ export default function SourceHub({ onDone, onBack }: { onDone: () => void; onBa
                   title={`Remove ${a.name}`}
                   onClick={() => {
                     if (a.url.startsWith('blob:')) { try { URL.revokeObjectURL(a.url); } catch {} }
-                    try { import('@/lib/clips/db').then(({ removeStoredBlob }) => removeStoredBlob(`asset:${a.id}`)); } catch {}
+                    try {
+                      import('@/lib/clips/db').then(({ removeStoredBlob, blobKeyForAsset }) => {
+                        removeStoredBlob(blobKeyForAsset(projectId || 'unassigned', a.id));
+                        removeStoredBlob(`asset:${a.id}`); // legacy pre-library row
+                      });
+                    } catch {}
                     set({ assets: assets.filter((x) => x.id !== a.id) });
                   }}
                 >✕</button>

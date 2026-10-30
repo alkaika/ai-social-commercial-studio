@@ -7,7 +7,10 @@
 import Dexie, { type Table } from 'dexie';
 
 export interface StoredBlob {
-  key: string; // scene:s1:voice | scene:s1:video | asset:<id>
+  key: string; // {projectId}:scene:s1:voice | {projectId}:scene:s1:video | {projectId}:asset:<id>
+  // Namespaced per project so the library can hold many commercials.
+  // Legacy rows (pre-library) have no projectId — migrated on first run.
+  projectId?: string;
   sceneId?: string;
   kind?: string; // voice | video | asset
   assetId?: string;
@@ -32,6 +35,9 @@ class ClipsDB extends Dexie {
     // Same blobs schema + new store only → v1 databases upgrade in place.
     this.version(1).stores({ blobs: 'key, sceneId, kind, assetId' });
     this.version(2).stores({ blobs: 'key, sceneId, kind, assetId', prefs: 'key' });
+    // v3 adds `projectId` index so the project library can namespace footage
+    // per saved project. No data loss — old rows upgrade in place.
+    this.version(3).stores({ blobs: 'key, projectId, sceneId, kind, assetId', prefs: 'key' });
   }
 }
 
@@ -46,6 +52,69 @@ export async function getStoredBlob(key: string): Promise<StoredBlob | undefined
     return await clipsDb.blobs.get(key);
   } catch {
     return undefined;
+  }
+}
+
+export async function getBlobsForProject(projectId: string): Promise<StoredBlob[]> {
+  try {
+    return await clipsDb.blobs.where('projectId').equals(projectId).toArray();
+  } catch {
+    return [];
+  }
+}
+
+export async function removeBlobsForProject(projectId: string): Promise<void> {
+  try {
+    await clipsDb.blobs.where('projectId').equals(projectId).delete();
+  } catch { /* ignore */ }
+}
+
+/** Namespaced key builders — single source of truth for blob keys. */
+export const blobKeyForScene = (projectId: string, sceneId: string, kind: string) =>
+  `${projectId}:scene:${sceneId}:${kind}`;
+export const blobKeyForAsset = (projectId: string, assetId: string) =>
+  `${projectId}:asset:${assetId}`;
+
+/**
+ * One-time migration: legacy rows (no projectId, keys like
+ * `scene:s1:voice`) are copied into the recovered project's namespace.
+ * Old rows are kept (harmless) — new saves use namespaced keys.
+ */
+export async function migrateLegacyBlobsToProject(projectId: string): Promise<number> {
+  try {
+    const all = await clipsDb.blobs.toArray();
+    const legacy = all.filter((r) => !r.projectId);
+    if (!legacy.length) return 0;
+    let n = 0;
+    for (const r of legacy) {
+      try {
+        let key = r.key;
+        let sceneId = r.sceneId;
+        let kind = r.kind;
+        let assetId = r.assetId;
+        // Infer from legacy key shape when fields are missing.
+        if (key.startsWith('scene:')) {
+          const parts = key.split(':');
+          sceneId = sceneId || parts[1];
+          kind = kind || parts[2];
+          if (sceneId && kind) key = blobKeyForScene(projectId, sceneId, kind);
+          else key = `${projectId}:${r.key}`;
+        } else if (key.startsWith('asset:')) {
+          const parts = key.split(':');
+          assetId = assetId || parts[1];
+          kind = 'asset';
+          if (assetId) key = blobKeyForAsset(projectId, assetId);
+          else key = `${projectId}:${r.key}`;
+        } else {
+          key = `${projectId}:${r.key}`;
+        }
+        await clipsDb.blobs.put({ ...r, key, projectId, sceneId, kind, assetId, updatedAt: r.updatedAt || Date.now() });
+        n++;
+      } catch { /* skip bad row */ }
+    }
+    return n;
+  } catch {
+    return 0;
   }
 }
 
