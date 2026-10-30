@@ -154,6 +154,63 @@ export function buildSingleStoryPrompt(input: SingleStoryPromptInput): string {
   ].join('\n');
 }
 
+// --- Combined single-prompt with per-10s batch instructions ---
+// One paste into meta.ai that carries the FULL script split into explicit
+// ~10s voice+video segments, so meta.ai outputs everything together as one
+// continuous commercial (no separate pastes, no manual stitching).
+
+export interface CombinedStoryPromptInput {
+  batches: StoryBatch[];
+  durationSec: number;
+  aspect: string;
+  width: number;
+  height: number;
+  platformLabel: string;
+  vibeLabel: string;
+  brandName?: string;
+  device: StoryDevice | string;
+  voice: string;
+}
+
+export function buildCombinedStoryPrompt(input: CombinedStoryPromptInput): string {
+  const { batches, durationSec, aspect, width, height, platformLabel, vibeLabel, brandName, device, voice } = input;
+  const full = batches.map((b) => b.text).join(' ').replace(/\s+/g, ' ').trim() || '[paste your script above]';
+  const orientation =
+    aspect === '16:9' ? 'landscape widescreen'
+      : aspect === '1:1' ? 'square'
+        : aspect === '4:5' ? 'vertical portrait' : 'vertical full-screen';
+  const brandBit = brandName ? ` for ${brandName}` : '';
+  const multi = batches.length > 1;
+  const lines: string[] = [
+    `Make a ${durationSec}-second ${orientation} video (${aspect}, ${width}x${height}) for ${platformLabel}${brandBit} with a ${vibeLabel.toLowerCase()} vibe${multi ? ` — deliver as ${batches.length} back-to-back segments that join into one continuous commercial` : ''}.`,
+    ``,
+    `Make a video of a ${voice} voice saying: "${full}" while simultaneously showing the same woman using the app on her ${device} with the attached screenshots.`,
+    ``,
+  ];
+  if (multi) {
+    lines.push(`Use the SAME woman, SAME ${voice} voice, SAME ${device} framing, and SAME ${vibeLabel.toLowerCase()} style across ALL ${batches.length} segments so they cut together seamlessly. Do NOT repeat lines between segments. Do NOT add a new intro/outro.`);
+    lines.push(``);
+    batches.forEach((b) => {
+      lines.push(`--- SEGMENT ${b.index} OF ${b.total} (~${b.batchSec}s voice + video) ---`);
+      lines.push(`Say exactly (word-for-word, no paraphrase): "${b.text}"`);
+      lines.push(`While saying it, show: the same woman using the app on her ${device}; cut between her and close-ups of the attached screenshots shown clearly on the ${device} screen. Bright, cinematic, real-app look. Finish this line inside ~${b.batchSec} seconds.`);
+      lines.push(``);
+    });
+  }
+  lines.push(`Requirements:`);
+  lines.push(`- Total runtime: exactly ${durationSec} seconds in one continuous take — the voiceover starts immediately and finishes inside ${durationSec} seconds.`);
+  if (multi) lines.push(`- Each segment is ~10 seconds max of voice + video (${batches.map((b) => `${b.batchSec}s`).join(' + ')} = ${durationSec}s); keep segment boundaries clean for seamless joining.`);
+  lines.push(`- Screen ratio: ${aspect} (${width}x${height}) — fill the full frame, no black bars, no cropping of the ${device} screen.`);
+  lines.push(`- Platform: ${platformLabel}.`);
+  lines.push(`- Vibe: ${vibeLabel.toLowerCase()} delivery and visuals.`);
+  lines.push(`- Visual: a friendly woman on screen using the app on her ${device}; cut between her and close-ups of the attached screenshots shown clearly on the ${device} screen. Bright, cinematic, real-app look.`);
+  lines.push(`- Audio: ${voice} voice, clear studio quality, no background music louder than the voice.`);
+  lines.push(`- No burned-in text overlays or auto-subtitles (captions are added later).`);
+  lines.push(``);
+  lines.push(`I have attached screenshots of the website / mobile app — show them on the ${device} screen in the video.`);
+  return lines.join('\n');
+}
+
 export function copyText(text: string): Promise<void> {
   if (navigator?.clipboard?.writeText) return navigator.clipboard.writeText(text);
   return Promise.reject(new Error('Clipboard unavailable'));

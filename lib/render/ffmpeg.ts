@@ -1,24 +1,52 @@
 // Final MP4 stitching: FFmpeg.wasm runs fully in the browser (open-source,
 // LGPL: ffmpeg + @ffmpeg/ffmpeg + @ffmpeg/util + @ffmpeg/core from npm).
 // No server upload, no extra cost. Single-thread core needs no COOP/COEP.
+//
+// Loading strategy (2026-10-30 fix for "Cannot find module 'blob:...'" +
+// "cannot be accessed from origin"):
+// - NEVER use toBlobURL() for coreURL — the class-worker does
+//   `await import(coreURL)` and a blob: ESM import fails under Next.js.
+// - NEVER use a cross-origin classWorkerURL — `new Worker(https CDN url)`
+//   is blocked by the browser ("cannot be accessed from origin") and the
+//   worker's own `./const.js` / `./errors.js` relative imports break.
+//   The class-worker is ALWAYS the same-origin `/ffmpeg/ffmpeg-worker.js`;
+//   only coreURL/wasmURL vary (local file → CDN file). A same-origin worker
+//   CAN `await import()` a CORS-enabled CDN core (unpkg/jsdelivr send ACAO:*).
+// - classWorkerURL/coreURL/wasmURL are ABSOLUTE (origin + path): FFmpeg does
+//   `new URL(url, import.meta.url)` and import.meta.url is webpack-internal
+//   in Next.js dev, so a relative '/ffmpeg/...' path throws Invalid URL.
 import { FFmpeg } from '@ffmpeg/ffmpeg';
-import { fetchFile, toBlobURL } from '@ffmpeg/util';
+import { fetchFile } from '@ffmpeg/util';
 
 let ff: FFmpeg | null = null;
 let loading: Promise<FFmpeg> | null = null;
 let progressWired = false;
 let latestProgress: ((p: number) => void) | null = null;
 const logLines: string[] = [];
+// The class-worker MUST be same-origin (plain absolute URL). Only
+// coreURL/wasmURL fall back to CDN files — a same-origin module worker CAN
+// `await import()` a CORS-enabled (ACAO:*) CDN core.
 const CORE_VER = '0.12.10';
-const CORE_SOURCES = [
-  '/ffmpeg', // self-hosted in public/ (no CORS / ad-block risk)
-  `https://unpkg.com/@ffmpeg/core@${CORE_VER}/dist/esm`,
-  `https://cdn.jsdelivr.net/npm/@ffmpeg/core@${CORE_VER}/dist/esm`,
+interface CoreSrc { label: string; coreURL: string; wasmURL: string }
+const CDN_CORE_SOURCES: CoreSrc[] = [
+  {
+    label: 'unpkg CDN',
+    coreURL: `https://unpkg.com/@ffmpeg/core@${CORE_VER}/dist/esm/ffmpeg-core.js`,
+    wasmURL: `https://unpkg.com/@ffmpeg/core@${CORE_VER}/dist/esm/ffmpeg-core.wasm`,
+  },
+  {
+    label: 'jsdelivr CDN',
+    coreURL: `https://cdn.jsdelivr.net/npm/@ffmpeg/core@${CORE_VER}/dist/esm/ffmpeg-core.js`,
+    wasmURL: `https://cdn.jsdelivr.net/npm/@ffmpeg/core@${CORE_VER}/dist/esm/ffmpeg-core.wasm`,
+  },
 ];
 
 function pushLog(m: string) { logLines.push(m); if (logLines.length > 120) logLines.splice(0, logLines.length - 120); }
 /** Call before Retry after a load failure so the next attempt starts fresh. */
-export function resetFFmpeg() { ff = null; loading = null; progressWired = false; latestProgress = null; logLines.length = 0; }
+export function resetFFmpeg() {
+  try { ff?.terminate(); } catch { /* worker may never have spawned */ }
+  ff = null; loading = null; progressWired = false; latestProgress = null; logLines.length = 0;
+}
 
 // NOTE: the ffmpeg web-worker rejects with a PLAIN STRING (e.toString()),
 // not an Error object — so every catch must handle `typeof e === 'string'`.
@@ -31,25 +59,36 @@ export async function loadFFmpeg(onLog?: (m: string) => void): Promise<FFmpeg> {
   loading = (async () => {
     const inst = new FFmpeg();
     inst.on('log', ({ message }: { message: string }) => { pushLog(message); onLog?.(message); });
+    // Absolute same-origin worker URL: FFmpeg does
+    // `new Worker(new URL(classWorkerURL, import.meta.url))` and import.meta.url
+    // is webpack-internal under Next.js, so a relative path throws Invalid URL.
+    const origin = typeof window !== 'undefined' ? window.location.origin : '';
+    const classWorkerURL = `${origin}/ffmpeg/ffmpeg-worker.js`;
     let lastErr = 'unknown load error';
-    for (const base of CORE_SOURCES) {
+    // Candidate core/wasm pairs: local app files first, then CDN files.
+    const candidates: CoreSrc[] = [
+      { label: 'app files (/ffmpeg)', coreURL: `${origin}/ffmpeg/ffmpeg-core.js`, wasmURL: `${origin}/ffmpeg/ffmpeg-core.wasm` },
+      ...CDN_CORE_SOURCES,
+    ];
+    for (const src of candidates) {
       try {
-        pushLog(`loading core from ${base}`);
-        // Self-hosted base ships its own worker file; CDN bases use the
-        // bundled worker. Passing an explicit classWorkerURL avoids the
-        // Next.js `new URL("./worker.js", import.meta.url)` bundling pitfall.
-        const isLocal = base.startsWith('/');
+        pushLog(`[loader v3] worker=${classWorkerURL}`);
+        pushLog(`loading core from ${src.label}: ${src.coreURL}`);
+        // Plain URLs only — NO toBlobURL(). classWorkerURL stays same-origin
+        // (cross-origin Worker construction is blocked by the browser); only
+        // coreURL/wasmURL vary. The worker `await import()`s coreURL, which
+        // works cross-origin because unpkg/jsdelivr send ACAO:*.
         await inst.load({
-          ...(isLocal ? { classWorkerURL: `${base}/ffmpeg-worker.js` } : {}),
-          coreURL: await toBlobURL(`${base}/ffmpeg-core.js`, 'text/javascript'),
-          wasmURL: await toBlobURL(`${base}/ffmpeg-core.wasm`, 'application/wasm'),
+          classWorkerURL,
+          coreURL: src.coreURL,
+          wasmURL: src.wasmURL,
         } as never);
         ff = inst;
-        pushLog(`core ready via ${base}`);
+        pushLog(`core ready via ${src.label}`);
         return inst;
-      } catch (e) { lastErr = errText(e); pushLog(`core load failed from ${base}: ${lastErr}`); }
+      } catch (e) { lastErr = errText(e); pushLog(`core load failed from ${src.label}: ${lastErr}`); }
     }
-    throw new Error(`Could not load the video joiner (~32MB). Tried app files then ${CORE_SOURCES.length - 1} CDN backup(s). Check connection/VPN/ad-blocker and press Retry. Last error: ${lastErr}`);
+    throw new Error(`Could not load the video joiner (~32MB) [loader v3]. Tried app files then ${candidates.length - 1} CDN backup(s). Check connection/VPN/ad-blocker and press Retry. Last error: ${lastErr}\n\nTechnical detail:\n${tailLog(30)}`);
   })();
   try {
     return await loading;

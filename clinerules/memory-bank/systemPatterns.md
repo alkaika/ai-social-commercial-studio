@@ -13,9 +13,10 @@ Next.js App Router. Client wizard (`app/studio/page.tsx` + `stores/projectStore.
 - Scraper: homepage + 8 de-duped about candidates, JS-shell detection (`needsJs`) with honest fallback message, story beats into `aboutSummary`/`aboutPoints`/`aboutSource`, merges across URLs.
 - Duration math: `WORDS_PER_SEC=2.5`, `targetWordRange(duration)` gives target/min/max/hardMax; master draft is sized to the slot (buildMasterScriptPrompt + retry + `constrainToWordRange` backstop), so Story starts fitting and `fitsDuration()`/cadence are only safety nets.
 - DEMO mode: `key==='DEMO'` → deterministic mock script/images; `?demo=1` enters without key.
+- Export stitch loader v3 (`lib/render/ffmpeg.ts`): class-worker ALWAYS same-origin absolute `${origin}/ffmpeg/ffmpeg-worker.js`; coreURL/wasmURL try local `/ffmpeg/` then unpkg + jsdelivr `@ffmpeg/core@0.12.10` pairs; `[loader v3]` tag + tail-log on load errors; `resetFFmpeg()` terminates worker before Retry. Self-hosted runtime in `public/ffmpeg/` via `scripts/copy-ffmpeg-core.mjs` (postinstall).
 
 ## Component Map
-`KeySetup` → `ModelPicker` → `SourceHub` → `ConfigureStep` → `Storyboard` (batches: full-script textarea → voice+device → per-part copy prompts via `splitScriptIntoBatches`) → `ExportStep` (stitch Part MP4s via FFmpeg.wasm → final MP4 + SRT/txt/backup). `lib/screenshots.ts` for the retired per-scene shot picker. Studio header: `ProjectBar` (New / Save+name / Open(n) / Delete + amber unsaved warning) — the ONLY persistence UI; studio boots fresh, PersistGate is migration-only.
+`KeySetup` → `ModelPicker` → `SourceHub` → `ConfigureStep` → `Storyboard` (ONE combined prompt: full-script textarea → voice+device → single paste via `buildCombinedStoryPrompt` with SEGMENT i OF N ~10s blocks) → `ExportStep` (stitch fallback via FFmpeg.wasm → final MP4 + SRT/txt/backup). `lib/screenshots.ts` for the retired per-scene shot picker. Studio header: `ProjectBar` (New / Save+name / Open(n) / Delete + amber unsaved warning) — the ONLY persistence UI; studio boots fresh, PersistGate is migration-only.
 
 ## Critical Paths
 - `POST /api/muse/script` → `generateScript()` → Spark chat → strict JSON parse → fallback mock.

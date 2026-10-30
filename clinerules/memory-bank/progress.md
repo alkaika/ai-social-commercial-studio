@@ -4,7 +4,7 @@
 
 ## What Works ✅
 - `npm run build` passes (13 routes: /, /studio, 8 APIs).
-- Stitch failure fixed (2026-10-30): bare "Stitch failed" on 3 landscape MP4s → worker rejects plain strings (errText), explicit classWorkerURL, self-hosted `public/ffmpeg/` + CDN fallback, per-stage errors, Retry resets. Build ✅.
+- Story ONE combined prompt (2026-10-30): `buildCombinedStoryPrompt()` single paste — full voiceover line + SEGMENT i OF N (~10s each) + ratio/platform/vibe/timing. Replaces multi-paste version. Export stitch kept as fallback. tsc clean.
 - Landing + 8-step wizard renders; demo mode works keyless (`/studio?demo=1`).
 - Key validate: 5/5 ✅ live (Wonder retired — spark-standard, spark-contributor, image, voice-captions, sam), writer table, scrape (homepage + about-page story, removable chips, multi-site merge) + Business-page master script — drafted with Setup settings (duration/platform/vibe) in mind, free edit, gated Approve → Continue + uploads (removable thumbnails) + snippets+pin, configure FIRST (duration/platform/vibe shape the draft; Story just organizes, no re-fit needed), timed organize from approved master (Spark organizes, never reinvents; storyBeat per scene), quick buttons, Director's Notes, lock, fits-meter, SRT/txt/backup export, ← Back on every step + clickable breadcrumb + ← Back to home (no state loss — Zustand), vault: biometrics + synced passkey + encrypted export/import, raw-bytes PRF fix.
 - Known vault gotcha (fixed): `eval.first` must be Uint8Array, not b64url — browser type-checks extension inputs strictly.
