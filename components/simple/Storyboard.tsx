@@ -2,7 +2,7 @@
 import { useMemo, useState } from 'react';
 import { useProject } from '@/stores/projectStore';
 import { PLATFORMS, TONES } from '@/config/platforms';
-import { META_AI_URL, STORY_VOICES, STORY_DEVICES, splitScriptIntoBatches, buildCombinedStoryPrompt, copyText } from '@/lib/meta-sdk/prompts';
+import { META_AI_URL, STORY_VOICE_STYLES, STORY_DEVICES, STORY_DEVICE_ICONS, splitScriptIntoBatches, buildCombinedStoryPrompt, copyText, voicePerson } from '@/lib/meta-sdk/prompts';
 import { masterFit } from '@/lib/script-utils';
 
 export default function Storyboard({ onDone, onBack }: { onDone: () => void; onBack?: () => void }) {
@@ -14,7 +14,9 @@ export default function Storyboard({ onDone, onBack }: { onDone: () => void; onB
   }, [masterScript, script]);
   const [scriptText, setScriptText] = useState(seed);
   const [device, setDevice] = useState<string>(STORY_DEVICES[0]);
-  const [voice, setVoice] = useState<string>(STORY_VOICES[0]);
+  const [gender, setGender] = useState<'female' | 'male'>('female');
+  const [style, setStyle] = useState<string>(STORY_VOICE_STYLES[0]);
+  const voice = `warm ${gender}, ${style}`;
   const [copied, setCopied] = useState(false);
   const [msg, setMsg] = useState('');
   const pf = PLATFORMS[platform];
@@ -26,6 +28,8 @@ export default function Storyboard({ onDone, onBack }: { onDone: () => void; onB
     durationSec, aspect: pf.aspect, width: pf.width, height: pf.height,
     platformLabel: pf.label, vibeLabel: vibe, brandName: brand.brandName || undefined, device, voice,
   }), [batches, durationSec, pf, vibe, brand.brandName, device, voice]);
+  const who = voicePerson(voice) === 'man' ? 'man' : 'woman';
+  const poss = who === 'woman' ? 'her' : 'his';
   const doCopy = async () => {
     try { await copyText(prompt); setCopied(true); setMsg(`Copied — 1 paste into meta.ai with ${batches.length} labeled ~10s segment(s). Attach screenshots there.`); setTimeout(() => setCopied(false), 2500); }
     catch { setMsg('Copy blocked — select the prompt manually.'); }
@@ -34,31 +38,33 @@ export default function Storyboard({ onDone, onBack }: { onDone: () => void; onB
     const t = scriptText.trim();
     if (!t) { setMsg('Add your script text first.'); return; }
     set({ masterScript: t, masterApproved: true,
-      script: { scenes: batches.map((b) => ({ id: `batch-${b.index}`, heading: b.total > 1 ? `Segment ${b.index} of ${b.total}` : 'Full commercial', voiceover: b.text, onScreenText: brand.tagline || brand.brandName || '', visualPrompt: `Woman using app on ${device} — segment ${b.index}`, durationSec: b.batchSec })), totalSec: durationSec, sparkModel } });
+      script: { scenes: batches.map((b) => ({ id: `batch-${b.index}`, heading: b.total > 1 ? `Segment ${b.index} of ${b.total}` : 'Full commercial', voiceover: b.text, onScreenText: brand.tagline || brand.brandName || '', visualPrompt: `${who} using app on ${device} — segment ${b.index}`, durationSec: b.batchSec })), totalSec: durationSec, sparkModel } });
     onDone();
   };
   return (
     <div className="space-y-4">
       <div className="card space-y-2">
         <h2 className="text-xl font-bold">Story — one Meta.ai prompt</h2>
-        <p className="text-sm text-neutral-600">One paste into meta.ai. It carries the full script plus labeled ~10s voice+video directions, so meta.ai outputs everything together as one {durationSec}s video. Attach your screenshots there.</p>
-        <div className="flex flex-wrap gap-2 text-sm"><span className="badge">⏱ {durationSec}s ({batches.length || 1} segment{(batches.length || 1) > 1 ? 's' : ''} inside)</span><span className="badge">📐 {pf.aspect} {pf.width}x{pf.height}</span><span className="badge">📱 {pf.label}</span><span className="badge">✨ {vibe}</span></div>
+        <p className="text-sm text-neutral-600">One paste into meta.ai. Full script + labeled ~10s directions so meta.ai outputs one {durationSec}s video. Attach screenshots there.</p>
+        <div className="flex flex-wrap gap-2 text-sm"><span className="badge">⏱ {durationSec}s ({batches.length || 1} segs)</span><span className="badge">📐 {pf.aspect} {pf.width}x{pf.height}</span><span className="badge">📱 {pf.label}</span><span className="badge">✨ {vibe}</span><span className="badge">🎙 {voice}</span></div>
       </div>
       <div className="card space-y-2">
         <h3 className="font-semibold">1 · Full script</h3>
         <textarea className="input" rows={5} value={scriptText} onChange={(e) => setScriptText(e.target.value)} placeholder="Your full commercial script…" />
-        <p className="text-xs text-neutral-500">{fit.wordCount} words · ~{fit.targetWords} for {durationSec}s{batches.length > 1 ? ` · auto-sections: ${batches.map((b) => `~${b.batchSec}s`).join(' + ')}` : ''}</p>
+        <p className="text-xs text-neutral-500">{fit.wordCount} words · ~{fit.targetWords} for {durationSec}s{batches.length > 1 ? ` · sections: ${batches.map((b) => `~${b.batchSec}s`).join(' + ')}` : ''}</p>
       </div>
       <div className="card space-y-3">
         <h3 className="font-semibold">2 · Voice + screen</h3>
-        <label className="text-sm block">Voice<select className="input mt-1" value={voice} onChange={(e) => setVoice(e.target.value)}>{STORY_VOICES.map((v) => <option key={v} value={v}>{v}</option>)}</select></label>
-        <div className="flex flex-wrap gap-2">{STORY_DEVICES.map((d) => <button key={d} onClick={() => setDevice(d)} className={`border-2 rounded-full px-4 py-2 ${device === d ? 'border-black bg-neutral-100' : 'border-neutral-200'}`}>{d === 'Mobile phone' ? '📱 Mobile phone' : '🖥 PC monitor'}</button>)}</div>
+        <div className="flex flex-wrap gap-2">{(['female', 'male'] as const).map((g) => <button key={g} onClick={() => setGender(g)} className={`border-2 rounded-full px-4 py-2 ${gender === g ? 'border-black bg-neutral-100' : 'border-neutral-200'}`}>{g === 'female' ? '👩 Female' : '👨 Male'}</button>)}</div>
+        <label className="text-sm block">Style (same 5 for both)<select className="input mt-1" value={style} onChange={(e) => setStyle(e.target.value)}>{STORY_VOICE_STYLES.map((s) => <option key={s} value={s}>{s}</option>)}</select></label>
+        <p className="text-xs text-neutral-500">Selected: {voice} — the {who} in the video uses this voice.</p>
+        <div className="flex flex-wrap gap-2">{STORY_DEVICES.map((d) => <button key={d} onClick={() => setDevice(d)} className={`border-2 rounded-full px-4 py-2 ${device === d ? 'border-black bg-neutral-100' : 'border-neutral-200'}`}>{STORY_DEVICE_ICONS[d] || '📺'} {d}</button>)}</div>
       </div>
       <div className="card space-y-3">
         <h3 className="font-semibold">3 · Copy this one prompt into meta.ai</h3>
         <pre className="whitespace-pre-wrap text-sm bg-neutral-900 text-white rounded-xl p-4">{prompt}</pre>
         <div className="flex flex-wrap gap-2"><button className="btn-primary" onClick={doCopy}>{copied ? '✅ Copied!' : '📋 Copy prompt'}</button><a className="btn-secondary" href={META_AI_URL} target="_blank" rel="noreferrer">Open meta.ai →</a></div>
-        <ol className="list-decimal ml-5 text-sm text-neutral-700 space-y-1"><li>Copy, open meta.ai, attach screenshots of your website / app.</li><li>Paste once — meta.ai renders one {durationSec}s {pf.label} video: {voice} voice + woman on {device}, SAME look across all {batches.length || 1} labeled segment(s).</li><li>Download the finished video → continue to export for captions.</li></ol>
+        <ol className="list-decimal ml-5 text-sm text-neutral-700 space-y-1"><li>Copy, open meta.ai, attach screenshots.</li><li>Paste once — {durationSec}s {pf.label}: {voice} voice + {who} on {poss} {device}.</li><li>Download → continue to export for captions.</li></ol>
         {msg && <p className="text-sm bg-neutral-100 border rounded-xl p-3">{msg}</p>}
       </div>
       <div className="flex justify-between items-center"><button className="btn-secondary" onClick={onBack}>← Back</button><button className="btn-primary" onClick={goNext}>Looks good — continue to export →</button></div>

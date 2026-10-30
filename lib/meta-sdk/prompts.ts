@@ -40,19 +40,47 @@ export function buildAllPrompts(
 // script, so the user only pastes once into meta.ai and attaches their
 // website/app screenshots there.
 
+export const STORY_VOICE_STYLES = [
+  'energetic',
+  'calm and friendly',
+  'professional',
+  'cheerful and upbeat',
+  'confident and bold',
+] as const;
+
 export const STORY_VOICES = [
   'warm female, energetic',
   'warm female, calm and friendly',
+  'warm female, professional',
+  'warm female, cheerful and upbeat',
+  'warm female, confident and bold',
   'warm male, energetic',
-  'warm male, calm and professional',
+  'warm male, calm and friendly',
+  'warm male, professional',
+  'warm male, cheerful and upbeat',
+  'warm male, confident and bold',
 ] as const;
 
-export const STORY_DEVICES = ['Mobile phone', 'PC monitor'] as const;
+export const STORY_DEVICES = ['Mobile phone', 'Tablet', 'Laptop', 'PC monitor'] as const;
 export type StoryDevice = (typeof STORY_DEVICES)[number];
+
+export const STORY_DEVICE_ICONS: Record<string, string> = {
+  'Mobile phone': '📱',
+  Tablet: '📲',
+  Laptop: '💻',
+  'PC monitor': '🖥',
+};
 export const MAX_BATCH_SEC = 10;
 
 export interface StoryBatch {
   index: number; total: number; batchSec: number; text: string; wordCount: number;
+}
+
+export function voicePerson(voice: string): 'woman' | 'man' | 'person' {
+  const v = (voice || '').toLowerCase();
+  if (v.includes('female')) return 'woman';
+  if (v.includes('male')) return 'man';
+  return 'person';
 }
 
 export function splitScriptIntoBatches(scriptText: string, durationSec: number, maxBatchSec = MAX_BATCH_SEC): StoryBatch[] {
@@ -174,6 +202,10 @@ export interface CombinedStoryPromptInput {
 
 export function buildCombinedStoryPrompt(input: CombinedStoryPromptInput): string {
   const { batches, durationSec, aspect, width, height, platformLabel, vibeLabel, brandName, device, voice } = input;
+  const person = voicePerson(voice);
+  const samePerson = person === 'woman' ? 'SAME woman' : person === 'man' ? 'SAME man' : 'SAME person';
+  const aPerson = person === 'woman' ? 'the same woman' : person === 'man' ? 'the same man' : 'the same person';
+  const poss = person === 'woman' ? 'her' : person === 'man' ? 'his' : 'their';
   const full = batches.map((b) => b.text).join(' ').replace(/\s+/g, ' ').trim() || '[paste your script above]';
   const orientation =
     aspect === '16:9' ? 'landscape widescreen'
@@ -184,16 +216,16 @@ export function buildCombinedStoryPrompt(input: CombinedStoryPromptInput): strin
   const lines: string[] = [
     `Make a ${durationSec}-second ${orientation} video (${aspect}, ${width}x${height}) for ${platformLabel}${brandBit} with a ${vibeLabel.toLowerCase()} vibe${multi ? ` — deliver as ${batches.length} back-to-back segments that join into one continuous commercial` : ''}.`,
     ``,
-    `Make a video of a ${voice} voice saying: "${full}" while simultaneously showing the same woman using the app on her ${device} with the attached screenshots.`,
+    `Make a video of a ${voice} voice saying: "${full}" while simultaneously showing ${aPerson} using the app on ${poss} ${device} with the attached screenshots.`,
     ``,
   ];
   if (multi) {
-    lines.push(`Use the SAME woman, SAME ${voice} voice, SAME ${device} framing, and SAME ${vibeLabel.toLowerCase()} style across ALL ${batches.length} segments so they cut together seamlessly. Do NOT repeat lines between segments. Do NOT add a new intro/outro.`);
+    lines.push(`Use the ${samePerson}, SAME ${voice} voice, SAME ${device} framing, and SAME ${vibeLabel.toLowerCase()} style across ALL ${batches.length} segments so they cut together seamlessly. Do NOT repeat lines between segments. Do NOT add a new intro/outro.`);
     lines.push(``);
     batches.forEach((b) => {
       lines.push(`--- SEGMENT ${b.index} OF ${b.total} (~${b.batchSec}s voice + video) ---`);
       lines.push(`Say exactly (word-for-word, no paraphrase): "${b.text}"`);
-      lines.push(`While saying it, show: the same woman using the app on her ${device}; cut between her and close-ups of the attached screenshots shown clearly on the ${device} screen. Bright, cinematic, real-app look. Finish this line inside ~${b.batchSec} seconds. End the segment the instant the last word is spoken — cut immediately, no pause, no trailing silence, no hold on the last frame, so the next segment starts clean with no time gap.`);
+      lines.push(`While saying it, show: ${aPerson} using the app on ${poss} ${device}; cut between ${person === 'person' ? 'them' : person === 'woman' ? 'her' : 'him'} and close-ups of the attached screenshots shown clearly on the ${device} screen. Bright, cinematic, real-app look. Finish this line inside ~${b.batchSec} seconds. End the segment the instant the last word is spoken — cut immediately, no pause, no trailing silence, no hold on the last frame, so the next segment starts clean with no time gap.`);
       lines.push(``);
     });
   }
@@ -204,7 +236,7 @@ export function buildCombinedStoryPrompt(input: CombinedStoryPromptInput): strin
   lines.push(`- Screen ratio: ${aspect} (${width}x${height}) — fill the full frame, no black bars, no cropping of the ${device} screen.`);
   lines.push(`- Platform: ${platformLabel}.`);
   lines.push(`- Vibe: ${vibeLabel.toLowerCase()} delivery and visuals.`);
-  lines.push(`- Visual: a friendly woman on screen using the app on her ${device}; cut between her and close-ups of the attached screenshots shown clearly on the ${device} screen. Bright, cinematic, real-app look.`);
+  lines.push(`- Visual: a friendly ${person} on screen using the app on ${poss} ${device}; cut between ${person === 'person' ? 'them' : person === 'woman' ? 'her' : 'him'} and close-ups of the attached screenshots shown clearly on the ${device} screen. Bright, cinematic, real-app look.`);
   lines.push(`- Audio: ${voice} voice, clear studio quality, no background music louder than the voice.`);
   lines.push(`- No burned-in text overlays or auto-subtitles (captions are added later).`);
   lines.push(``);
