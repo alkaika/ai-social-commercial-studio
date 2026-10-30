@@ -115,10 +115,13 @@ export interface BatchBalance {
 export function checkBatchBalance(batches: StoryBatch[], durationSec: number): BatchBalance {
   const warnings: string[] = [];
   if (!batches.length) return { even: false, maxDriftWords: 0, maxDriftSec: 0, needsRebalance: true, warnings: ['Script is empty — add your script text first.'] };
-  const expected = batches.length ? Math.round(batches.flatMap((b) => b.text.split(' ').filter(Boolean)).length / batches.length) : 0;
+  const totalWords = batches.flatMap((b) => b.text.split(' ').filter(Boolean)).length;
+  const totalSecs = batches.reduce((a, b) => a + b.batchSec, 0) || durationSec;
+  // Proportional expectation: a 5s tail should carry ~half the words of a 10s head.
+  const expectedFor = (batchSec: number) => Math.round((totalWords * batchSec) / totalSecs);
   let maxDriftWords = 0;
   for (const b of batches) {
-    const drift = Math.abs(b.wordCount - expected);
+    const drift = Math.abs(b.wordCount - expectedFor(b.batchSec));
     maxDriftWords = Math.max(maxDriftWords, drift);
   }
   const natural = batches.map((b) => Math.round((b.wordCount / 2.5) * 10) / 10);
@@ -134,22 +137,24 @@ export function checkBatchBalance(batches: StoryBatch[], durationSec: number): B
   for (const b of empty) warnings.push(`Segment ${b.index} is empty — the split ran before the script was finished. Re-check after editing.`);
   const needsRebalance = maxDriftWords > 6 || overflow.length > 0 || empty.length > 0;
   if (maxDriftWords > 6 && !overflow.length) {
-    warnings.push(`Word spread is uneven (biggest gap ~${maxDriftWords} words off the average of ~${expected}). Rebalance evens the segments.`);
+    warnings.push(`Word spread is uneven for the segment lengths (biggest gap ~${maxDriftWords} words off its proportional share). Rebalance evens the segments.`);
   }
   return { even: !needsRebalance && warnings.length === 0, maxDriftWords, maxDriftSec, needsRebalance, warnings };
 }
 
-/** Even out word counts after an edit (moves boundary words, keeps order). */
+/** Even out word counts after an edit (proportional to each segment's seconds, keeps order). */
 export function rebalanceBatches(batches: StoryBatch[]): StoryBatch[] {
   if (batches.length < 2) return batches;
   const words = batches.flatMap((b) => b.text.split(' ').filter(Boolean));
   if (!words.length) return batches;
-  const per = Math.floor(words.length / batches.length);
-  const extra = words.length % batches.length;
+  const totalSecs = batches.reduce((a, b) => a + b.batchSec, 0) || batches.length;
+  // Proportional split: a 5s tail gets ~half the words of a 10s head.
+  const targets = batches.map((b) => Math.round((words.length * b.batchSec) / totalSecs));
+  targets[targets.length - 1] += words.length - targets.reduce((a, n) => a + n, 0);
   const out: StoryBatch[] = [];
   let pos = 0;
   batches.forEach((b, i) => {
-    const n = per + (i < extra ? 1 : 0);
+    const n = i === batches.length - 1 ? words.length - pos : targets[i];
     const slice = words.slice(pos, pos + n).join(' ');
     pos += n;
     out.push({ ...b, text: slice, wordCount: slice.split(' ').filter(Boolean).length });
@@ -321,12 +326,15 @@ export function buildCombinedStoryPrompt(input: CombinedStoryPromptInput): strin
   ];
   if (multi) {
     // Self-verification block: forces Meta.ai to recount before rendering,
-    // so an edited script can't leave one segment overloaded.
+    // so an edited script can't leave one segment overloaded. Targets are
+    // PROPORTIONAL to each segment's seconds (a 5s tail holds ~half the
+    // words of a 10s head) — never a flat per-segment average.
     const totalWords = batches.reduce((a, b) => a + b.wordCount, 0);
-    const avg = Math.round((totalWords / batches.length) * 10) / 10;
-    lines.push(`DOUBLE-CHECK BEFORE RENDERING — script must stay evenly spread across ${batches.length} × ~10s segments:`);
+    const totalSecs = batches.reduce((a, b) => a + b.batchSec, 0) || durationSec;
+    const targetFor = (secs: number) => Math.round((totalWords * secs) / totalSecs);
+    lines.push(`DOUBLE-CHECK BEFORE RENDERING — script must stay evenly spread across ${batches.length} segments (total ~${totalWords} words / ${totalSecs}s, ~2.5 words per second):`);
     batches.forEach((b) => {
-      lines.push(`- Segment ${b.index}: ~${b.wordCount} words for ~${b.batchSec}s (target ~${avg} words each; total ~${totalWords} words). If any segment is much longer or shorter, rebalance the lines evenly before rendering — do NOT render an uneven split.`);
+      lines.push(`- Segment ${b.index}: ~${b.wordCount} words for ~${b.batchSec}s (proportional target ~${targetFor(b.batchSec)} words for this ${b.batchSec}s slot). If any segment is much longer or shorter than its proportional target, rebalance the lines proportionally before rendering — do NOT render an uneven split.`);
     });
     lines.push(`If the script was edited, recount and re-split evenly first — never carry over a stale split.`);
     lines.push(``);
