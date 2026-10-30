@@ -195,7 +195,7 @@ export function buildSingleStoryPrompt(input: SingleStoryPromptInput): string {
     `- Screen ratio: ${input.aspect} (${input.width}x${input.height}) — fill the full frame, no black bars, no cropping of the ${input.device} screen.`,
     `- Platform: ${input.platformLabel}.`,
     `- Vibe: ${input.vibeLabel.toLowerCase()} delivery and visuals.`,
-    `- Visual: a friendly woman on screen using the app on her ${input.device}; cut between her and close-ups of the attached screenshots shown clearly on the ${input.device} screen. Bright, cinematic, real-app look.`,
+    `- Visual: a friendly woman on screen using the app on her ${input.device}; cut between her and close-ups of the attached screenshots shown clearly on the ${input.device} screen. Rotate through every attached screenshot evenly so each gets roughly equal screen time. Bright, cinematic, real-app look.`,
     `- Audio: ${input.voice} voice, clear studio quality, no background music louder than the voice.`,
     `- No burned-in text overlays or auto-subtitles (captions are added later).`,
     ``,
@@ -243,8 +243,10 @@ export function buildCombinedStoryPrompt(input: CombinedStoryPromptInput): strin
   const poss = person === 'woman' ? 'her' : person === 'man' ? 'his' : 'their';
   const him = person === 'woman' ? 'her' : person === 'man' ? 'him' : 'them';
   const source = deviceSourceLabel(device);
-  const sourceLine = `I have attached screenshots of the ${source} — show them on the ${device} screen in the video.`;
+  const sourceLine = `I have attached screenshots of the ${source} — show them on the ${device} screen in the video, giving each screenshot roughly equal screen time across the full ${durationSec}s.`;
   const screenNoun = device === 'Mobile phone' ? 'a phone screen' : `a ${device.toLowerCase()} screen`;
+  const pacingLine = `- Screenshot pacing: spread ALL attached screenshots evenly across the full ${durationSec}s — each screenshot gets roughly equal screen time (total time divided by number of screenshots). Cycle through every screenshot at least once, never linger on one, never skip one, never repeat the same screenshot twice in a row. Keep the on-screen app visuals changing in rhythm with the voiceover.`;
+  const segmentPacing = (secs: number) => `Give each screenshot shown in this segment a roughly equal share of these ~${secs}s — rotate evenly, no lingering, no repeats back-to-back.`;
   const openLine = showPerson
     ? `Make a video of a ${voice} voice saying: "${full}" while simultaneously showing ${aPerson} using the app on ${poss} ${device} with the attached screenshots.`
     : `Make a voiceover video with a ${voice} voice saying: "${full}" over full-screen app footage built from the attached screenshots on ${screenNoun} — voiceover only, no person on camera, no actor, no avatar.`;
@@ -252,11 +254,11 @@ export function buildCombinedStoryPrompt(input: CombinedStoryPromptInput): strin
     ? `Use the ${samePerson}, SAME ${voice} voice, SAME ${device} framing, and SAME ${vibeLabel.toLowerCase()} style across ALL ${batches.length} segments so they cut together seamlessly. Do NOT repeat lines between segments. Do NOT add a new intro/outro.`
     : `Use the SAME ${voice} voiceover, SAME ${device} screen framing, and SAME ${vibeLabel.toLowerCase()} style across ALL ${batches.length} segments so they cut together seamlessly. Voiceover only throughout — no person on camera at any point. Do NOT repeat lines between segments. Do NOT add a new intro/outro.`;
   const segmentVisual = (text: string, secs: number) => showPerson
-    ? `While saying it, show: ${aPerson} using the app on ${poss} ${device}; cut between ${him} and close-ups of the attached screenshots shown clearly on the ${device} screen. Bright, cinematic, real-app look. Finish this line inside ~${secs} seconds. End the segment the instant the last word is spoken — cut immediately, no pause, no trailing silence, no hold on the last frame, so the next segment starts clean with no time gap.`
-    : `While saying it, show full-screen app footage only: the attached ${source.toLowerCase()} screenshots fill the frame on ${screenNoun}; smooth pans and zooms between screens, no person, actor, avatar, or face at any point. Bright, cinematic, real-app look. Finish this line inside ~${secs} seconds. End the segment the instant the last word is spoken — cut immediately, no pause, no trailing silence, no hold on the last frame, so the next segment starts clean with no time gap.`;
+    ? `While saying it, show: ${aPerson} using the app on ${poss} ${device}; cut between ${him} and close-ups of the attached screenshots shown clearly on the ${device} screen. ${segmentPacing(secs)} Bright, cinematic, real-app look. Finish this line inside ~${secs} seconds. End the segment the instant the last word is spoken — cut immediately, no pause, no trailing silence, no hold on the last frame, so the next segment starts clean with no time gap.`
+    : `While saying it, show full-screen app footage only: the attached ${source.toLowerCase()} screenshots fill the frame on ${screenNoun}; smooth pans and zooms between screens, no person, actor, avatar, or face at any point. ${segmentPacing(secs)} Bright, cinematic, real-app look. Finish this line inside ~${secs} seconds. End the segment the instant the last word is spoken — cut immediately, no pause, no trailing silence, no hold on the last frame, so the next segment starts clean with no time gap.`;
   const visualReqLine = showPerson
-    ? `- Visual: a friendly ${person} on screen using the app on ${poss} ${device}; cut between ${him} and close-ups of the attached screenshots shown clearly on the ${device} screen. Bright, cinematic, real-app look.`
-    : `- Visual: full-screen app footage only — the attached ${source.toLowerCase()} screenshots fill the frame on ${screenNoun}; smooth pans and zooms between screens. Absolutely no person, actor, avatar, or face on camera at any point. Bright, cinematic, real-app look.`;
+    ? `- Visual: a friendly ${person} on screen using the app on ${poss} ${device}; cut between ${him} and close-ups of the attached screenshots shown clearly on the ${device} screen. Rotate through every attached screenshot evenly so each gets roughly equal screen time. Bright, cinematic, real-app look.`
+    : `- Visual: full-screen app footage only — the attached ${source.toLowerCase()} screenshots fill the frame on ${screenNoun}; smooth pans and zooms between screens. Rotate through every attached screenshot evenly so each gets roughly equal screen time. Absolutely no person, actor, avatar, or face on camera at any point. Bright, cinematic, real-app look.`;
   const lines: string[] = [
     `Make a ${durationSec}-second ${orientation} video (${aspect}, ${width}x${height}) for ${platformLabel}${brandBit} with a ${vibeLabel.toLowerCase()} vibe${multi ? ` — deliver as ${batches.length} back-to-back segments that join into one continuous commercial` : ''}.`,
     ``,
@@ -274,6 +276,7 @@ export function buildCombinedStoryPrompt(input: CombinedStoryPromptInput): strin
     });
   }
   lines.push(`Requirements:`);
+  lines.push(pacingLine);
   lines.push(`- Total runtime: exactly ${durationSec} seconds in one continuous take — the voiceover starts immediately and finishes inside ${durationSec} seconds.`);
   lines.push(`- Tight endings: end each segment (and the whole video) the instant the last word is spoken — cut immediately with no pause, no trailing silence, and no hold on the last frame, so the final stitched video flows naturally with no time gaps.`);
   if (multi) lines.push(`- Each segment is ~10 seconds max of voice + video (${batches.map((b) => `${b.batchSec}s`).join(' + ')} = ${durationSec}s); keep segment boundaries clean for seamless joining.`);
