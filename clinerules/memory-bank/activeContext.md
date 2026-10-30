@@ -1,11 +1,13 @@
-# Active Context (2026-10-27)
+# Active Context (2026-10-30)
 
 > Living note — status as of last push. Durable architecture lives in `systemPatterns.md`; durable scope in `projectbrief.md`.
 
 ## Current Focus
-Guidance box shipped on the Business Final-script card: free-text focus/exclude notes (`scriptGuidance` in store, sent as `guidance` on every master draft, honored over defaults in the Spark prompt). Build ✅, ready to commit + push.
+Website screenshot picker shipped on Story motion: per-scene `Pick a website shot` grid (homepage + about variants via free mShots/thum.io/microlink, no key), landscape edge-to-edge, placeholder auto-retry (`ShotImg.tsx`), `motionSource='screenshot'` + `screenshotPageUrl`, Export shows 🌐. Build ✅, ready to commit + push.
 
 ## Recent Changes
+- Story motion screenshot picker (2026-10-30): per-scene `Pick a website shot` grid (homepage + about variants from scanned urls + scraper `aboutSource`), free mShots/thum.io/microlink (no key), landscape 1280x720 edge-to-edge (`aspect-video object-cover`), `ShotImg.tsx` placeholder auto-retry (naturalWidth <700 detect, cache-buster 3/4/6/8/10s, fallback chain), `motionSource='screenshot'` + `screenshotPageUrl`, Export preview shows 🌐.
+- Screenshot fix (2026-10-30): mShots first-hit "Generating Preview" WP logo handled (was stuck in thumbnails while new-tab showed real shot — generation lag); black side bars removed (was 1080x1920 vertical crop → now 1280x720 landscape).
 - Wonder RETIRED: all reasoning on chosen Spark; 5-check validate; Animate marks kenburns locally (no API fetch); 'wonder' removed from MotionSource union.
 - MILESTONE: 6/6 ✅ — was all models reachable with user's key (SAM auto-discovery worked).
 - Full-script timing: cadence controls (`bestCadence`, 0.85–1.2x, auto-fit) + trim recommendations (`trimWords`, per-scene approve/keep) so the entire approved script always plays; Spark prompt forbidden from trimming.
@@ -17,7 +19,7 @@ Guidance box shipped on the Business Final-script card: free-text focus/exclude 
 3. Advanced timeline UI; tests; Next upgrade.
 
 ## Active Decisions
-- Motion + voice: metai-upload clips → kenburns; `metai-clip` voice clips per scene. No Seedance. No meta.ai automation (ToS) — manual upload only. Check meta.ai terms for ad use.
+- Motion + voice: metai-upload clips → website screenshots (free, no key, Ken Burns zoom over shot) → kenburns; `metai-clip` voice clips per scene. No Seedance. No meta.ai automation (ToS) — manual upload only. Check meta.ai terms for ad use.
 - No meta.ai API/automation (none exists; ToS) — manual upload only. Check meta.ai terms for ad use.
 - Stay neutral on writer choice; session memory default; vault opt-in; `?demo=1` trial.
 - Per-scene regen only; dual approval (plan+cost, then result).

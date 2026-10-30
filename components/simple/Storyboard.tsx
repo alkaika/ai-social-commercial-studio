@@ -1,17 +1,28 @@
 'use client';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useProject } from '@/stores/projectStore';
 import { useKeyStore } from '@/stores/keyStore';
 import { fitsDuration, bestCadence, trimWords, wordsToSec, MIN_CADENCE, MAX_CADENCE } from '@/lib/script-utils';
 import { PLATFORMS } from '@/config/platforms';
+import { screenshotCandidates } from '@/lib/screenshots';
+import WebsiteShots from '@/components/simple/WebsiteShots';
 
 export default function Storyboard({ onDone, onBack }: { onDone: () => void; onBack?: () => void }) {
-  const { script, set, durationSec, brand, tone, platform, sparkModel, snippets, assets, masterScript, masterApproved } = useProject();
+  const { script, set, durationSec, brand, tone, platform, sparkModel, snippets, assets, masterScript, masterApproved, urls } = useProject();
   const { key, baseUrl } = useKeyStore();
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState('');
   const [note, setNote] = useState('');
   const [plan, setPlan] = useState<any>(null);
+  const [shotsOpen, setShotsOpen] = useState<Record<string, boolean>>({});
+
+  // Free website screenshots (homepage + about variants) for the motion picker.
+  // No API key — mShots render of the user's own scanned site(s).
+  const shots = useMemo(
+    () => screenshotCandidates(urls || [], brand.aboutSource || ''),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [JSON.stringify(urls || []), brand.aboutSource]
+  );
 
   const fit = script ? fitsDuration(script, durationSec, 1) : null;
   // Best cadence across ALL scenes (single voice delivery speed).
@@ -184,30 +195,67 @@ export default function Storyboard({ onDone, onBack }: { onDone: () => void; onB
             </div>
             <div className="border-t pt-2 mt-2 space-y-2">
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-sm font-medium">🎬 Motion: {s.motionSource === 'metai-upload' ? <span className="badge">Meta AI clip ✅</span> : <span className="badge">Ken Burns (free)</span>}</span>
+                <span className="text-sm font-medium">Motion: {s.motionSource === 'metai-upload' ? <span className="badge">Meta AI clip picked</span> : s.motionSource === 'screenshot' ? <span className="badge">Website shot picked</span> : <span className="badge">Ken Burns (free)</span>}</span>
               </div>
               {s.videoUrl && s.motionSource === 'metai-upload' && (
                 <video src={s.videoUrl} controls muted playsInline className="w-full max-h-56 rounded-xl border bg-black" />
               )}
               <div className="flex flex-wrap gap-2 items-center">
                 <label className="btn-secondary cursor-pointer inline-block">
-                  🎞 Use a Meta AI clip
+                  Use a Meta AI clip
                   <input type="file" accept="video/*" className="hidden" onChange={(e) => {
                     const f = e.target.files?.[0];
                     if (!f || !script) return;
                     const url = URL.createObjectURL(f);
                     set({ script: { ...script, scenes: script.scenes.map((x) => x.id === s.id ? { ...x, videoUrl: url, motionSource: 'metai-upload' as const, muteSourceAudio: x.muteSourceAudio ?? true } : x) } });
-                    setMsg(`Meta AI clip attached to ${s.id}. Its sound will be muted under your voice-over.`);
+                    setMsg('Meta AI clip attached to ' + s.id + '. Its sound will be muted under your voice-over.');
                   }} />
                 </label>
                 {s.motionSource === 'metai-upload' && (
                   <>
-                    <button className="text-xs underline" onClick={() => set({ script: { ...script!, scenes: script!.scenes.map((x) => x.id === s.id ? { ...x, muteSourceAudio: !(x.muteSourceAudio ?? true) } : x) } })}>{(s.muteSourceAudio ?? true) ? '🔇 Clip muted (VO on top)' : '🔊 Clip sound on'}</button>
+                    <button className="text-xs underline" onClick={() => set({ script: { ...script!, scenes: script!.scenes.map((x) => x.id === s.id ? { ...x, muteSourceAudio: !(x.muteSourceAudio ?? true) } : x) } })}>{(s.muteSourceAudio ?? true) ? 'Clip muted (VO on top)' : 'Clip sound on'}</button>
                     <button className="text-xs underline" onClick={() => set({ script: { ...script!, scenes: script!.scenes.map((x) => x.id === s.id ? { ...x, videoUrl: undefined, motionSource: 'kenburns' as const } : x) } })}>Remove clip</button>
                   </>
                 )}
               </div>
-              <p className="text-xs text-neutral-500">How to get a clip: go to meta.ai → describe or upload a photo → download the ~10s MP4 → attach it here. Check meta.ai terms for ad use.</p>
+              <WebsiteShots
+                sceneId={s.id}
+                imageUrl={s.imageUrl}
+                motionSource={s.motionSource}
+                shots={shots}
+                open={!!shotsOpen[s.id]}
+                onToggle={() => setShotsOpen((prev) => ({ ...prev, [s.id]: !prev[s.id] }))}
+                onPick={(shot) => {
+                  if (!script) return;
+                  set({ script: { ...script, scenes: script.scenes.map((x) => x.id === s.id ? { ...x, imageUrl: shot.imageUrl, screenshotPageUrl: shot.pageUrl, motionSource: 'screenshot' as const } : x) } });
+                  setMsg('Website shot picked for ' + s.id + ' (' + shot.label + '). Plays with a slow zoom.');
+                }}
+                onClear={() => {
+                  if (!script) return;
+                  set({ script: { ...script, scenes: script.scenes.map((x) => x.id === s.id ? { ...x, imageUrl: '', screenshotPageUrl: undefined, motionSource: 'kenburns' as const } : x) } });
+                }}
+              />
+              {shots.length > 0 && (
+                <button
+                  className="text-xs underline"
+                  onClick={() => {
+                    if (!script) return;
+                    set({
+                      script: {
+                        ...script,
+                        scenes: script.scenes.map((x, idx) => {
+                          const pick = shots[idx % shots.length];
+                          return { ...x, imageUrl: pick.imageUrl, screenshotPageUrl: pick.pageUrl, motionSource: 'screenshot' as const };
+                        }),
+                      },
+                    });
+                    setMsg('Applied one website shot per scene. Tap any scene to swap it.');
+                  }}
+                >
+                  Apply one website shot per scene
+                </button>
+              )}
+              <p className="text-xs text-neutral-500">How to get a clip: go to meta.ai, describe or upload a photo, download the MP4, attach it here. Or pick a free website shot above. Check meta.ai terms for ad use.</p>
             </div>
           </div>
         );
