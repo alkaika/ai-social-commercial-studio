@@ -15,7 +15,7 @@ Next.js App Router. Client wizard (`app/studio/page.tsx` + `stores/projectStore.
 - DEMO mode: `key==='DEMO'` → deterministic mock script/images; `?demo=1` enters without key.
 
 ## Component Map
-`KeySetup` → `ModelPicker` → `SourceHub` → `ConfigureStep` → `Storyboard` (generate/quick/revise/lock + `WebsiteShots` website-shot picker per scene via `ShotImg` auto-retry) → `ExportStep` (SRT/txt/backup). `lib/screenshots.ts` (mShots/thum.io/microlink candidates) + `lib/render/ffmpeg.ts` stub for Phase-2 MP4. Studio header: `ProjectBar` (New / Save+name / Open(n) / Delete + amber unsaved warning) — the ONLY persistence UI; studio boots fresh, PersistGate is migration-only.
+`KeySetup` → `ModelPicker` → `SourceHub` → `ConfigureStep` → `Storyboard` (batches: full-script textarea → voice+device → per-part copy prompts via `splitScriptIntoBatches`) → `ExportStep` (stitch Part MP4s via FFmpeg.wasm → final MP4 + SRT/txt/backup). `lib/screenshots.ts` for the retired per-scene shot picker. Studio header: `ProjectBar` (New / Save+name / Open(n) / Delete + amber unsaved warning) — the ONLY persistence UI; studio boots fresh, PersistGate is migration-only.
 
 ## Critical Paths
 - `POST /api/muse/script` → `generateScript()` → Spark chat → strict JSON parse → fallback mock.

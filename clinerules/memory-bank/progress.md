@@ -4,7 +4,7 @@
 
 ## What Works ✅
 - `npm run build` passes (13 routes: /, /studio, 8 APIs).
-- Story = 10s Meta.ai batches (2026-10-30, ~10s voice+video cap): auto-split full script into ceil(duration/10) sentence-aware parts, one prompt per part (Copy part N + Open meta.ai each), SAME voice/woman/device continuity, stitch after. Voice dropdown (warm female/male) + Mobile phone/PC monitor; auto-includes Setup ratio (9:16, 4:5, 1:1, 16:9), platform (TikTok, Instagram, YT Short, Instagram, Square, YouTube/LinkedIn), vibe (fun, professional, bold, friendly, premium). tsc clean.
+- Export stitch (2026-10-30): "Stitch my parts" joins meta.ai 10s Part MP4s in-browser via open-source FFmpeg.wasm (stream-copy, re-encode fallback) → preview + `commercial-{platform}-{duration}s-final.mp4` + SRT/txt/backup. No upload, no cost. Build ✅.
 - Landing + 8-step wizard renders; demo mode works keyless (`/studio?demo=1`).
 - Key validate: 5/5 ✅ live (Wonder retired — spark-standard, spark-contributor, image, voice-captions, sam), writer table, scrape (homepage + about-page story, removable chips, multi-site merge) + Business-page master script — drafted with Setup settings (duration/platform/vibe) in mind, free edit, gated Approve → Continue + uploads (removable thumbnails) + snippets+pin, configure FIRST (duration/platform/vibe shape the draft; Story just organizes, no re-fit needed), timed organize from approved master (Spark organizes, never reinvents; storyBeat per scene), quick buttons, Director's Notes, lock, fits-meter, SRT/txt/backup export, ← Back on every step + clickable breadcrumb + ← Back to home (no state loss — Zustand), vault: biometrics + synced passkey + encrypted export/import, raw-bytes PRF fix.
 - Known vault gotcha (fixed): `eval.first` must be Uint8Array, not b64url — browser type-checks extension inputs strictly.
@@ -17,8 +17,8 @@
 - Default gateway everywhere is the verified Meta Model API (`https://api.meta.ai/v1`), so the Key step comes prefilled — user only pastes their key.
 
 ## What's Left
-- End-to-end project run with the live key (script gen on real Spark — mocks are gone for chat/image now). Verify: fresh boot blank → Save → refresh blank → Open restores text + footage; New wipes; Delete removes entry + blobs.
-- FFmpeg.wasm MP4 honoring `motionPlan()` + VO (stub), Advanced timeline UI, music/voice pickers, caption editor, BrandKit conflict UI, cost estimator totals, tests, Next upgrade.
+- End-to-end project run with the live key (script gen on real Spark). Verify: fresh boot blank → Save → refresh blank → Open restores text + footage; Story batches → meta.ai parts → Export stitch → final MP4 + SRT.
+- VO/motion-plan assembly (motionPlan VO layering) still stub; Advanced timeline UI, music/voice pickers, caption editor, BrandKit conflict UI, cost estimator totals, tests, Next upgrade.
 
 ## Known Issues
 - Next 14.2.5 security notice (build warns, runs fine).
