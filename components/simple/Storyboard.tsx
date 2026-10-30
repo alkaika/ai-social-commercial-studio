@@ -2,7 +2,7 @@
 import { useMemo, useState } from 'react';
 import { useProject } from '@/stores/projectStore';
 import { PLATFORMS, TONES } from '@/config/platforms';
-import { META_AI_URL, STORY_VOICE_STYLES, STORY_DEVICES, STORY_DEVICE_ICONS, deviceSourceLabel, splitScriptIntoBatches, buildCombinedStoryPrompt, copyText, voicePerson } from '@/lib/meta-sdk/prompts';
+import { META_AI_URL, STORY_VOICE_STYLES, STORY_DEVICES, STORY_DEVICE_ICONS, STORY_MUSIC, deviceSourceLabel, splitScriptIntoBatches, buildCombinedStoryPrompt, copyText, voicePerson } from '@/lib/meta-sdk/prompts';
 import { masterFit } from '@/lib/script-utils';
 
 export default function Storyboard({ onDone, onBack }: { onDone: () => void; onBack?: () => void }) {
@@ -16,6 +16,7 @@ export default function Storyboard({ onDone, onBack }: { onDone: () => void; onB
   const [device, setDevice] = useState<string>(STORY_DEVICES[0]);
   const [gender, setGender] = useState<'female' | 'male'>('female');
   const [style, setStyle] = useState<string>(STORY_VOICE_STYLES[0]);
+  const [musicId, setMusicId] = useState<string>('none');
   const voice = `warm ${gender}, ${style}`;
   const [copied, setCopied] = useState(false);
   const [msg, setMsg] = useState('');
@@ -25,9 +26,9 @@ export default function Storyboard({ onDone, onBack }: { onDone: () => void; onB
   const batches = useMemo(() => splitScriptIntoBatches(scriptText || '', durationSec), [scriptText, durationSec]);
   const prompt = useMemo(() => buildCombinedStoryPrompt({
     batches: batches.length ? batches : [{ index: 1, total: 1, batchSec: durationSec, text: '[paste your script above]', wordCount: 0 }],
-    durationSec, aspect: pf.aspect, width: pf.width, height: pf.height,
+    durationSec, aspect: pf.aspect, width: pf.width, height: pf.height, musicId,
     platformLabel: pf.label, vibeLabel: vibe, brandName: brand.brandName || undefined, device, voice,
-  }), [batches, durationSec, pf, vibe, brand.brandName, device, voice]);
+  }), [batches, durationSec, pf, vibe, brand.brandName, device, voice, musicId]);
   const who = voicePerson(voice) === 'man' ? 'man' : 'woman';
   const poss = who === 'woman' ? 'her' : 'his';
   const source = deviceSourceLabel(device);
@@ -59,13 +60,18 @@ export default function Storyboard({ onDone, onBack }: { onDone: () => void; onB
         <div className="flex flex-wrap gap-2">{(['female', 'male'] as const).map((g) => <button key={g} onClick={() => setGender(g)} className={`border-2 rounded-full px-4 py-2 ${gender === g ? 'border-black bg-neutral-100' : 'border-neutral-200'}`}>{g === 'female' ? '👩 Female' : '👨 Male'}</button>)}</div>
         <label className="text-sm block">Style (same 5 for both)<select className="input mt-1" value={style} onChange={(e) => setStyle(e.target.value)}>{STORY_VOICE_STYLES.map((s) => <option key={s} value={s}>{s}</option>)}</select></label>
         <p className="text-xs text-neutral-500">Selected: {voice} — the {who} in the video uses this voice.</p>
-        <div className="flex flex-wrap gap-2">{STORY_DEVICES.map((d) => <button key={d} onClick={() => setDevice(d)} className={`border-2 rounded-full px-4 py-2 ${device === d ? 'border-black bg-neutral-100' : 'border-neutral-200'}`}>{STORY_DEVICE_ICONS[d] || '📺'} {d}</button>)}</div>
+        <div className="text-sm space-y-1"><p className="font-medium">Screen — showing the app on {poss}…</p><div className="flex flex-wrap gap-2">{STORY_DEVICES.map((d) => <button key={d} onClick={() => setDevice(d)} className={`border-2 rounded-full px-4 py-2 ${device === d ? 'border-black bg-neutral-100' : 'border-neutral-200'}`}>{STORY_DEVICE_ICONS[d] || '📺'} {d}</button>)}</div></div>
+        <div className="text-sm space-y-1"><p className="font-medium">🎵 Background music (royalty-free, subtle — stays under the voice)</p><div className="grid sm:grid-cols-2 gap-2">{STORY_MUSIC.map((m) => <button key={m.id} onClick={() => setMusicId(m.id)} className={`border-2 rounded-xl p-3 text-left ${musicId === m.id ? 'border-black bg-neutral-50' : 'border-neutral-200'}`}><div className="font-semibold">{m.emoji} {m.label}</div><div className="text-xs text-neutral-600">{m.desc}</div></button>)}</div></div>
       </div>
       <div className="card space-y-3">
         <h3 className="font-semibold">3 · Copy this one prompt into meta.ai</h3>
+        <div className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm space-y-1">
+          <p className="font-semibold">🧠 Use Thinking mode in Meta.ai (not Instant)</p>
+          <p className="text-neutral-700">Thinking follows multi-segment scripts, exact word-for-word lines, and tight endings far better. In Meta.ai, switch the mode to <b>Thinking</b> before you paste — Instant tends to skip segments or paraphrase.</p>
+        </div>
         <pre className="whitespace-pre-wrap text-sm bg-neutral-900 text-white rounded-xl p-4">{prompt}</pre>
         <div className="flex flex-wrap gap-2"><button className="btn-primary" onClick={doCopy}>{copied ? '✅ Copied!' : '📋 Copy prompt'}</button><a className="btn-secondary" href={META_AI_URL} target="_blank" rel="noreferrer">Open meta.ai →</a></div>
-        <ol className="list-decimal ml-5 text-sm text-neutral-700 space-y-1"><li>Copy, open meta.ai, attach {source} screenshots.</li><li>Paste once — {durationSec}s {pf.label}: {voice} voice + {who} on {poss} {device}.</li><li>Download → continue to export for captions.</li></ol>
+        <ol className="list-decimal ml-5 text-sm text-neutral-700 space-y-1"><li>Copy, open meta.ai, switch to <b>Thinking</b> mode (not Instant), attach {source} screenshots.</li><li>Paste once — {durationSec}s {pf.label}: {voice} voice + {who} on {poss} {device}.</li><li>Download → continue to export for captions.</li></ol>
         {msg && <p className="text-sm bg-neutral-100 border rounded-xl p-3">{msg}</p>}
       </div>
       <div className="flex justify-between items-center"><button className="btn-secondary" onClick={onBack}>← Back</button><button className="btn-primary" onClick={goNext}>Looks good — continue to export →</button></div>
