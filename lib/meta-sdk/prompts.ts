@@ -193,12 +193,13 @@ export function buildCombinedStoryPrompt(input: CombinedStoryPromptInput): strin
     batches.forEach((b) => {
       lines.push(`--- SEGMENT ${b.index} OF ${b.total} (~${b.batchSec}s voice + video) ---`);
       lines.push(`Say exactly (word-for-word, no paraphrase): "${b.text}"`);
-      lines.push(`While saying it, show: the same woman using the app on her ${device}; cut between her and close-ups of the attached screenshots shown clearly on the ${device} screen. Bright, cinematic, real-app look. Finish this line inside ~${b.batchSec} seconds.`);
+      lines.push(`While saying it, show: the same woman using the app on her ${device}; cut between her and close-ups of the attached screenshots shown clearly on the ${device} screen. Bright, cinematic, real-app look. Finish this line inside ~${b.batchSec} seconds. End the segment the instant the last word is spoken — cut immediately, no pause, no trailing silence, no hold on the last frame, so the next segment starts clean with no time gap.`);
       lines.push(``);
     });
   }
   lines.push(`Requirements:`);
   lines.push(`- Total runtime: exactly ${durationSec} seconds in one continuous take — the voiceover starts immediately and finishes inside ${durationSec} seconds.`);
+  lines.push(`- Tight endings: end each segment (and the whole video) the instant the last word is spoken — cut immediately with no pause, no trailing silence, and no hold on the last frame, so the final stitched video flows naturally with no time gaps.`);
   if (multi) lines.push(`- Each segment is ~10 seconds max of voice + video (${batches.map((b) => `${b.batchSec}s`).join(' + ')} = ${durationSec}s); keep segment boundaries clean for seamless joining.`);
   lines.push(`- Screen ratio: ${aspect} (${width}x${height}) — fill the full frame, no black bars, no cropping of the ${device} screen.`);
   lines.push(`- Platform: ${platformLabel}.`);
