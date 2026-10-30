@@ -103,6 +103,60 @@ export function voicePerson(voice: string): 'woman' | 'man' | 'person' {
   return 'person';
 }
 
+export interface BatchBalance {
+  even: boolean;
+  maxDriftWords: number;
+  maxDriftSec: number;
+  needsRebalance: boolean;
+  warnings: string[];
+}
+
+/** Check the current split still fits ~10s/segment before writing the prompt. */
+export function checkBatchBalance(batches: StoryBatch[], durationSec: number): BatchBalance {
+  const warnings: string[] = [];
+  if (!batches.length) return { even: false, maxDriftWords: 0, maxDriftSec: 0, needsRebalance: true, warnings: ['Script is empty — add your script text first.'] };
+  const expected = batches.length ? Math.round(batches.flatMap((b) => b.text.split(' ').filter(Boolean)).length / batches.length) : 0;
+  let maxDriftWords = 0;
+  for (const b of batches) {
+    const drift = Math.abs(b.wordCount - expected);
+    maxDriftWords = Math.max(maxDriftWords, drift);
+  }
+  const natural = batches.map((b) => Math.round((b.wordCount / 2.5) * 10) / 10);
+  const overflow = batches
+    .map((b, i) => ({ b, spoken: natural[i] }))
+    .filter(({ b, spoken }) => spoken > b.batchSec + 1);
+  let maxDriftSec = 0;
+  for (const { b, spoken } of overflow) {
+    maxDriftSec = Math.max(maxDriftSec, Math.round((spoken - b.batchSec) * 10) / 10);
+    warnings.push(`Segment ${b.index} is long: ~${b.wordCount} words ≈ ${spoken}s natural speech for a ~${b.batchSec}s slot. Shorten it or slow the delivery.`);
+  }
+  const empty = batches.filter((b) => !b.text.trim());
+  for (const b of empty) warnings.push(`Segment ${b.index} is empty — the split ran before the script was finished. Re-check after editing.`);
+  const needsRebalance = maxDriftWords > 6 || overflow.length > 0 || empty.length > 0;
+  if (maxDriftWords > 6 && !overflow.length) {
+    warnings.push(`Word spread is uneven (biggest gap ~${maxDriftWords} words off the average of ~${expected}). Rebalance evens the segments.`);
+  }
+  return { even: !needsRebalance && warnings.length === 0, maxDriftWords, maxDriftSec, needsRebalance, warnings };
+}
+
+/** Even out word counts after an edit (moves boundary words, keeps order). */
+export function rebalanceBatches(batches: StoryBatch[]): StoryBatch[] {
+  if (batches.length < 2) return batches;
+  const words = batches.flatMap((b) => b.text.split(' ').filter(Boolean));
+  if (!words.length) return batches;
+  const per = Math.floor(words.length / batches.length);
+  const extra = words.length % batches.length;
+  const out: StoryBatch[] = [];
+  let pos = 0;
+  batches.forEach((b, i) => {
+    const n = per + (i < extra ? 1 : 0);
+    const slice = words.slice(pos, pos + n).join(' ');
+    pos += n;
+    out.push({ ...b, text: slice, wordCount: slice.split(' ').filter(Boolean).length });
+  });
+  return out;
+}
+
 export function splitScriptIntoBatches(scriptText: string, durationSec: number, maxBatchSec = MAX_BATCH_SEC): StoryBatch[] {
   const clean = (scriptText || '').trim().replace(/\s+/g, ' ');
   if (!clean) return [];
@@ -266,6 +320,16 @@ export function buildCombinedStoryPrompt(input: CombinedStoryPromptInput): strin
     ``,
   ];
   if (multi) {
+    // Self-verification block: forces Meta.ai to recount before rendering,
+    // so an edited script can't leave one segment overloaded.
+    const totalWords = batches.reduce((a, b) => a + b.wordCount, 0);
+    const avg = Math.round((totalWords / batches.length) * 10) / 10;
+    lines.push(`DOUBLE-CHECK BEFORE RENDERING — script must stay evenly spread across ${batches.length} × ~10s segments:`);
+    batches.forEach((b) => {
+      lines.push(`- Segment ${b.index}: ~${b.wordCount} words for ~${b.batchSec}s (target ~${avg} words each; total ~${totalWords} words). If any segment is much longer or shorter, rebalance the lines evenly before rendering — do NOT render an uneven split.`);
+    });
+    lines.push(`If the script was edited, recount and re-split evenly first — never carry over a stale split.`);
+    lines.push(``);
     lines.push(continuousLine);
     lines.push(``);
     batches.forEach((b) => {

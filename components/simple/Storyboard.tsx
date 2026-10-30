@@ -1,8 +1,8 @@
 'use client';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useProject } from '@/stores/projectStore';
 import { PLATFORMS, TONES } from '@/config/platforms';
-import { META_AI_URL, STORY_VOICE_STYLES, STORY_DEVICES, STORY_DEVICE_ICONS, STORY_MUSIC, deviceSourceLabel, splitScriptIntoBatches, buildCombinedStoryPrompt, copyText, voicePerson } from '@/lib/meta-sdk/prompts';
+import { META_AI_URL, STORY_VOICE_STYLES, STORY_DEVICES, STORY_DEVICE_ICONS, STORY_MUSIC, deviceSourceLabel, splitScriptIntoBatches, rebalanceBatches, checkBatchBalance, buildCombinedStoryPrompt, copyText, voicePerson } from '@/lib/meta-sdk/prompts';
 import { masterFit } from '@/lib/script-utils';
 
 export default function Storyboard({ onDone, onBack }: { onDone: () => void; onBack?: () => void }) {
@@ -24,7 +24,13 @@ export default function Storyboard({ onDone, onBack }: { onDone: () => void; onB
   const pf = PLATFORMS[platform];
   const vibe = TONES.find((t) => t.id === tone)?.label || 'Friendly';
   const fit = masterFit(scriptText || '', durationSec);
-  const batches = useMemo(() => splitScriptIntoBatches(scriptText || '', durationSec), [scriptText, durationSec]);
+  const autoBatches = useMemo(() => splitScriptIntoBatches(scriptText || '', durationSec), [scriptText, durationSec]);
+  const [rebalanced, setRebalanced] = useState<typeof autoBatches | null>(null);
+  const batches = rebalanced ?? autoBatches;
+  const balance = useMemo(() => checkBatchBalance(autoBatches, durationSec), [autoBatches, durationSec]);
+  const effectiveBalance = useMemo(() => checkBatchBalance(batches, durationSec), [batches, durationSec]);
+  // Any script edit invalidates a manual rebalance — fresh auto-split takes over.
+  useEffect(() => { setRebalanced(null); }, [scriptText, durationSec]);
   const prompt = useMemo(() => buildCombinedStoryPrompt({
     batches: batches.length ? batches : [{ index: 1, total: 1, batchSec: durationSec, text: '[paste your script above]', wordCount: 0 }],
     durationSec, aspect: pf.aspect, width: pf.width, height: pf.height, musicId, showPerson,
@@ -34,6 +40,8 @@ export default function Storyboard({ onDone, onBack }: { onDone: () => void; onB
   const poss = who === 'woman' ? 'her' : 'his';
   const source = deviceSourceLabel(device);
   const doCopy = async () => {
+    if (!scriptText.trim()) { setMsg('Add your script text first — the split check needs words to verify.'); return; }
+    if (!effectiveBalance.even) { setMsg('Split is uneven — shorten the long segment or tap Rebalance, then copy. The prompt always uses the latest checked split.'); return; }
     try { await copyText(prompt); setCopied(true); setMsg(`Copied — 1 paste into meta.ai with ${batches.length} labeled ~10s segment(s). Attach ${source} screenshots there.`); setTimeout(() => setCopied(false), 2500); }
     catch { setMsg('Copy blocked — select the prompt manually.'); }
   };
@@ -54,7 +62,20 @@ export default function Storyboard({ onDone, onBack }: { onDone: () => void; onB
       <div className="card space-y-2">
         <h3 className="font-semibold">1 · Full script</h3>
         <textarea className="input" rows={5} value={scriptText} onChange={(e) => setScriptText(e.target.value)} placeholder="Your full commercial script…" />
-        <p className="text-xs text-neutral-500">{fit.wordCount} words · ~{fit.targetWords} for {durationSec}s{batches.length > 1 ? ` · sections: ${batches.map((b) => `~${b.batchSec}s`).join(' + ')}` : ''}</p>
+        <p className="text-xs text-neutral-500">{fit.wordCount} words · ~{fit.targetWords} for {durationSec}s{batches.length > 1 ? ` · sections: ${batches.map((b) => `S${b.index} ~${b.wordCount}w/${b.batchSec}s`).join(' · ')}` : ''}</p>
+        <div className={`rounded-xl border p-3 text-sm space-y-1 ${effectiveBalance.even ? 'border-green-300 bg-green-50' : 'border-amber-300 bg-amber-50'}`}>
+          <p className="font-semibold">{effectiveBalance.even ? `✅ Split check: evenly spread across ${batches.length || 1} ~10s segment(s)` : `⚠️ Split check: uneven — fix before copying`}</p>
+          {effectiveBalance.even ? (
+            <p className="text-neutral-700">Re-checked on every edit. Each segment fits its ~10s slot at natural pace.</p>
+          ) : (
+            <>
+              <ul className="list-disc ml-5 text-neutral-700 space-y-0.5">{effectiveBalance.warnings.map((w, i) => <li key={i}>{w}</li>)}</ul>
+              {balance.needsRebalance && batches.length > 1 && (
+                <button className="btn-secondary" onClick={() => { setRebalanced(rebalanceBatches(autoBatches)); setMsg('Rebalanced — segments evened out. Prompt below uses the new split.'); }}>⚖️ Rebalance segments evenly</button>
+              )}
+            </>
+          )}
+        </div>
       </div>
       <div className="card space-y-3">
         <h3 className="font-semibold">2 · Voice + screen</h3>
