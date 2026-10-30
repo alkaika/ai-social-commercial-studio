@@ -66,12 +66,12 @@ export default function Storyboard({ onDone, onBack }: { onDone: () => void; onB
       <div className="card space-y-3">
         <h3 className="font-semibold">3 · Copy this one prompt into meta.ai</h3>
         <div className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm space-y-1">
-          <p className="font-semibold">🧠 Use Thinking mode in Meta.ai (not Instant)</p>
-          <p className="text-neutral-700">Thinking follows multi-segment scripts, exact word-for-word lines, and tight endings far better. In Meta.ai, switch the mode to <b>Thinking</b> before you paste — Instant tends to skip segments or paraphrase.</p>
+          <p className="font-semibold">🧠 Pick the right mode in Meta.ai</p>
+          <p className="text-neutral-700">No Meta One Core subscription → use <b>Instant</b> mode. Have a Meta One Core subscription → use <b>Thinking</b> mode (follows multi-segment scripts, exact word-for-word lines, and tight endings better — Instant tends to skip segments or paraphrase).</p>
         </div>
         <pre className="whitespace-pre-wrap text-sm bg-neutral-900 text-white rounded-xl p-4">{prompt}</pre>
         <div className="flex flex-wrap gap-2"><button className="btn-primary" onClick={doCopy}>{copied ? '✅ Copied!' : '📋 Copy prompt'}</button><a className="btn-secondary" href={META_AI_URL} target="_blank" rel="noreferrer">Open meta.ai →</a></div>
-        <ol className="list-decimal ml-5 text-sm text-neutral-700 space-y-1"><li>Copy, open meta.ai, switch to <b>Thinking</b> mode (not Instant), attach {source} screenshots.</li><li>Paste once — {durationSec}s {pf.label}: {voice} voice + {who} on {poss} {device}.</li><li>Download → continue to export for captions.</li></ol>
+        <ol className="list-decimal ml-5 text-sm text-neutral-700 space-y-1"><li>Copy, open meta.ai, pick <b>Instant</b> (no One Core sub) or <b>Thinking</b> (with One Core sub), attach {source} screenshots.</li><li>Paste once — {durationSec}s {pf.label}: {voice} voice + {who} on {poss} {device}.</li><li>Download → continue to export for captions.</li></ol>
         {msg && <p className="text-sm bg-neutral-100 border rounded-xl p-3">{msg}</p>}
       </div>
       <div className="flex justify-between items-center"><button className="btn-secondary" onClick={onBack}>← Back</button><button className="btn-primary" onClick={goNext}>Looks good — continue to export →</button></div>
