@@ -10,6 +10,7 @@ import SourceHub from '@/components/source/SourceHub';
 import ConfigureStep from '@/components/simple/ConfigureStep';
 import Storyboard from '@/components/simple/Storyboard';
 import ExportStep from '@/components/simple/ExportStep';
+import PersistGate from '@/components/project/PersistGate';
 
 const STEPS: { id: Step; label: string }[] = [
   { id: 'key', label: 'Key' },
@@ -90,6 +91,7 @@ function StudioInner() {
 export default function StudioPage() {
   return (
     <Suspense fallback={<main className="p-8 text-center">Loading studio…</main>}>
+      <PersistGate />
       <StudioInner />
     </Suspense>
   );

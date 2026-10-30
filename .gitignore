@@ -4,3 +4,4 @@ out/
 public/outputs/*
 !.gitkeep
 .env*.local
+*.tsbuildinfo

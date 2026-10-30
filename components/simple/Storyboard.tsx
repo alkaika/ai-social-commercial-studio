@@ -6,6 +6,9 @@ import { fitsDuration, bestCadence, trimWords, wordsToSec, MIN_CADENCE, MAX_CADE
 import { PLATFORMS } from '@/config/platforms';
 import { screenshotCandidates } from '@/lib/screenshots';
 import WebsiteShots from '@/components/simple/WebsiteShots';
+import ClipJobsPanel from '@/components/simple/ClipJobsPanel';
+import PreviewVoiceButton from '@/components/voice/PreviewVoiceButton';
+import { useClipJobs } from '@/stores/clipJobsStore';
 
 export default function Storyboard({ onDone, onBack }: { onDone: () => void; onBack?: () => void }) {
   const { script, set, durationSec, brand, tone, platform, sparkModel, snippets, assets, masterScript, masterApproved, urls } = useProject();
@@ -141,6 +144,7 @@ export default function Storyboard({ onDone, onBack }: { onDone: () => void; onB
           {!pace?.fits && <button className="btn-primary" onClick={suggestTrim}>✂️ Recommend a shorter cut</button>}
         </div>
       </div>
+      <ClipJobsPanel />
       {script.scenes.map((s) => {
         const sec = wordsToSec(s.voiceover, s.cadence ?? 1);
         return (
@@ -170,18 +174,22 @@ export default function Storyboard({ onDone, onBack }: { onDone: () => void; onB
             )}
             <textarea className="input" rows={2} value={s.voiceover} onChange={(e) => set({ script: { ...script, scenes: script.scenes.map((x) => x.id === s.id ? { ...x, voiceover: e.target.value } : x) } })} />
             <div className="flex flex-wrap gap-2 items-center">
+              <PreviewVoiceButton text={s.voiceover} rate={s.cadence ?? 1} />
               <label className="btn-secondary cursor-pointer inline-block">
                 🎙 Use a Meta AI voice clip
-                <input type="file" accept="video/*,audio/*" className="hidden" onChange={(e) => {
+                <input type="file" accept="video/*,audio/*" className="hidden" onChange={async (e) => {
                   const f = e.target.files?.[0];
+                  (e.target as HTMLInputElement).value = '';
                   if (!f || !script) return;
                   const url = URL.createObjectURL(f);
+                  try { const { saveStoredBlob } = await import('@/lib/clips/db'); await saveStoredBlob({ key: `scene:${s.id}:voice`, sceneId: s.id, kind: 'voice', blob: f, name: f.name, mime: f.type || 'video/mp4', updatedAt: Date.now() }); } catch {}
+                  try { const st = useClipJobs.getState(); const hit = st.jobs.find((j) => j.sceneId === s.id && j.kind === 'voice' && j.status !== 'attached'); if (hit) st.setStatus(hit.id, 'attached', { fileName: f.name, objectUrl: url }); } catch {}
                   set({ script: { ...script, scenes: script.scenes.map((x) => x.id === s.id ? { ...x, voiceSource: 'metai-clip' as const, voiceClipUrl: url, voiceUrl: url } : x) } });
-                  setMsg(`🎙 Voice clip attached to ${s.id}. This audio WILL play in your commercial (motion clips stay muted under it unless you toggle them).`);
+                  setMsg(`🎙 Voice clip attached to ${s.id} + saved locally — survives refresh. This audio WILL play in your commercial.`);
                 }} />
               </label>
               {s.voiceSource === 'metai-clip' && (
-                <button className="text-xs underline" onClick={() => set({ script: { ...script!, scenes: script!.scenes.map((x) => x.id === s.id ? { ...x, voiceSource: undefined, voiceClipUrl: undefined, voiceUrl: undefined } : x) } })}>Remove voice</button>
+                <button className="text-xs underline" onClick={() => { try { import('@/lib/clips/db').then(({ removeStoredBlob }) => removeStoredBlob(`scene:${s.id}:voice`)); } catch {} set({ script: { ...script!, scenes: script!.scenes.map((x) => x.id === s.id ? { ...x, voiceSource: undefined, voiceClipUrl: undefined, voiceUrl: undefined } : x) } }) }}>Remove voice</button>
               )}
             </div>
             <p className="text-xs text-neutral-500">How to get voice: go to meta.ai and paste: Make a video of a warm, female, energetic voice saying, then your line above in quotes. Download the clip and attach it here. One clip per scene keeps timing tight.</p>
@@ -202,19 +210,22 @@ export default function Storyboard({ onDone, onBack }: { onDone: () => void; onB
               )}
               <div className="flex flex-wrap gap-2 items-center">
                 <label className="btn-secondary cursor-pointer inline-block">
-                  Use a Meta AI clip
-                  <input type="file" accept="video/*" className="hidden" onChange={(e) => {
+                  Use a Meta AI video clip
+                  <input type="file" accept="video/*" className="hidden" onChange={async (e) => {
                     const f = e.target.files?.[0];
+                    (e.target as HTMLInputElement).value = '';
                     if (!f || !script) return;
                     const url = URL.createObjectURL(f);
+                    try { const { saveStoredBlob } = await import('@/lib/clips/db'); await saveStoredBlob({ key: `scene:${s.id}:video`, sceneId: s.id, kind: 'video', blob: f, name: f.name, mime: f.type || 'video/mp4', updatedAt: Date.now() }); } catch {}
+                    try { const st = useClipJobs.getState(); const hit = st.jobs.find((j) => j.sceneId === s.id && j.kind === 'video' && j.status !== 'attached'); if (hit) st.setStatus(hit.id, 'attached', { fileName: f.name, objectUrl: url }); } catch {}
                     set({ script: { ...script, scenes: script.scenes.map((x) => x.id === s.id ? { ...x, videoUrl: url, motionSource: 'metai-upload' as const, muteSourceAudio: x.muteSourceAudio ?? true } : x) } });
-                    setMsg('Meta AI clip attached to ' + s.id + '. Its sound will be muted under your voice-over.');
+                    setMsg('Meta AI clip attached to ' + s.id + ' + saved locally.');
                   }} />
                 </label>
                 {s.motionSource === 'metai-upload' && (
                   <>
                     <button className="text-xs underline" onClick={() => set({ script: { ...script!, scenes: script!.scenes.map((x) => x.id === s.id ? { ...x, muteSourceAudio: !(x.muteSourceAudio ?? true) } : x) } })}>{(s.muteSourceAudio ?? true) ? 'Clip muted (VO on top)' : 'Clip sound on'}</button>
-                    <button className="text-xs underline" onClick={() => set({ script: { ...script!, scenes: script!.scenes.map((x) => x.id === s.id ? { ...x, videoUrl: undefined, motionSource: 'kenburns' as const } : x) } })}>Remove clip</button>
+                    <button className="text-xs underline" onClick={() => { set({ script: { ...script!, scenes: script!.scenes.map((x) => x.id === s.id ? { ...x, videoUrl: undefined, motionSource: 'kenburns' as const } : x) } }); try { import('@/lib/clips/db').then(({ removeStoredBlob }) => removeStoredBlob(`scene:${s.id}:video`)); } catch {} }}>Remove clip</button>
                   </>
                 )}
               </div>

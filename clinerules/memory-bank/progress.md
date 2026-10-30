@@ -9,6 +9,7 @@
 - Known vault gotcha (fixed): `eval.first` must be Uint8Array, not b64url — browser type-checks extension inputs strictly.
 - SAM auto-discovery: validator enumerates the model catalog and fuzzy-matches SAM-like IDs (docs ID `sam-3-1` mismatched this key's catalog) — this is what flipped the 6th check ✅.
 - Motion flow: per-scene meta.ai clip slot (upload+preview+mute toggle+remove), website screenshot picker (free mShots/thum.io/microlink grid, placeholder auto-retry, landscape edge-to-edge, `motionSource='screenshot'`), Wonder animate button, Ken Burns fallback, tier badge + export icons, `motionPlan()` render contract.
+- Clip watcher: Downloads-folder auto-ingest (File System Access API, read-only, Chromium) — new byte-stable media files route through `autoAttachBatch`; folder handle persisted (Dexie v2 `prefs`) + auto-restored on reload when the grant survives; one-click `Copy + open meta.ai` row button; graceful Firefox/Safari fallback message.
 - Live smoke test: 15s script → 3 scenes (Hook…).
 - GitHub repo live: https://github.com/alkaika/ai-social-commercial-studio (public). Local git remote `origin` set, branch `main`.
 - Default gateway everywhere is the verified Meta Model API (`https://api.meta.ai/v1`), so the Key step comes prefilled — user only pastes their key.
@@ -25,4 +26,5 @@
 ## Decision Evolution
 - Plan→Act 2026-10-26: plan-only → scaffolded. Added layers: BYOK vault → sources → easy UI → revise loop → factual writer table → built.
 - 2026-10-27: motion locked to metai-upload → wonder → kenburns (`6facfa3`). No Seedance (deferred). No meta.ai automation (ToS). `clinerules/` kept in repo; `activeContext.md` + this file marked as living notes.
+- 2026-10-30: "automatic clips" resolved ToS-safely — Playwright bot rejected; File System Access watcher automates everything AFTER the user's manual generate+download at meta.ai (reads only the user's own Downloads folder).
 - Repo: `ai-social-commercial-studio` public via `gh` (Composio github toolkit blocked for session, used local gh CLI as alkaika).
