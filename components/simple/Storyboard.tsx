@@ -2,7 +2,7 @@
 import { useMemo, useState } from 'react';
 import { useProject } from '@/stores/projectStore';
 import { PLATFORMS, TONES } from '@/config/platforms';
-import { META_AI_URL, STORY_VOICE_STYLES, STORY_DEVICES, STORY_DEVICE_ICONS, splitScriptIntoBatches, buildCombinedStoryPrompt, copyText, voicePerson } from '@/lib/meta-sdk/prompts';
+import { META_AI_URL, STORY_VOICE_STYLES, STORY_DEVICES, STORY_DEVICE_ICONS, deviceSourceLabel, splitScriptIntoBatches, buildCombinedStoryPrompt, copyText, voicePerson } from '@/lib/meta-sdk/prompts';
 import { masterFit } from '@/lib/script-utils';
 
 export default function Storyboard({ onDone, onBack }: { onDone: () => void; onBack?: () => void }) {
@@ -30,8 +30,9 @@ export default function Storyboard({ onDone, onBack }: { onDone: () => void; onB
   }), [batches, durationSec, pf, vibe, brand.brandName, device, voice]);
   const who = voicePerson(voice) === 'man' ? 'man' : 'woman';
   const poss = who === 'woman' ? 'her' : 'his';
+  const source = deviceSourceLabel(device);
   const doCopy = async () => {
-    try { await copyText(prompt); setCopied(true); setMsg(`Copied — 1 paste into meta.ai with ${batches.length} labeled ~10s segment(s). Attach screenshots there.`); setTimeout(() => setCopied(false), 2500); }
+    try { await copyText(prompt); setCopied(true); setMsg(`Copied — 1 paste into meta.ai with ${batches.length} labeled ~10s segment(s). Attach ${source} screenshots there.`); setTimeout(() => setCopied(false), 2500); }
     catch { setMsg('Copy blocked — select the prompt manually.'); }
   };
   const goNext = () => {
@@ -64,7 +65,7 @@ export default function Storyboard({ onDone, onBack }: { onDone: () => void; onB
         <h3 className="font-semibold">3 · Copy this one prompt into meta.ai</h3>
         <pre className="whitespace-pre-wrap text-sm bg-neutral-900 text-white rounded-xl p-4">{prompt}</pre>
         <div className="flex flex-wrap gap-2"><button className="btn-primary" onClick={doCopy}>{copied ? '✅ Copied!' : '📋 Copy prompt'}</button><a className="btn-secondary" href={META_AI_URL} target="_blank" rel="noreferrer">Open meta.ai →</a></div>
-        <ol className="list-decimal ml-5 text-sm text-neutral-700 space-y-1"><li>Copy, open meta.ai, attach screenshots.</li><li>Paste once — {durationSec}s {pf.label}: {voice} voice + {who} on {poss} {device}.</li><li>Download → continue to export for captions.</li></ol>
+        <ol className="list-decimal ml-5 text-sm text-neutral-700 space-y-1"><li>Copy, open meta.ai, attach {source} screenshots.</li><li>Paste once — {durationSec}s {pf.label}: {voice} voice + {who} on {poss} {device}.</li><li>Download → continue to export for captions.</li></ol>
         {msg && <p className="text-sm bg-neutral-100 border rounded-xl p-3">{msg}</p>}
       </div>
       <div className="flex justify-between items-center"><button className="btn-secondary" onClick={onBack}>← Back</button><button className="btn-primary" onClick={goNext}>Looks good — continue to export →</button></div>

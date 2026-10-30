@@ -70,6 +70,12 @@ export const STORY_DEVICE_ICONS: Record<string, string> = {
   Laptop: '💻',
   'PC monitor': '🖥',
 };
+
+// Screenshot source follows the selected device: phone shows the mobile app,
+// larger screens show the website. Keeps the prompt footer specific.
+export function deviceSourceLabel(device: StoryDevice | string): 'Website' | 'Mobile app' {
+  return device === 'Mobile phone' ? 'Mobile app' : 'Website';
+}
 export const MAX_BATCH_SEC = 10;
 
 export interface StoryBatch {
@@ -146,6 +152,7 @@ export interface SingleStoryPromptInput {
 
 export function buildSingleStoryPrompt(input: SingleStoryPromptInput): string {
   const script = (input.scriptText || '').trim().replace(/\s+/g, ' ');
+  const source = deviceSourceLabel(input.device);
   const batchLabel =
     input.batchTotal && input.batchTotal > 1 && input.batchIndex
       ? ` (Part ${input.batchIndex} of ${input.batchTotal})`
@@ -178,7 +185,7 @@ export function buildSingleStoryPrompt(input: SingleStoryPromptInput): string {
     `- Audio: ${input.voice} voice, clear studio quality, no background music louder than the voice.`,
     `- No burned-in text overlays or auto-subtitles (captions are added later).`,
     ``,
-    `I have attached screenshots of the website / mobile app — show them on the ${input.device} screen in the video.`,
+    `I have attached screenshots of the ${source} — show them on the ${input.device} screen in the video.`,
   ].join('\n');
 }
 
@@ -213,6 +220,8 @@ export function buildCombinedStoryPrompt(input: CombinedStoryPromptInput): strin
         : aspect === '4:5' ? 'vertical portrait' : 'vertical full-screen';
   const brandBit = brandName ? ` for ${brandName}` : '';
   const multi = batches.length > 1;
+  const source = deviceSourceLabel(device);
+  const sourceLine = `I have attached screenshots of the ${source} — show them on the ${device} screen in the video.`;
   const lines: string[] = [
     `Make a ${durationSec}-second ${orientation} video (${aspect}, ${width}x${height}) for ${platformLabel}${brandBit} with a ${vibeLabel.toLowerCase()} vibe${multi ? ` — deliver as ${batches.length} back-to-back segments that join into one continuous commercial` : ''}.`,
     ``,
@@ -240,7 +249,7 @@ export function buildCombinedStoryPrompt(input: CombinedStoryPromptInput): strin
   lines.push(`- Audio: ${voice} voice, clear studio quality, no background music louder than the voice.`);
   lines.push(`- No burned-in text overlays or auto-subtitles (captions are added later).`);
   lines.push(``);
-  lines.push(`I have attached screenshots of the website / mobile app — show them on the ${device} screen in the video.`);
+  lines.push(sourceLine);
   return lines.join('\n');
 }
 
