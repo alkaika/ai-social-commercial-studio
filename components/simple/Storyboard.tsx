@@ -17,6 +17,7 @@ export default function Storyboard({ onDone, onBack }: { onDone: () => void; onB
   const [gender, setGender] = useState<'female' | 'male'>('female');
   const [style, setStyle] = useState<string>(STORY_VOICE_STYLES[0]);
   const [musicId, setMusicId] = useState<string>('none');
+  const [showPerson, setShowPerson] = useState<boolean>(true);
   const voice = `warm ${gender}, ${style}`;
   const [copied, setCopied] = useState(false);
   const [msg, setMsg] = useState('');
@@ -26,9 +27,9 @@ export default function Storyboard({ onDone, onBack }: { onDone: () => void; onB
   const batches = useMemo(() => splitScriptIntoBatches(scriptText || '', durationSec), [scriptText, durationSec]);
   const prompt = useMemo(() => buildCombinedStoryPrompt({
     batches: batches.length ? batches : [{ index: 1, total: 1, batchSec: durationSec, text: '[paste your script above]', wordCount: 0 }],
-    durationSec, aspect: pf.aspect, width: pf.width, height: pf.height, musicId,
+    durationSec, aspect: pf.aspect, width: pf.width, height: pf.height, musicId, showPerson,
     platformLabel: pf.label, vibeLabel: vibe, brandName: brand.brandName || undefined, device, voice,
-  }), [batches, durationSec, pf, vibe, brand.brandName, device, voice, musicId]);
+  }), [batches, durationSec, pf, vibe, brand.brandName, device, voice, musicId, showPerson]);
   const who = voicePerson(voice) === 'man' ? 'man' : 'woman';
   const poss = who === 'woman' ? 'her' : 'his';
   const source = deviceSourceLabel(device);
@@ -40,7 +41,7 @@ export default function Storyboard({ onDone, onBack }: { onDone: () => void; onB
     const t = scriptText.trim();
     if (!t) { setMsg('Add your script text first.'); return; }
     set({ masterScript: t, masterApproved: true,
-      script: { scenes: batches.map((b) => ({ id: `batch-${b.index}`, heading: b.total > 1 ? `Segment ${b.index} of ${b.total}` : 'Full commercial', voiceover: b.text, onScreenText: brand.tagline || brand.brandName || '', visualPrompt: `${who} using app on ${device} — segment ${b.index}`, durationSec: b.batchSec })), totalSec: durationSec, sparkModel } });
+      script: { scenes: batches.map((b) => ({ id: `batch-${b.index}`, heading: b.total > 1 ? `Segment ${b.index} of ${b.total}` : 'Full commercial', voiceover: b.text, onScreenText: brand.tagline || brand.brandName || '', visualPrompt: showPerson ? `${who} using app on ${device} — segment ${b.index}` : `Full-screen ${source} screenshots on ${device} — voiceover only, no person — segment ${b.index}`, durationSec: b.batchSec })), totalSec: durationSec, sparkModel } });
     onDone();
   };
   return (
@@ -48,7 +49,7 @@ export default function Storyboard({ onDone, onBack }: { onDone: () => void; onB
       <div className="card space-y-2">
         <h2 className="text-xl font-bold">Story — one Meta.ai prompt</h2>
         <p className="text-sm text-neutral-600">One paste into meta.ai. Full script + labeled ~10s directions so meta.ai outputs one {durationSec}s video. Attach screenshots there.</p>
-        <div className="flex flex-wrap gap-2 text-sm"><span className="badge">⏱ {durationSec}s ({batches.length || 1} segs)</span><span className="badge">📐 {pf.aspect} {pf.width}x{pf.height}</span><span className="badge">📱 {pf.label}</span><span className="badge">✨ {vibe}</span><span className="badge">🎙 {voice}</span></div>
+        <div className="flex flex-wrap gap-2 text-sm"><span className="badge">⏱ {durationSec}s ({batches.length || 1} segs)</span><span className="badge">📐 {pf.aspect} {pf.width}x{pf.height}</span><span className="badge">📱 {pf.label}</span><span className="badge">✨ {vibe}</span><span className="badge">🎙 {voice}</span><span className="badge">{showPerson ? `🧍 ${who} + ${device}` : `🎙 Voice + ${source} only`}</span></div>
       </div>
       <div className="card space-y-2">
         <h3 className="font-semibold">1 · Full script</h3>
@@ -57,9 +58,10 @@ export default function Storyboard({ onDone, onBack }: { onDone: () => void; onB
       </div>
       <div className="card space-y-3">
         <h3 className="font-semibold">2 · Voice + screen</h3>
+        <div className="text-sm space-y-1"><p className="font-medium">On camera</p><div className="flex flex-wrap gap-2"><button onClick={() => setShowPerson(true)} className={`border-2 rounded-full px-4 py-2 ${showPerson ? 'border-black bg-neutral-100' : 'border-neutral-200'}`}>🧍 Person + app</button><button onClick={() => setShowPerson(false)} className={`border-2 rounded-full px-4 py-2 ${!showPerson ? 'border-black bg-neutral-100' : 'border-neutral-200'}`}>🎙 Voice + screenshots only</button></div></div>
         <div className="flex flex-wrap gap-2">{(['female', 'male'] as const).map((g) => <button key={g} onClick={() => setGender(g)} className={`border-2 rounded-full px-4 py-2 ${gender === g ? 'border-black bg-neutral-100' : 'border-neutral-200'}`}>{g === 'female' ? '👩 Female' : '👨 Male'}</button>)}</div>
         <label className="text-sm block">Style (same 5 for both)<select className="input mt-1" value={style} onChange={(e) => setStyle(e.target.value)}>{STORY_VOICE_STYLES.map((s) => <option key={s} value={s}>{s}</option>)}</select></label>
-        <p className="text-xs text-neutral-500">Selected: {voice} — the {who} in the video uses this voice.</p>
+        <p className="text-xs text-neutral-500">Selected: {voice}{showPerson ? ` — the ${who} in the video uses this voice.` : ' — voiceover only, no one on camera.'}</p>
         <div className="text-sm space-y-1"><p className="font-medium">Screen — showing the app on {poss}…</p><div className="flex flex-wrap gap-2">{STORY_DEVICES.map((d) => <button key={d} onClick={() => setDevice(d)} className={`border-2 rounded-full px-4 py-2 ${device === d ? 'border-black bg-neutral-100' : 'border-neutral-200'}`}>{STORY_DEVICE_ICONS[d] || '📺'} {d}</button>)}</div></div>
         <div className="text-sm space-y-1"><p className="font-medium">🎵 Background music (royalty-free, subtle — stays under the voice)</p><div className="grid sm:grid-cols-2 gap-2">{STORY_MUSIC.map((m) => <button key={m.id} onClick={() => setMusicId(m.id)} className={`border-2 rounded-xl p-3 text-left ${musicId === m.id ? 'border-black bg-neutral-50' : 'border-neutral-200'}`}><div className="font-semibold">{m.emoji} {m.label}</div><div className="text-xs text-neutral-600">{m.desc}</div></button>)}</div></div>
       </div>
@@ -71,7 +73,7 @@ export default function Storyboard({ onDone, onBack }: { onDone: () => void; onB
         </div>
         <pre className="whitespace-pre-wrap text-sm bg-neutral-900 text-white rounded-xl p-4">{prompt}</pre>
         <div className="flex flex-wrap gap-2"><button className="btn-primary" onClick={doCopy}>{copied ? '✅ Copied!' : '📋 Copy prompt'}</button><a className="btn-secondary" href={META_AI_URL} target="_blank" rel="noreferrer">Open meta.ai →</a></div>
-        <ol className="list-decimal ml-5 text-sm text-neutral-700 space-y-1"><li>Copy, open meta.ai, pick <b>Instant</b> (no One Core sub) or <b>Thinking</b> (with One Core sub), attach {source} screenshots.</li><li>Paste once — {durationSec}s {pf.label}: {voice} voice + {who} on {poss} {device}.</li><li>Download → continue to export for captions.</li></ol>
+        <ol className="list-decimal ml-5 text-sm text-neutral-700 space-y-1"><li>Copy, open meta.ai, pick <b>Instant</b> (no One Core sub) or <b>Thinking</b> (with One Core sub), attach {source} screenshots.</li><li>Paste once — {durationSec}s {pf.label}: {voice} voice{showPerson ? ` + ${who} on ${poss} ${device}` : ` over full-screen ${source} footage, no one on camera`}.</li><li>Download → continue to export for captions.</li></ol>
         {msg && <p className="text-sm bg-neutral-100 border rounded-xl p-3">{msg}</p>}
       </div>
       <div className="flex justify-between items-center"><button className="btn-secondary" onClick={onBack}>← Back</button><button className="btn-primary" onClick={goNext}>Looks good — continue to export →</button></div>
