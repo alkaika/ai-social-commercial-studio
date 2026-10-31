@@ -1,16 +1,24 @@
 'use client';
-import { DURATIONS, PLATFORMS, TONES, type PlatformId } from '@/config/platforms';
+import { useEffect } from 'react';
+import { DURATIONS, PLATFORMS, TONES, normalizeDurationSec, type PlatformId } from '@/config/platforms';
 import { useProject } from '@/stores/projectStore';
 
 export default function ConfigureStep({ onDone, onBack }: { onDone: () => void; onBack?: () => void }) {
   const { durationSec, platform, tone, set } = useProject();
+  // Snap legacy saves/open projects (5s / 15s) to the 10s batch grid.
+  useEffect(() => {
+    const fixed = normalizeDurationSec(durationSec);
+    if (fixed !== durationSec) set({ durationSec: fixed });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   return (
     <div className="card space-y-5">
       <h2 className="text-xl font-bold">🎬 Pick your style</h2>
       <p className="text-sm text-neutral-600">Your script will be written with these settings in mind — length, platform, and vibe shape the draft from the start.</p>
       <div>
         <p className="font-medium mb-2">How long?</p>
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+        <p className="text-xs text-neutral-500 mb-2">Built in 10-second batches — TikTok, Reels & Shorts use 10s or 20s.</p>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
           {DURATIONS.map((d) => (
             <button key={d.sec} onClick={() => set({ durationSec: d.sec })}
               className={`border-2 rounded-2xl p-3 text-left ${durationSec === d.sec ? 'border-black bg-neutral-50' : 'border-neutral-200'}`}>

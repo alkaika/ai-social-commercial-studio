@@ -7,6 +7,7 @@
 // the library as a "Recovered project" so no prior work is lost.
 import type { AdScript, BrandKit } from '@/lib/script-utils';
 import type { PlatformId } from '@/config/platforms';
+import { normalizeDurationSec } from '@/config/platforms';
 import type { SparkModelId } from '@/config/pricing';
 import type { Step } from '@/stores/projectStore';
 
@@ -184,7 +185,10 @@ export function saveProjectLocal(p: Omit<PersistedProject, 'v' | 'savedAt'>): vo
   } catch { /* ignore */ }
 }
 export function loadProjectLocal(): PersistedProject | null {
-  return loadLegacyProjectLocal();
+  const rec = loadLegacyProjectLocal();
+  if (!rec) return null;
+  // Legacy 5s/15s saves snap to the 10s batch grid.
+  return { ...rec, durationSec: normalizeDurationSec((rec as any).durationSec) };
 }
 export function clearProjectLocal(): void {
   clearLegacyProjectLocal();

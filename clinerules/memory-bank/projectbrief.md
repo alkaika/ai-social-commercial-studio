@@ -4,7 +4,7 @@
 `C:\Users\alana\meta-app` — Next.js 14 App Router, single codebase.
 
 ## Core Goal
-Web app that generates 5/10/15/30/60s social commercials from a company website + user uploads + pasted content. Generates script, voice-over, visuals. User edits before export. No monthly subscription.
+Web app that generates 10/20/30/60s social commercials from a company website + user uploads + pasted content (10s batches only — 5s/15s removed 2026-10-31; legacy saves snap 5→10, 15→20). Generates script, voice-over, visuals. User edits before export. No monthly subscription.
 
 ## BYOK Model
 - Users bring ONE Meta API key powering all 5 Muse models via REST gateway.

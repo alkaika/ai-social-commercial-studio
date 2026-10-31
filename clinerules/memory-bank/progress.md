@@ -4,6 +4,7 @@
 
 ## What Works ✅
 - `npm run build` passes (13 routes: /, /studio, 8 APIs).
+- Durations locked to 10s batches (2026-10-31): Setup How-long offers 10/20/30/60s only (5s + 15s removed); TikTok/Reels/Shorts = 10s or 20s. `normalizeDurationSec()` (config/platforms) snaps legacy 5→10, 15→20; enforced in store set/open, ConfigureStep, spark master+organize, legacy local load. Defaults 20s; mocks + cost estimate re-based. Build ✅.
 - Story 10s testimonial batches (2026-10-30): one self-contained Meta.ai prompt per ~10s part via `buildBatchTestimonialPrompt()` — own voice+face+lines, DIFFERENT-speaker continuity, same aspect/device/vibe/music, tight endings, strict-but-alive screenshots, device-specific footer. Cast: 6 personas (`STORY_TESTIMONIAL_PERSONAS` + `assignBatchSpeakers()`), per-part recast dropdowns. Split auto-verified (proportional check + rebalance + copy guard). Export stitch joins parts into one N-person testimonial. Build ✅.
 - Landing + 8-step wizard renders; demo mode works keyless (`/studio?demo=1`).
 - Key validate: 5/5 ✅ live (Wonder retired — spark-standard, spark-contributor, image, voice-captions, sam), writer table, scrape (homepage + about-page story, removable chips, multi-site merge) + Business-page master script — drafted with Setup settings (duration/platform/vibe) in mind, free edit, gated Approve → Continue + uploads (removable thumbnails) + snippets+pin, configure FIRST (duration/platform/vibe shape the draft; Story just organizes, no re-fit needed), timed organize from approved master (Spark organizes, never reinvents; storyBeat per scene), quick buttons, Director's Notes, lock, fits-meter, SRT/txt/backup export, ← Back on every step + clickable breadcrumb + ← Back to home (no state loss — Zustand), vault: biometrics + synced passkey + encrypted export/import, raw-bytes PRF fix.
@@ -29,4 +30,3 @@
 - Plan→Act 2026-10-26: plan-only → scaffolded. Added layers: BYOK vault → sources → easy UI → revise loop → factual writer table → built.
 - 2026-10-27: motion locked to metai-upload → wonder → kenburns (`6facfa3`). No Seedance (deferred). No meta.ai automation (ToS). `clinerules/` kept in repo; `activeContext.md` + this file marked as living notes.
 - 2026-10-30: "automatic clips" resolved ToS-safely — Playwright bot rejected; File System Access watcher automates everything AFTER the user's manual generate+download at meta.ai (reads only the user's own Downloads folder).
-- Repo: `ai-social-commercial-studio` public via `gh` (Composio github toolkit blocked for session, used local gh CLI as alkaika).

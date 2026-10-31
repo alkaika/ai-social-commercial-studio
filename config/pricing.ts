@@ -37,12 +37,12 @@ export const MODEL_ROWS: { feature: string; standard: string; contributor: strin
   { feature: 'Data Training Rights', standard: 'No data use for model training', contributor: 'Meta may use prompts & completions' },
 ];
 
-/** Rough per-script cost estimate. ~1.6k input + ~0.9k output tokens per 15s script. */
+/** Rough per-script cost estimate. ~2.1k input + ~1.2k output tokens per 20s script. */
 export function estimateScriptCost(model: SparkModelId, durationSec: number) {
   const m = SPARK_MODELS[model];
-  const scale = durationSec / 15;
-  const inTok = 1600 * scale;
-  const outTok = 900 * scale;
+  const scale = durationSec / 20;
+  const inTok = 2133 * scale;
+  const outTok = 1200 * scale;
   return (inTok / 1e6) * m.inputPerMTok + (outTok / 1e6) * m.outputPerMTok;
 }
 

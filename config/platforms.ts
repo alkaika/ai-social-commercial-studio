@@ -13,12 +13,31 @@ export const PLATFORMS: Record<
 };
 
 export const DURATIONS = [
-  { sec: 5, label: '5s', desc: 'A quick teaser', scenes: 1, words: 12 },
-  { sec: 10, label: '10s', desc: 'One message', scenes: 2, words: 25 },
-  { sec: 15, label: '15s', desc: 'Most popular', scenes: 3, words: 37 },
-  { sec: 30, label: '30s', desc: 'Tell a story', scenes: 5, words: 75 },
-  { sec: 60, label: '60s', desc: 'Full showcase', scenes: 7, words: 150 },
+  { sec: 10, label: '10s', desc: 'One message · 1 part', scenes: 1, words: 25 },
+  { sec: 20, label: '20s', desc: 'TikTok / Reels / Shorts · 2 parts', scenes: 2, words: 50 },
+  { sec: 30, label: '30s', desc: 'Tell a story · 3 parts', scenes: 3, words: 75 },
+  { sec: 60, label: '60s', desc: 'Full showcase · 6 parts', scenes: 6, words: 150 },
 ];
+
+// Scripts are built in 10s batches — only multiples of 10 are valid.
+// Legacy saves (5s / 15s) snap to the nearest valid slot: 5 → 10, 15 → 20.
+export const ALLOWED_DURATIONS = DURATIONS.map((d) => d.sec);
+
+export function normalizeDurationSec(sec: unknown): number {
+  const n = typeof sec === 'number' && Number.isFinite(sec) ? sec : 20;
+  if ((ALLOWED_DURATIONS as number[]).includes(n)) return n;
+  let best = ALLOWED_DURATIONS[0];
+  let bestDist = Math.abs(n - best);
+  for (const a of ALLOWED_DURATIONS) {
+    const dist = Math.abs(n - a);
+    // Round half-up (15 → 20, not 10) so legacy cuts keep their words.
+    if (dist < bestDist || (dist === bestDist && a > best)) {
+      best = a;
+      bestDist = dist;
+    }
+  }
+  return best;
+}
 
 export const TONES = [
   { id: 'fun', label: 'Fun', emoji: '😄' },

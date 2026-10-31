@@ -1,5 +1,6 @@
 import { callMuse } from './client';
 import { endpointModelForSpark } from './models.config';
+import { normalizeDurationSec } from '@/config/platforms';
 import type { SparkModelId } from '@/config/pricing';
 import type { AdScript, BrandKit } from '@/lib/script-utils';
 import { countWords, targetWordRange, constrainToWordRange } from '@/lib/script-utils';
@@ -17,7 +18,7 @@ export interface MasterScriptInput {
 
 /** Draft the master narrative sized to the selected slot, then machine-enforced to fit it. */
 export function buildMasterScriptPrompt(i: MasterScriptInput) {
-  const dSec = i.durationSec && i.durationSec > 0 ? i.durationSec : 30;
+  const dSec = normalizeDurationSec(i.durationSec);
   const { target, min, max } = targetWordRange(dSec);
   const setting = `SETTINGS THIS SCRIPT IS WRITTEN FOR: ${dSec}s cut${i.platform ? ` for ${i.platform}` : ''}, ${i.tone} vibe at a natural speaking pace (~2.5 words/sec). Write the master at ~${target} words — acceptable ${min}-${max} words. This length IS the product: it must be deliverable in ${dSec}s at 1.0x without cutting a word. Hook first, offer near the end, CTA last. Shorter is better than longer — never exceed ${max} words.`;
   const story = i.brand.aboutStory
@@ -42,7 +43,7 @@ Return STRICT JSON: {"masterScript": "..."} (paragraphs separated by \\n\\n).`;
 // The returned draft is guaranteed to fit the slot at natural pace
 // (constrainToWordRange as a final backstop) so Story starts clean.
 export async function generateMasterScript(opts: { key: string; baseUrl: string } & MasterScriptInput): Promise<string> {
-  const dSec = opts.durationSec && opts.durationSec > 0 ? opts.durationSec : 30;
+  const dSec = normalizeDurationSec(opts.durationSec);
   const { target, max } = targetWordRange(dSec);
   const finish = (draft: string) => constrainToWordRange(draft, dSec).text;
   if (!opts.key || opts.key === 'DEMO') return mockMasterScript(opts.brand.brandName || 'this business', dSec);
@@ -88,13 +89,14 @@ export interface ScriptInput {
 }
 
 export function buildScriptPrompt(i: ScriptInput) {
-  const words = Math.round(i.durationSec * 2.5);
+  const dSec = normalizeDurationSec((i as any).durationSec);
+  const words = Math.round(dSec * 2.5);
   const master = i.masterScript?.trim()
     ? `FINAL APPROVED MASTER SCRIPT — USE EVERY WORD of it, organized across scenes. Do NOT summarize, shorten, or drop lines to hit the time slot. If the words exceed ~${words} spoken words, still emit scenes covering the ENTIRE script in order (hook first, CTA last) and flag the overflow in storyBeat — timing will be handled with voice cadence (0.85x–1.2x), never by cutting your output:\n${i.masterScript.trim().slice(0, 2500)}`
     : (i.brand.aboutStory
       ? `BRAND STORY (from about page ${i.brand.aboutSource || ''} — weave this into the arc, don't just list facts):\n${i.brand.aboutStory}\nStory beats to dramatize across scenes: ${(i.brand.aboutPoints || []).join(' | ') || 'none'}`
       : 'BRAND STORY: none found (homepage only). Lean on homepage description + offer.');
-  return `You are an expert social-media commercial organizer. The user already approved a final master script — your job is to ORGANIZE its every word into a ${i.durationSec}-second vertical video ad (~${words} spoken words at natural pace), not to write a new story or trim to fit.
+  return `You are an expert social-media commercial organizer. The user already approved a final master script — your job is to ORGANIZE its every word into a ${dSec}-second vertical video ad (~${words} spoken words at natural pace), not to write a new story or trim to fit.
 ${master}
 Brand: ${i.brand.brandName} — ${i.brand.tagline}
 Homepage pitch: ${i.brand.description}
@@ -109,7 +111,8 @@ Return STRICT JSON: {"scenes":[{"id":"s1","heading":"...","voiceover":"...","onS
 }
 
 export async function generateScript(opts: { key: string; baseUrl: string } & ScriptInput): Promise<AdScript> {
-  if (!opts.key || opts.key === 'DEMO') return mockScript(opts.durationSec, opts.sparkModel);
+  const dSec = normalizeDurationSec((opts as any).durationSec);
+  if (!opts.key || opts.key === 'DEMO') return mockScript(dSec, opts.sparkModel);
   const data: any = await callMuse({
     key: opts.key, baseUrl: opts.baseUrl, path: '/v1/chat/completions',
     body: { model: endpointModelForSpark(opts.sparkModel), messages: [{ role: 'user', content: buildScriptPrompt(opts) }], temperature: 0.8 },
@@ -124,6 +127,6 @@ export async function generateScript(opts: { key: string; baseUrl: string } & Sc
       visualPrompt: s.visualPrompt || '', durationSec: Number(s.durationSec) || 5,
       storyBeat: s.storyBeat || '', cadence: 1,
     }));
-    return { scenes, totalSec: opts.durationSec, sparkModel: opts.sparkModel };
-  } catch { return mockScript(opts.durationSec, opts.sparkModel); }
+    return { scenes, totalSec: dSec, sparkModel: opts.sparkModel };
+  } catch { return mockScript(dSec, opts.sparkModel); }
 }

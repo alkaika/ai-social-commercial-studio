@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import type { AdScript, BrandKit } from '@/lib/script-utils';
 import type { SparkModelId } from '@/config/pricing';
-import type { PlatformId } from '@/config/platforms';
+import { normalizeDurationSec, type PlatformId } from '@/config/platforms';
 import { usePrefs } from '@/stores/preferences';
 
 export type Step = 'key' | 'writer' | 'sources' | 'brand' | 'configure' | 'script' | 'review' | 'export';
@@ -57,7 +57,7 @@ export const useProject = create<ProjectState>((set) => ({
   step: 'key',
   projectId: freshId(),
   projectName: '',
-  durationSec: 15,
+  durationSec: 20,
   platform: 'tiktok',
   tone: 'friendly',
   sparkModel: 'spark-contributor',
@@ -69,12 +69,16 @@ export const useProject = create<ProjectState>((set) => ({
   masterScript: '',
   masterApproved: false,
   scriptGuidance: '',
-  set: (p) => set(p),
+  set: (p) => set(
+    (p as any).durationSec !== undefined
+      ? { ...p, durationSec: normalizeDurationSec((p as any).durationSec) }
+      : p
+  ),
   newFreshProject: () => set({
     step: 'key',
     projectId: freshId(),
     projectName: '',
-    durationSec: 15,
+    durationSec: 20,
     platform: 'tiktok',
     tone: 'friendly',
     sparkModel: usePrefs.getState().lastWriter || 'spark-contributor',
@@ -91,7 +95,7 @@ export const useProject = create<ProjectState>((set) => ({
     step: p.step && p.step !== 'key' && p.step !== 'writer' ? p.step : 'sources',
     projectId: p.projectId || p.id || freshId(),
     projectName: p.projectName || p.name || '',
-    durationSec: p.durationSec,
+    durationSec: normalizeDurationSec((p as any).durationSec),
     platform: p.platform,
     tone: p.tone,
     sparkModel: p.sparkModel,
