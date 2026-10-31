@@ -64,6 +64,15 @@ export const STORY_VOICES = [
 export const STORY_DEVICES = ['Mobile phone', 'Tablet', 'Laptop', 'PC monitor'] as const;
 export type StoryDevice = (typeof STORY_DEVICES)[number];
 
+export const STORY_TESTIMONIAL_PERSONAS = [
+  { voice: 'warm female, energetic', person: 'woman' as const, appearance: 'young woman in her 20s with long dark hair', short: 'Young woman - dark hair' },
+  { voice: 'warm male, energetic', person: 'man' as const, appearance: 'young man in his 20s with short curly hair', short: 'Young man - curly hair' },
+  { voice: 'warm female, calm and friendly', person: 'woman' as const, appearance: 'woman in her 30s with a short blonde bob', short: 'Woman - blonde bob' },
+  { voice: 'warm male, calm and friendly', person: 'man' as const, appearance: 'man in his 30s with a short beard and glasses', short: 'Man - beard + glasses' },
+  { voice: 'warm female, professional', person: 'woman' as const, appearance: 'professional woman in her 40s with shoulder-length brown hair in a blazer', short: 'Professional woman - blazer' },
+  { voice: 'warm male, professional', person: 'man' as const, appearance: 'professional man in his 40s with neat short hair in a button-down shirt', short: 'Professional man - button-down' },
+];
+
 export const STORY_DEVICE_ICONS: Record<string, string> = {
   'Mobile phone': '📱',
   Tablet: '📲',
@@ -268,6 +277,38 @@ export function buildSingleStoryPrompt(input: SingleStoryPromptInput): string {
 // ~10s voice+video segments, so meta.ai outputs everything together as one
 // continuous commercial (no separate pastes, no manual stitching).
 
+export interface BatchSpeaker {
+  batchIndex: number;
+  voice: string;
+  person: 'woman' | 'man' | 'person';
+  appearance: string;
+  short: string;
+}
+
+/** Assign a DIFFERENT voice + face to every 10s batch (testimonial style). */
+export function assignBatchSpeakers(total: number): BatchSpeaker[] {
+  const out: BatchSpeaker[] = [];
+  for (let i = 0; i < total; i++) {
+    const p = STORY_TESTIMONIAL_PERSONAS[i % STORY_TESTIMONIAL_PERSONAS.length];
+    out.push({ batchIndex: i + 1, voice: p.voice, person: p.person, appearance: p.appearance, short: p.short });
+  }
+  return out;
+}
+
+export interface BatchTestimonialPromptInput {
+  batch: StoryBatch;
+  speaker: BatchSpeaker;
+  aspect: string;
+  width: number;
+  height: number;
+  platformLabel: string;
+  vibeLabel: string;
+  brandName?: string;
+  device: StoryDevice | string;
+  musicId?: string;
+  showPerson?: boolean;
+}
+
 export interface CombinedStoryPromptInput {
   batches: StoryBatch[];
   musicId?: string;
@@ -365,6 +406,47 @@ export function buildCombinedStoryPrompt(input: CombinedStoryPromptInput): strin
   lines.push(``);
   lines.push(sourceLine);
   return lines.join('\n');
+}
+
+/** One self-contained 10s Meta.ai prompt: its own voice + face + lines. */
+export function buildBatchTestimonialPrompt(input: BatchTestimonialPromptInput): string {
+  const { batch, speaker } = input;
+  const music = storyMusicById(input.musicId || 'none');
+  const showPerson = input.showPerson !== false;
+  const person = voicePerson(speaker.voice);
+  const poss = person === 'woman' ? 'her' : person === 'man' ? 'his' : 'their';
+  const him = person === 'woman' ? 'her' : person === 'man' ? 'him' : 'them';
+  const source = deviceSourceLabel(input.device);
+  const screenNoun = input.device === 'Mobile phone' ? 'a phone screen' : `a ${String(input.device).toLowerCase()} screen`;
+  const orientation = input.aspect === '16:9' ? 'landscape widescreen' : input.aspect === '1:1' ? 'square' : input.aspect === '4:5' ? 'vertical portrait' : 'vertical full-screen';
+  const brandBit = input.brandName ? ` for ${input.brandName}` : '';
+  const audioLine = music.prompt
+    ? `- Audio: ${speaker.voice} voice front and center, clear studio quality. Underneath: ${music.prompt} at low background level (~-20dB, ducked while speaking) so the voice stays fully clear. No lyrics.`
+    : `- Audio: ${speaker.voice} voice, clear studio quality. Voice only — no background music, no sound effects.`;
+  const visualLine = showPerson
+    ? `- Visual: ${speaker.appearance} speaking to camera as a happy-customer testimonial, using the app on ${poss} ${input.device}; cut between ${him} and close-ups of the attached ${source.toLowerCase()} screenshots on the ${input.device} screen. UI straight from attachments (never redesigned) but alive — taps, scrolling, popups. Bright, cinematic, real-app look.`
+    : `- Visual: full-screen app footage only — attached ${source.toLowerCase()} screenshots fill ${screenNoun}, straight from attachments (never redesigned) but alive: taps, scrolls, popups. No person, actor, avatar, or face at any point. Bright, cinematic, real-app look.`;
+  const openLine = showPerson
+    ? `Make a video of a ${speaker.voice} voice saying: "${batch.text}" while showing ${speaker.appearance} speaking directly to camera as testimonial speaker ${batch.index}, using the app on ${poss} ${input.device} with the attached screenshots.`
+    : `Make a voiceover video with a ${speaker.voice} voice saying: "${batch.text}" over full-screen app footage from the attached screenshots on ${screenNoun} — voiceover only, no person on camera, no actor, no avatar. This is Part ${batch.index} of ${batch.total}.`;
+  return [
+    `Make a ${batch.batchSec}-second ${orientation} customer-testimonial video (Part ${batch.index} of ${batch.total}, ${input.aspect}, ${input.width}x${input.height}) for ${input.platformLabel}${brandBit} with a ${input.vibeLabel.toLowerCase()} vibe.`,
+    ``,
+    openLine,
+    ``,
+    `This is a DIFFERENT speaker from the other parts — new face, new voice. Keep the SAME ${input.aspect} framing, SAME ${input.device} screen, SAME ${input.vibeLabel.toLowerCase()} style so the parts stitch into one ${batch.total}-person testimonial commercial. Do NOT repeat other parts' lines. Do NOT add an intro/outro.`,
+    ``,
+    `Requirements:`,
+    `- Total runtime: exactly ${batch.batchSec} seconds — voiceover starts immediately and ends the instant the last word is spoken: cut immediately, no pause, no trailing silence, no hold on the last frame, so the stitched video flows with no gaps.`,
+    `- Screen ratio: ${input.aspect} (${input.width}x${input.height}) — fill the full frame, no black bars.`,
+    `- Platform: ${input.platformLabel}. Vibe: ${input.vibeLabel.toLowerCase()} delivery and visuals.`,
+    visualLine,
+    audioLine,
+    `- Screenshot use (STRICT but ALIVE): every pixel of app UI comes from the attached screenshots — no redesign, no fake UI. You MAY show taps, scrolling, popups from the screenshots, and recombine cropped regions from the SAME set. All UI stays readable.`,
+    `- No burned-in text overlays or auto-subtitles (captions are added later).`,
+    ``,
+    `I have attached screenshots of the ${source} — show them on the ${input.device} screen in this part, giving each screenshot fair screen time.`,
+  ].join('\n');
 }
 
 export function copyText(text: string): Promise<void> {
