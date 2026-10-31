@@ -4,6 +4,7 @@
 
 ## What Works ✅
 - `npm run build` passes (13 routes: /, /studio, 8 APIs).
+- Business paste-card removed (2026-10-31): `SourceHub.tsx` has no paste textarea/addSnippet/snippet list — Final script card is a single always-visible editable textarea (write/paste directly, approve gates Continue, edit resets approval); draft sends `extraContext: ''`. Store `snippets` kept only for legacy saves. Build ✅.
 - Durations locked to 10s batches (2026-10-31): Setup How-long offers 10/20/30/60s only (5s + 15s removed); TikTok/Reels/Shorts = 10s or 20s. `normalizeDurationSec()` (config/platforms) snaps legacy 5→10, 15→20; enforced in store set/open, ConfigureStep, spark master+organize, legacy local load. Defaults 20s; mocks + cost estimate re-based. Build ✅.
 - Story 10s testimonial batches (2026-10-30): one self-contained Meta.ai prompt per ~10s part via `buildBatchTestimonialPrompt()` — own voice+face+lines, DIFFERENT-speaker continuity, same aspect/device/vibe/music, tight endings, strict-but-alive screenshots, device-specific footer. Cast: 6 personas (`STORY_TESTIMONIAL_PERSONAS` + `assignBatchSpeakers()`), per-part recast dropdowns. Split auto-verified (proportional check + rebalance + copy guard). Export stitch joins parts into one N-person testimonial. Build ✅.
 - Landing + 8-step wizard renders; demo mode works keyless (`/studio?demo=1`).

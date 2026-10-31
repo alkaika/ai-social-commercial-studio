@@ -31,7 +31,7 @@ Legacy per-scene detail (kept for reference, no longer on Story page):
 
 ## Scope Locked
 - Writer choice at start of EVERY project: exact 3-row table (Input $1.25 vs $0.10 / Output $4.25 vs $0.20 / Data rights). No pros/cons. Source: `config/pricing.ts`.
-- Source Hub: multi-URL scrape + uploads + snippets with pinned must-use-verbatim.
+- Source Hub: multi-URL scrape + uploads + Final script box (paste-card removed 2026-10-31 — no snippets/pins; users write/paste directly in the Final script). Draft-from-website sends `extraContext: ''`.
 - Simple Mode default (storyboard cards), Advanced timeline hidden behind button.
 - Revision loop: manual edit + quick buttons + Director's Notes chat, preview-and-approve, locked scenes skipped, pinned preserved.
 - Exports: TikTok/Reels/Shorts 9:16, IG 4:5, Square 1:1, Landscape 16:9 + SRT + script.txt.

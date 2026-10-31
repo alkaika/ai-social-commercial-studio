@@ -5,12 +5,11 @@ import { useKeyStore } from '@/stores/keyStore';
 import { masterFit } from '@/lib/script-utils';
 
 export default function SourceHub({ onDone, onBack }: { onDone: () => void; onBack?: () => void }) {
-  const { urls, set, snippets, assets, brand, durationSec, platform, tone, sparkModel, masterScript, masterApproved, scriptGuidance, projectId } = useProject();
+  const { urls, set, assets, brand, durationSec, platform, tone, sparkModel, masterScript, masterApproved, scriptGuidance, projectId } = useProject();
   const { key, baseUrl } = useKeyStore() as any;
   const [urlInput, setUrlInput] = useState('');
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState('');
-  const [paste, setPaste] = useState('');
   const [drafting, setDrafting] = useState(false);
 
   const addUrl = () => {
@@ -40,12 +39,12 @@ export default function SourceHub({ onDone, onBack }: { onDone: () => void; onBa
         if (aboutStory) {
           setMsg(`Found “${first.brandName}” + brand story from about page (${aboutSource}). Your script will be built around it.`);
         } else if (needsJs) {
-          setMsg(`Found “${first.brandName}”, but its pages load content with JavaScript — I can see the shell but not the words (this includes the about page). Paste 2–3 sentences about your story below, or open the about page in your browser and copy the text — then tap “Draft my script”.`);
+          setMsg(`Found "${first.brandName}", but its pages load content with JavaScript - I can see the shell but not the words. Just write your story in the Final script box below, then tap "Draft my script".`);
         } else {
-          setMsg(`Found “${first.brandName}”. No about page found — add your story below or the script leans on the homepage.`);
+          setMsg(`Found "${first.brandName}". No about page found - the script will lean on the homepage, or just write your version in the Final script box below.`);
         }
       } else {
-        setMsg('That website would not let us read it. No problem — paste your text below or upload photos instead.');
+        setMsg('That website would not let us read it. No problem - upload photos instead, or just write your script in the Final script box below.');
       }
     } catch (e: any) { setMsg(e.message); } finally { setBusy(false); }
   }
@@ -66,22 +65,18 @@ export default function SourceHub({ onDone, onBack }: { onDone: () => void; onBa
     set({ assets: next });
   };
 
-  const addSnippet = (kind: string) => {
-    if (!paste.trim()) return;
-    set({ snippets: [...snippets, { id: `${Date.now()}`, kind, text: paste.trim(), pinned: false }] });
-    setPaste('');
-  };
-
   const hdr = () => ({ 'Content-Type': 'application/json', 'x-meta-key': key || 'DEMO', 'x-meta-base-url': baseUrl || '' });
+  // Legacy: pre-2026-10-31 projects may carry snippets (paste-card). No UI to add
+  // new ones - the Final script box is the single place to write/paste.
 
   async function draftMaster() {
-    if (!brand.brandName && !brand.description && !brand.aboutStory && snippets.length === 0) {
-      setMsg('Add a website, photos, or pasted text first — then I can draft your script.');
+    if (!brand.brandName && !brand.description && !brand.aboutStory) {
+      setMsg('Scan a website above first - or just write your own script in the Final script box below, then approve it.');
       return;
     }
     setDrafting(true); setMsg('Drafting your script with your settings (length, platform, vibe) + website story…');
     try {
-      const extra = snippets.map((s) => `${s.kind}${s.pinned ? ' (MUST USE VERBATIM)' : ''}: ${s.text}`).join('\n');
+      const extra = '';
       const res = await fetch('/api/muse/script', {
         method: 'POST', headers: hdr(),
         body: JSON.stringify({ mode: 'master', brand, durationSec, platform, tone, sparkModel, extraContext: extra, guidance: scriptGuidance }),
@@ -93,13 +88,12 @@ export default function SourceHub({ onDone, onBack }: { onDone: () => void; onBa
     } catch (e: any) { setMsg(e.message); } finally { setDrafting(false); }
   }
 
-  const wordCount = masterScript.trim() ? masterScript.trim().split(/\s+/).length : 0;
 
   return (
     <div className="space-y-4">
       <div className="card space-y-3">
         <h2 className="text-xl font-bold">🏢 Tell us about your business</h2>
-        <p className="text-sm text-neutral-600">Add a website, your own photos, or paste text — use any or all of them.</p>
+        <p className="text-sm text-neutral-600">Add a website and your own photos — we draft your script from them.</p>
         <label className="text-sm font-medium">Website address(es)</label>
         <div className="flex gap-2">
           <input className="input" placeholder="https://yourbusiness.com" value={urlInput} onChange={(e) => setUrlInput(e.target.value)} />
@@ -157,26 +151,6 @@ export default function SourceHub({ onDone, onBack }: { onDone: () => void; onBa
       </div>
 
       <div className="card space-y-3">
-        <h3 className="font-semibold">📝 Paste your own content (optional, free)</h3>
-        <textarea className="input" rows={3} placeholder="Paste product description, offer, reviews…" value={paste} onChange={(e) => setPaste(e.target.value)} />
-        <div className="flex flex-wrap gap-2">
-          {['Description', 'Offer', 'Review', 'Must-use line'].map((k) => (
-            <button key={k} className="btn-secondary" onClick={() => addSnippet(k)}>+ {k}</button>
-          ))}
-        </div>
-        {snippets.length > 0 && (
-          <ul className="space-y-2">
-            {snippets.map((s) => (
-              <li key={s.id} className="border rounded-xl p-2 text-sm flex justify-between gap-2">
-                <span><span className="badge mr-2">{s.kind}</span>{s.text}</span>
-                <button className="text-xs underline" onClick={() => set({ snippets: snippets.map((x) => x.id === s.id ? { ...x, pinned: !x.pinned } : x) })}>{s.pinned ? '📌 Pinned (must use)' : 'Pin as must-use'}</button>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
-
-      <div className="card space-y-3">
         <h3 className="font-semibold">💬 Guide the script — what should it focus on or leave out?</h3>
         <p className="text-sm text-neutral-600">Tell the app in your own words. It is read before every draft — e.g. “Focus on family-owned mornings, skip pricing” or “Leave out the delivery angle, end on the BOGO offer”. Saved with your project; edit it any time and re-draft.</p>
         <textarea className="input" rows={2} value={scriptGuidance} onChange={(e) => set({ scriptGuidance: e.target.value })} placeholder='e.g. "Focus on the morning ritual and neighbors, leave out delivery…"' />
@@ -187,24 +161,19 @@ export default function SourceHub({ onDone, onBack }: { onDone: () => void; onBa
         <p className="text-sm text-neutral-600">Drafted from your website + about page with your Setup picks (length, platform, vibe) already in mind. Edit it freely — this exact wording is what the app will organize into scenes. Nothing downstream runs until you approve it.</p>
         <div className="flex flex-wrap gap-2">
           <button className="btn-secondary" disabled={drafting} onClick={draftMaster}>{drafting ? 'Drafting…' : masterScript ? '🔄 Re-draft from sources' : '✨ Draft my script from website'}</button>
-          {masterScript && !masterApproved && (
+          {masterScript.trim() && !masterApproved && (
             <button className="btn-primary" onClick={() => set({ masterApproved: true })}>Approve this script →</button>
           )}
           {masterApproved && <span className="badge">✅ Approved — Story step will organize this</span>}
         </div>
-        {masterScript ? (
-          <>
-            <textarea className="input" rows={8} value={masterScript} onChange={(e) => set({ masterScript: e.target.value, masterApproved: false })} />
-            <div className="flex justify-between items-center text-xs text-neutral-500">
-              <span>{(() => { const f = masterFit(masterScript, durationSec); return `${f.wordCount} words · target ~${f.targetWords} for ${durationSec}s · runs ~${f.secAtNatural}s at natural pace${f.fitsNatural ? ' ✅ fits' : f.fitsWithCadence ? ' · fits with cadence' : ` · needs cadence or trim (~${f.secAtMax}s even at 1.2x)`}`; })()}</span>
-              <button className="underline" onClick={() => { set({ masterScript: '', masterApproved: false }); }}>Clear draft</button>
-            </div>
-          </>
+        <textarea className="input" rows={8} value={masterScript} onChange={(e) => set({ masterScript: e.target.value, masterApproved: false })} placeholder="Or write/paste your final script here…" />
+        {masterScript.trim() ? (
+          <div className="flex justify-between items-center text-xs text-neutral-500">
+            <span>{(() => { const f = masterFit(masterScript, durationSec); return `${f.wordCount} words · target ~${f.targetWords} for ${durationSec}s · runs ~${f.secAtNatural}s at natural pace${f.fitsNatural ? ' ✅ fits' : f.fitsWithCadence ? ' · fits with cadence' : ` · needs cadence or trim (~${f.secAtMax}s even at 1.2x)`}`; })()}</span>
+            <button className="underline" onClick={() => { set({ masterScript: '', masterApproved: false }); }}>Clear draft</button>
+          </div>
         ) : (
-          <p className="text-sm text-neutral-500 border border-dashed rounded-xl p-3">No script yet — scan a website above, then tap “Draft my script from website”. You can also just type/paste your own script here.</p>
-        )}
-        {!masterScript && (
-          <textarea className="input" rows={4} placeholder="Or write/paste your final script here…" onChange={(e) => set({ masterScript: e.target.value, masterApproved: false })} />
+          <p className="text-sm text-neutral-500 border border-dashed rounded-xl p-3">No script yet — scan a website above, then tap “Draft my script from website”. You can also just type/paste your own script above.</p>
         )}
       </div>
 
