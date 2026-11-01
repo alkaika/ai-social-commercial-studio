@@ -11,7 +11,7 @@ import { useProject } from '@/stores/projectStore';
 const voiceKey = (pid: string, i: number) => `${pid}:voice-part-${i + 1}`;
 
 export default function VoiceMp3Card({ batches }: { batches: StoryBatch[] }) {
-  const { projectId, set, voicePartUrls, voicePartNames } = useProject();
+  const { projectId, set, voicePartUrls, voicePartNames, durationSec } = useProject();
   const [voice, setVoice] = useState<string>(STORY_VOICES[0] as string);
   const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
   const [msg, setMsg] = useState('');
@@ -19,9 +19,10 @@ export default function VoiceMp3Card({ batches }: { batches: StoryBatch[] }) {
 
   const parts = useMemo(() => (batches?.length ? batches : []), [batches]);
   const total = parts.length || 1;
+  const fullLen = parts.reduce((a, b) => a + (b.batchSec || 0), 0) || total * 10;
   const prompts = useMemo(
-    () => parts.map((b) => buildVoiceBatchPrompt({ text: b.text, index: b.index, total, batchSec: b.batchSec, voice })),
-    [parts, total, voice]
+    () => parts.map((b) => buildVoiceBatchPrompt({ text: b.text, index: b.index, total, batchSec: b.batchSec, voice, totalDurationSec: fullLen || durationSec })),
+    [parts, total, voice, fullLen, durationSec]
   );
 
   const doCopy = async (i: number) => {
@@ -94,7 +95,7 @@ export default function VoiceMp3Card({ batches }: { batches: StoryBatch[] }) {
   return (
     <div className="space-y-3 border rounded-xl p-3">
       <p className="font-medium text-sm">Voice MP3s — one per part ({done}/{total})</p>
-      <p className="text-xs text-neutral-600">Meta.ai caps voice at ~10s too. Same narrator voice for all parts. Export joins them in order.</p>
+      <p className="text-xs text-neutral-600">Meta.ai caps voice at ~10s too. Same narrator voice for all parts. The LAST part asks Meta.ai to stitch all MP3s into one file — download that first; our Export join is the fallback.</p>
       <label className="block text-sm space-y-1">
         <span className="font-medium">Narrator voice (all parts)</span>
         <select className="input" value={voice} onChange={(e) => setVoice(e.target.value)}>
@@ -117,8 +118,9 @@ export default function VoiceMp3Card({ batches }: { batches: StoryBatch[] }) {
       ))}
       <ol className="list-decimal ml-5 text-sm text-neutral-700 space-y-1">
         <li>Copy Part 1, open meta.ai, generate + download the MP3. Repeat per part (same voice).</li>
-        <li>Upload each MP3 under its part.</li>
-        <li>Export: add images, Build — parts join in order.</li>
+        <li>The LAST part asks Meta.ai to stitch all MP3s — download that finished file first.</li>
+        <li>Upload each MP3 under its part (or just the stitched file under Part 1).</li>
+        <li>Export: add images, Build — parts join in order (fallback if Meta.ai did not stitch).</li>
       </ol>
       {msg && <p className="text-sm bg-neutral-100 border rounded-xl p-3">{msg}</p>}
     </div>

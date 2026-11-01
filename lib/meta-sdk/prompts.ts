@@ -394,6 +394,7 @@ export interface BatchTestimonialPromptInput {
   device: StoryDevice | string;
   musicId?: string;
   showPerson?: boolean;
+  totalDurationSec?: number;
 }
 
 export interface CombinedStoryPromptInput {
@@ -519,6 +520,11 @@ export function buildBatchTestimonialPrompt(input: BatchTestimonialPromptInput):
   const titleLine = showPerson
     ? `Make a ${batch.batchSec}-second ${orientation} customer-testimonial video (Part ${batch.index} of ${batch.total}, ${input.aspect}, ${input.width}x${input.height}) for ${input.platformLabel}${brandBit} with a ${input.vibeLabel.toLowerCase()} vibe.`
     : `Make a ${batch.batchSec}-second ${orientation} voiceover video (Part ${batch.index} of ${batch.total}, ${input.aspect}, ${input.width}x${input.height}) for ${input.platformLabel}${brandBit} with a ${input.vibeLabel.toLowerCase()} vibe.`;
+  const isLast = batch.total > 1 && batch.index === batch.total;
+  const fullLen = input.totalDurationSec || batch.total * batch.batchSec;
+  const stitchLine = isLast
+    ? `FINAL STEP — STITCH FIRST: you now have all ${batch.total} voice + video parts. Stitch/join them in order (Part 1 → Part ${batch.total}) into ONE finished ${fullLen}-second ${input.aspect} commercial for ${input.platformLabel} — matching ${input.vibeLabel.toLowerCase()} style throughout, tight cuts with no gaps between parts. Output/download that single stitched video as the final result (keep the individual parts too). If you cannot stitch in-app, export the parts separately in order and I will join them.`
+    : '';
   const continuityLine = showPerson
     ? `This is a DIFFERENT speaker from the other parts — new face, new voice. Keep the SAME ${input.aspect} framing, SAME ${input.device} screen, SAME ${input.vibeLabel.toLowerCase()} style so the parts stitch into one ${batch.total}-person testimonial commercial. Do NOT repeat other parts' lines. Do NOT add an intro/outro.`
     : `This is a DIFFERENT voice from the other parts — new voice, same delivery style. Keep the SAME ${input.aspect} framing, SAME ${input.device} screen, SAME ${input.vibeLabel.toLowerCase()} style so the parts stitch into one ${batch.total}-part voiceover commercial. Do NOT repeat other parts' lines. Do NOT add an intro/outro.`;
@@ -529,6 +535,7 @@ export function buildBatchTestimonialPrompt(input: BatchTestimonialPromptInput):
     ``,
     continuityLine,
     ``,
+    ...(isLast ? [stitchLine, ``] : []),
     `Requirements:`,
     `- Total runtime: exactly ${batch.batchSec} seconds — voiceover starts immediately and ends the instant the last word is spoken: cut immediately, no pause, no trailing silence, no hold on the last frame, so the stitched video flows with no gaps.`,
     `- Screen ratio: ${input.aspect} (${input.width}x${input.height}) — fill the full frame, no black bars.`,
@@ -561,20 +568,27 @@ export interface VoiceBatchPromptInput {
   total: number;
   batchSec: number;
   voice: string;
+  totalDurationSec?: number;
 }
 
 /** One voice-only MP3 prompt per ~10s batch: Part i of n with its own lines.
  * Same voice across all parts of the commercial (one narrator), so parts
- * join seamlessly under the Ken Burns motion. */
+ * join seamlessly under the Ken Burns motion. The LAST part asks Meta.ai
+ * to stitch all MP3s first (app join is the fallback). */
 export function buildVoiceBatchPrompt(input: VoiceBatchPromptInput): string {
   const line = (input.text || '').trim().replace(/\s+/g, ' ');
   const partBit = input.total > 1 ? ` (Part ${input.index} of ${input.total})` : '';
+  const isLast = input.total > 1 && input.index === input.total;
+  const fullLen = input.totalDurationSec || input.total * input.batchSec;
+  const stitchBit = isLast
+    ? `\n\nFINAL STEP — STITCH FIRST: you now have all ${input.total} voice MP3 parts. Stitch/join them in order (Part 1 → Part ${input.total}) into ONE finished ~${fullLen}-second voiceover MP3 — same ${input.voice} voice throughout, tight cuts with no gaps or silence between parts. Output/download that single stitched MP3 as the final result (keep the individual parts too). If you cannot stitch in-app, export the parts separately in order and I will join them.`
+    : '';
   return [
     `Make a ${input.batchSec}-second audio-only voiceover MP3 of a ${input.voice} voice saying word-for-word${partBit}: "${line}"`,
     ``,
     `Voice only — no video, no music, no sound effects, no background noise.`,
     `Clear studio quality, natural pacing, exact words only, in order. SAME voice as the other parts — one narrator for the whole commercial.`,
-    `One take, no intro/outro. Exactly ~${input.batchSec} seconds — start immediately, end the instant the last word is spoken, no trailing silence so the parts join with no gaps.`,
+    `One take, no intro/outro. Exactly ~${input.batchSec} seconds — start immediately, end the instant the last word is spoken, no trailing silence so the parts join with no gaps.${stitchBit}`,
   ].join('\n');
 }
 

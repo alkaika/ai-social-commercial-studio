@@ -74,8 +74,8 @@ export default function ExportStep({ onBack }: { onBack?: () => void }) {
       </div>
       {kbMode ? (<KenBurnsExportCard />) : (
       <div className="card space-y-3">
-        <h3 className="font-semibold">Stitch my parts — one final MP4 (free, in browser)</h3>
-        <p className="text-sm text-neutral-600">Upload the {need} Part MP4(s) from meta.ai in order. Open-source FFmpeg joins them on your device — nothing uploads.</p>
+        <h3 className="font-semibold">Fallback: stitch my parts — one final MP4 (free, in browser)</h3>
+        <p className="text-sm text-neutral-600">Meta.ai should stitch the parts for you on the last paste — download that finished file first. Only use this if Meta.ai gave you separate Part MP4s: upload the {need} Part MP4(s) in order. Open-source FFmpeg joins them on your device — nothing uploads.</p>
         <input ref={inputRef} type="file" accept="video/mp4,video/*,.mp4" multiple className="hidden" onChange={(e) => onPick(e.target.files)} />
         <div className="flex flex-wrap gap-2">
           <button className="btn-secondary" onClick={() => inputRef.current?.click()}>Upload Part MP4s ({parts.length}/{need})</button>

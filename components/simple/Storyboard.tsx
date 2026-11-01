@@ -50,6 +50,7 @@ export default function Storyboard({ onDone, onBack }: { onDone: () => void; onB
     batch: b, speaker: speakers[i] || autoSpeakers[i] || autoSpeakers[0],
     aspect: pf.aspect, width: pf.width, height: pf.height, platformLabel: pf.label, vibeLabel: vibe,
     brandName: brand.brandName || undefined, device, musicId, showPerson,
+    totalDurationSec: durationSec,
   })), [batches, speakers]);
   const doCopy = async (i: number) => {
     try { await copyText(prompts[i]); setCopiedIdx(i); setMsg(`Part ${i + 1} copied — paste into meta.ai (attach ${source} screenshots). ${showPerson ? `Speaker: ${speakers[i]?.short} (${speakers[i]?.voice}).` : `Voice: ${speakers[i]?.voice} (voiceover only, no person on camera).`}`); setTimeout(() => setCopiedIdx(null), 2500); }
@@ -123,7 +124,7 @@ export default function Storyboard({ onDone, onBack }: { onDone: () => void; onB
             <div className="flex flex-wrap gap-2"><button className="btn-primary" onClick={() => doCopy(i)}>{copiedIdx === i ? '✅ Copied!' : `📋 Copy part ${i + 1}`}</button><a className="btn-secondary" href={META_AI_URL} target="_blank" rel="noreferrer">Open meta.ai →</a></div>
           </div>
         ))}
-        {mode !== 'voice-kenburns' && (<ol className="list-decimal ml-5 text-sm text-neutral-700 space-y-1"><li>Copy Part 1, open meta.ai, pick Instant/Thinking, attach {source} screenshots, generate + download.</li><li>{showPerson ? (<>Repeat per part — different speaker each time ({speakers.map((s) => s.short).join(' → ')}), same {pf.aspect} + {device} + {vibe.toLowerCase()} vibe.</>) : (<>Repeat per part — different voice each time ({speakers.map((s) => s.voice).join(' → ')}), same {pf.aspect} + {device} + {vibe.toLowerCase()} vibe. Voiceover only, no person on camera.</>)} </li><li>Stitch the {prompts.length} clips in order (Export step) → one {durationSec}s {pf.label} {showPerson ? 'testimonial' : 'voiceover'}.</li></ol>)}
+        {mode !== 'voice-kenburns' && (<ol className="list-decimal ml-5 text-sm text-neutral-700 space-y-1"><li>Copy Part 1, open meta.ai, pick Instant/Thinking, attach {source} screenshots, generate + download.</li><li>{showPerson ? (<>Repeat per part — different speaker each time ({speakers.map((s) => s.short).join(' → ')}), same {pf.aspect} + {device} + {vibe.toLowerCase()} vibe.</>) : (<>Repeat per part — different voice each time ({speakers.map((s) => s.voice).join(' → ')}), same {pf.aspect} + {device} + {vibe.toLowerCase()} vibe. Voiceover only, no person on camera.</>)} </li><li>On the LAST part, the prompt asks Meta.ai to stitch all parts into one {durationSec}s video — download that finished file. If Meta.ai only gives separate parts, stitch them in order in the Export step → one {durationSec}s {pf.label} {showPerson ? 'testimonial' : 'voiceover'} (our in-app stitch is the fallback).</li></ol>)}
         {msg && <p className="text-sm bg-neutral-100 border rounded-xl p-3 whitespace-pre-wrap">{msg}</p>}
       </div>
       <div className="flex justify-between items-center"><button className="btn-secondary" onClick={onBack}>← Back</button><button className="btn-primary" onClick={goNext}>Looks good — continue to export →</button></div>

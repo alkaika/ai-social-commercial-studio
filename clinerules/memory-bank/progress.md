@@ -3,6 +3,7 @@
 > Living note — status as of last push. `clinerules/` is intentionally committed (no secrets inside) so clones carry the why, not just the what.
 
 ## What Works ✅
+- Meta.ai stitch first, app fallback (2026-11-01): last 10s batch prompt asks Meta.ai to join all parts into one finished file (video + voice MP3 paths); Story steps say download the stitched file first; Export FFmpeg cards relabeled "Fallback". `tsc --noEmit` ✅.
 - Final script EXACT word count (2026-11-01): drafts always land on EXACTLY target words (20s=70, 60s=210) — prompt + retry + deterministic pad/trim backstop; readouts show "exactly N ✅ exact or ±delta". `tsc` ✅ build ✅.
 - Story auto-rebalance, zero manual work (2026-11-01): `splitScriptIntoBalancedBatches()` (sentence-aware + auto-rebalance on drift >6/empty) drives `Storyboard` live; manual Rebalance button + copy/continue gates removed. `tsc --noEmit` ✅.
 - Export stitch freeze fixed (2026-11-01, pushed `8302257`): `stitchParts()` always normalizes + re-encodes (`+genpts`, 30fps/yuv420p + AAC, `make_zero`, `faststart`, `-an` fallback) — 20s-but-stalls-at-9s concat-copy bug gone. `tsc --noEmit` ✅.
