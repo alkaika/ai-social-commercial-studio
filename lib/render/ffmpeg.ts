@@ -25,6 +25,11 @@ let latestProgress: ((p: number) => void) | null = null;
 /** Current phase maps raw FFmpeg 0..1 progress into a sub-range of 0..100. */
 let progressBase = 0;
 let progressSpan = 100;
+/** Highest value emitted in the current phase — progress never goes backwards. */
+let progressFloor = 0;
+/** Expected output duration (µs) of the current phase; lets the handler derive
+ * an honest fraction from the event `time` when `progress` itself is garbage. */
+let phaseExpectedUs = 0;
 const logLines: string[] = [];
 // The class-worker MUST be same-origin (plain absolute URL). Only
 // coreURL/wasmURL fall back to CDN files — a same-origin module worker CAN
@@ -49,7 +54,7 @@ function pushLog(m: string) { logLines.push(m); if (logLines.length > 120) logLi
 export function resetFFmpeg() {
   try { ff?.terminate(); } catch { /* worker may never have spawned */ }
   ff = null; loading = null; progressWired = false; latestProgress = null;
-  progressBase = 0; progressSpan = 100; logLines.length = 0;
+  progressBase = 0; progressSpan = 100; progressFloor = 0; phaseExpectedUs = 0; logLines.length = 0;
 }
 
 /** Raw FFmpeg progress is only trustworthy as a 0..1 fraction. Looped-image
@@ -62,25 +67,50 @@ function clampProgress01(n: unknown): number | null {
   return Math.min(1, Math.max(0, n));
 }
 
+/** Single exit point for progress values: always an integer in 0..100, so a
+ * wild FFmpeg event can never reach React state (the "-481006800%" bug). */
+function emitProgress(v: number) {
+  if (!latestProgress) return;
+  latestProgress(Math.max(0, Math.min(100, Math.round(v))));
+}
+
 function wireProgress(inst: FFmpeg, onProgress?: (p: number) => void) {
   latestProgress = onProgress ?? null;
+  progressFloor = 0; phaseExpectedUs = 0;
   if (!progressWired) {
     progressWired = true;
-    inst.on('progress', ({ progress }: { progress: number }) => {
+    inst.on('progress', ({ progress, time }: { progress: number; time: number }) => {
+      if (!latestProgress) return;
+      // Two independent estimates of the phase fraction: the core's own
+      // `progress` (only when sane) and `time / expected duration` (the core
+      // reports output time in µs; concat inputs can make `progress` itself
+      // hugely negative, e.g. -4810068, even though encoding is healthy).
+      const fracs: number[] = [];
       const c = clampProgress01(progress);
-      if (c === null || !latestProgress) return;
-      latestProgress(Math.max(0, Math.min(100, Math.round(progressBase + c * progressSpan))));
+      if (c !== null) fracs.push(c);
+      if (phaseExpectedUs > 0 && typeof time === 'number' && Number.isFinite(time) && time > 0) {
+        const tc = time / phaseExpectedUs;
+        if (tc >= 0 && tc <= 1.05) fracs.push(Math.min(1, tc));
+      }
+      if (!fracs.length) return;
+      const v = progressBase + Math.max(...fracs) * progressSpan;
+      if (v < progressFloor) return; // monotonic: the bar never runs backwards
+      progressFloor = v;
+      emitProgress(v);
     });
   }
 }
 
 /** Move the bar into a sub-range for the current phase and announce the step.
  * Pushes the phase start immediately so the UI never looks stuck when raw
- * progress events are indeterminate (looped images). */
-function setPhase(base: number, span: number, onStep?: (s: string) => void, label?: string) {
+ * progress events are indeterminate (looped images). `expectedSec` is the
+ * phase's expected output duration, used for time-based progress. */
+function setPhase(base: number, span: number, onStep?: (s: string) => void, label?: string, expectedSec?: number) {
   progressBase = base; progressSpan = span;
+  phaseExpectedUs = expectedSec && Number.isFinite(expectedSec) && expectedSec > 0 ? expectedSec * 1_000_000 : 0;
+  progressFloor = base;
   if (label && onStep) onStep(label);
-  latestProgress?.(Math.max(0, Math.min(100, Math.round(base))));
+  emitProgress(base);
 }
 
 // NOTE: the ffmpeg web-worker rejects with a PLAIN STRING (e.toString()),
@@ -133,6 +163,31 @@ export async function loadFFmpeg(onLog?: (m: string) => void): Promise<FFmpeg> {
   }
 }
 
+/** Real duration of a video File via metadata probe (client-only; undefined
+ * when unreadable). Used to drive time-based stitch progress. */
+function probeVideoDurationSec(f: File): Promise<number | undefined> {
+  if (typeof document === 'undefined') return Promise.resolve(undefined);
+  return new Promise((resolve) => {
+    let done = false;
+    let url = '';
+    const finish = (d?: number) => {
+      if (done) return;
+      done = true;
+      if (url) setTimeout(() => URL.revokeObjectURL(url), 2000);
+      resolve(d);
+    };
+    try {
+      url = URL.createObjectURL(f);
+      const v = document.createElement('video');
+      v.preload = 'metadata';
+      v.onloadedmetadata = () => finish(Number.isFinite(v.duration) && v.duration > 0 ? v.duration : undefined);
+      v.onerror = () => finish(undefined);
+      v.src = url;
+      setTimeout(() => finish(undefined), 8000);
+    } catch { finish(undefined); }
+  });
+}
+
 export interface StitchResult { blob: Blob; url: string; sizeBytes: number; usedRecode: boolean; log: string }
 
 /** Concat N mp4 parts in order. Checks exec exit codes; throws actionable errors. */
@@ -177,7 +232,13 @@ export async function stitchParts(
   // regenerated PTS (+genpts/make_zero) and faststart for preview.
   const w = opts.width || 1080;
   const h = opts.height || 1920;
-  setPhase(5, 95, opts.onStep, 'Joining + normalizing clips…');
+  // Probe real part durations so progress can be driven by output time —
+  // the core's own progress fraction is unreliable for concat inputs.
+  const partSecs = await Promise.all(files.map((f) => probeVideoDurationSec(f)));
+  const totalSec = partSecs.every((d) => typeof d === 'number' && d > 0)
+    ? (partSecs as number[]).reduce((a, b) => a + b, 0)
+    : undefined;
+  setPhase(5, 95, opts.onStep, 'Joining + normalizing clips…', totalSec);
   let code: number;
   let usedRecode = true;
   const baseArgs = [
@@ -197,7 +258,7 @@ export async function stitchParts(
   }
   if (code !== 0) {
     // One/all parts may have no audio track — retry as video-only.
-    setPhase(5, 95, opts.onStep, 'No audio track detected — joining video…');
+    setPhase(5, 95, opts.onStep, 'No audio track detected — joining video…', totalSec);
     try { await ffmpeg.deleteFile(out); } catch { /* retry fresh */ }
     const noAudioArgs = [
       '-fflags', '+genpts',
@@ -225,6 +286,7 @@ export async function stitchParts(
   const bytes = new Uint8Array(data);
   if (!bytes.length) throw new Error(`Join produced an empty file. Re-download the parts and retry.\n\nTechnical detail:\n${tailLog()}`);
   const blob = new Blob([bytes.buffer as ArrayBuffer], { type: 'video/mp4' });
+  emitProgress(100);
   return { blob, url: URL.createObjectURL(blob), sizeBytes: blob.size, usedRecode, log: tailLog(30) };
 }
 
@@ -255,6 +317,7 @@ export async function buildKenBurnsCommercial(opts: {
   if (emptyImg) throw new Error(`"${emptyImg.name}" is 0 bytes — re-save that screenshot and try again.`);
   const emptyAud = audioParts.find((f) => !f.size);
   if (emptyAud) throw new Error(`"${emptyAud.name}" is 0 bytes — re-download it from meta.ai and try again.`);
+
   const probed = audioParts.map((_, i) => {
     const d = opts.audioSecs?.[i];
     return d && Number.isFinite(d) && d > 0.5 ? d : undefined;
@@ -310,7 +373,7 @@ export async function buildKenBurnsCommercial(opts: {
   // (also extracts the audio when Meta.ai handed back an MP4).
   const vName = 'kb_voice_full.m4a';
   try { await ffmpeg.deleteFile(vName); } catch { /* fresh */ }
-  setPhase(6, 12, opts.onStep, opts.stitched ? 'Reading your stitched voice file…' : 'Joining voice parts…');
+  setPhase(6, 12, opts.onStep, opts.stitched ? 'Reading your stitched voice file…' : 'Joining voice parts…', totalSec);
   let vcode: number;
   try {
     if (aNames.length === 1) {
@@ -341,7 +404,7 @@ export async function buildKenBurnsCommercial(opts: {
     const zout = `1.12-0.12*on/${frames}`;
     const z = i % 2 === 0 ? zin : zout;
     const img = imgNames[i % imgNames.length];
-    setPhase(18 + i * stepSpan, stepSpan, opts.onStep, `Animating ${opts.stitched ? 'image' : 'part'} ${i + 1}/${segDurs.length}…`);
+    setPhase(18 + i * stepSpan, stepSpan, opts.onStep, `Animating ${opts.stitched ? 'image' : 'part'} ${i + 1}/${segDurs.length}…`, segDur);
     let code: number;
     try {
       code = await ffmpeg.exec([
@@ -363,7 +426,7 @@ export async function buildKenBurnsCommercial(opts: {
   }
   const silent = 'kb_silent.mp4';
   try { await ffmpeg.deleteFile(silent); } catch { /* fresh */ }
-  setPhase(82, 10, opts.onStep, 'Joining motion…');
+  setPhase(82, 10, opts.onStep, 'Joining motion…', totalSec);
   let code: number;
   try {
     // Normalized re-encode, NOT `-c copy`: concat-copy timestamps caused the
@@ -379,7 +442,7 @@ export async function buildKenBurnsCommercial(opts: {
   if (code !== 0) throw new Error(`Join failed (exit ${code}). Try fewer images.\n\nTechnical detail:\n${tailLog()}`);
   const out = 'kb_final.mp4';
   try { await ffmpeg.deleteFile(out); } catch { /* fresh */ }
-  setPhase(92, 8, opts.onStep, 'Laying your Meta.ai voice over the motion…');
+  setPhase(92, 8, opts.onStep, 'Laying your Meta.ai voice over the motion…', totalSec);
   try {
     // `-shortest` kept, `-t totalSec` dropped: segments now add up to the
     // real voice length, so neither side needs to be chopped blind.
@@ -397,7 +460,7 @@ export async function buildKenBurnsCommercial(opts: {
   const bytes = new Uint8Array(data);
   if (!bytes.length) throw new Error(`Produced an empty file. Retry.\n\nTechnical detail:\n${tailLog()}`);
   const blob = new Blob([bytes.buffer as ArrayBuffer], { type: 'video/mp4' });
-  latestProgress?.(100);
+  emitProgress(100);
   return { blob, url: URL.createObjectURL(blob), sizeBytes: blob.size, log: tailLog(30) };
 }
 
