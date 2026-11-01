@@ -1,5 +1,5 @@
 'use client';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useProject } from '@/stores/projectStore';
 import { useKeyStore } from '@/stores/keyStore';
 import { JUDGING_MODE, SERVER_KEY_PLACEHOLDER } from '@/lib/judging';
@@ -14,6 +14,25 @@ export default function SourceHub({ onDone, onBack }: { onDone: () => void; onBa
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState('');
   const [drafting, setDrafting] = useState(false);
+  const [draftSecs, setDraftSecs] = useState(0);
+  const draftTimer = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    if (drafting) {
+      setDraftSecs(0);
+      if (draftTimer.current) clearInterval(draftTimer.current);
+      draftTimer.current = setInterval(() => setDraftSecs((s) => s + 1), 1000);
+    } else if (draftTimer.current) {
+      clearInterval(draftTimer.current);
+      draftTimer.current = null;
+    }
+    return () => {
+      if (draftTimer.current) {
+        clearInterval(draftTimer.current);
+        draftTimer.current = null;
+      }
+    };
+  }, [drafting]);
   const [selected, setSelected] = useState<Record<string, boolean>>({});
   const [dlMsg, setDlMsg] = useState('');
   const [dlBusy, setDlBusy] = useState(false);
@@ -235,7 +254,12 @@ export default function SourceHub({ onDone, onBack }: { onDone: () => void; onBa
       <div className="card space-y-3">
         <h3 className="font-semibold">📜 Final script — written for your {durationSec}s {platform} cut</h3>
         <p className="text-sm text-neutral-600">Drafted from your website + about page with your Setup picks (length, platform, vibe) already in mind. Edit it freely — this exact wording is what the app will organize into scenes. Nothing downstream runs until you approve it.</p>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2 items-center">
+          {drafting && (
+            <span className="text-sm text-neutral-500 tabular-nums" aria-live="polite">
+              Please wait… {draftSecs}s
+            </span>
+          )}
           <button className="btn-secondary" disabled={drafting} onClick={draftMaster}>{drafting ? 'Drafting…' : masterScript ? '🔄 Re-draft from sources' : '✨ Draft my script from website'}</button>
           {masterScript.trim() && !masterApproved && (
             <button className="btn-primary" onClick={() => set({ masterApproved: true })}>Approve this script →</button>

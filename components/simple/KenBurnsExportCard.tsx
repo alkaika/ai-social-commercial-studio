@@ -48,6 +48,25 @@ export default function KenBurnsExportCard() {
   const need = Math.max(1, Math.ceil(durationSec / 10));
   const voiceDone = voices.filter(Boolean).length;
   const [busy, setBusy] = useState(false);
+  const [buildSecs, setBuildSecs] = useState(0);
+  const buildTimer = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    if (busy) {
+      setBuildSecs(0);
+      if (buildTimer.current) clearInterval(buildTimer.current);
+      buildTimer.current = setInterval(() => setBuildSecs((s) => s + 1), 1000);
+    } else if (buildTimer.current) {
+      clearInterval(buildTimer.current);
+      buildTimer.current = null;
+    }
+    return () => {
+      if (buildTimer.current) {
+        clearInterval(buildTimer.current);
+        buildTimer.current = null;
+      }
+    };
+  }, [busy]);
   const [pct, setPct] = useState(0);
   const [step, setStep] = useState('');
   const [failed, setFailed] = useState(false);
@@ -247,7 +266,14 @@ export default function KenBurnsExportCard() {
         {images.length > 0 && <ol className="list-decimal ml-5 text-xs text-neutral-700">{images.map((f, i) => <li key={i}>{f.name} <button className="underline text-red-600" onClick={() => setImages((prev) => prev.filter((_, j) => j !== i))}>remove</button></li>)}</ol>}
         <p className="text-xs text-neutral-500">{hasStitched ? 'Save website screenshots on Story, then upload those files here. 1 image builds fine; up to 12 just adds variety (images share your finished voice evenly).' : 'Save website screenshots on Story, then upload those files here. 1 image builds fine; up to 12 just adds variety (each part cycles images).'}</p>
       </div>
-      <button className="btn-primary" disabled={busy || (!hasStitched && voiceDone < need) || !images.length} onClick={build}>{busy ? `Building ${Math.max(0, Math.min(100, pct))}%` : failed ? 'Retry build' : hasStitched ? '🎞 Build Ken Burns MP4 (voice already stitched)' : `Build ${durationSec}s commercial`}</button>
+      <div className="flex flex-wrap items-center gap-2">
+        <button className="btn-primary" disabled={busy || (!hasStitched && voiceDone < need) || !images.length} onClick={build}>{busy ? `Building ${Math.max(0, Math.min(100, pct))}%` : failed ? 'Retry build' : hasStitched ? '🎞 Build Ken Burns MP4 (voice already stitched)' : `Build ${durationSec}s commercial`}</button>
+        {busy && (
+          <span className="text-sm text-neutral-500 tabular-nums" aria-live="polite">
+            Please wait… {buildSecs}s
+          </span>
+        )}
+      </div>
       {busy && <div className="h-2 bg-neutral-200 rounded-full overflow-hidden"><div className="h-full bg-black transition-all" style={{ width: `${Math.max(0, Math.min(100, pct))}%` }} /></div>}
       {busy && step && <p className="text-xs text-neutral-500">{step}</p>}
       {outUrl && <div className="space-y-2"><video src={outUrl} controls playsInline className="w-full max-w-sm mx-auto rounded-xl border" /><p className="text-xs text-neutral-500 text-center">{finalName} {outMB}</p><div className="flex justify-center"><a className="btn-primary" href={outUrl} download={finalName}>Download final MP4</a></div></div>}

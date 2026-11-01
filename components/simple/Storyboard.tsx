@@ -23,6 +23,7 @@ export default function Storyboard({ onDone, onBack }: { onDone: () => void; onB
   const setMode = (m: 'people' | 'voices-meta' | 'voice-kenburns') => set({ storyMode: m });
   const [speakerIdx, setSpeakerIdx] = useState<number[]>([]);
   const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
+  const [attachPopup, setAttachPopup] = useState<number | null>(null);
   const [msg, setMsg] = useState('');
   const [shotMsg, setShotMsg] = useState('');
   const shots = useMemo(
@@ -53,7 +54,7 @@ export default function Storyboard({ onDone, onBack }: { onDone: () => void; onB
     totalDurationSec: durationSec,
   })), [batches, speakers]);
   const doCopy = async (i: number) => {
-    try { await copyText(prompts[i]); setCopiedIdx(i); setMsg(`Part ${i + 1} copied — paste into meta.ai (attach ${source} screenshots). ${showPerson ? `Speaker: ${speakers[i]?.short} (${speakers[i]?.voice}).` : `Voice: ${speakers[i]?.voice} (voiceover only, no person on camera).`}`); setTimeout(() => setCopiedIdx(null), 2500); }
+    try { await copyText(prompts[i]); setCopiedIdx(i); setAttachPopup(i); setMsg(`Part ${i + 1} copied — paste into meta.ai (attach ${source} screenshots). ${showPerson ? `Speaker: ${speakers[i]?.short} (${speakers[i]?.voice}).` : `Voice: ${speakers[i]?.voice} (voiceover only, no person on camera).`}`); setTimeout(() => setCopiedIdx(null), 2500); }
     catch { setMsg('Copy blocked — select the prompt manually.'); }
   };
   const goNext = () => {
@@ -126,6 +127,18 @@ export default function Storyboard({ onDone, onBack }: { onDone: () => void; onB
         ))}
         {mode !== 'voice-kenburns' && (<ol className="list-decimal ml-5 text-sm text-neutral-700 space-y-1"><li>Copy Part 1, open meta.ai, pick Instant/Thinking, attach {source} screenshots, generate + download.</li><li>{showPerson ? (<>Repeat per part — different speaker each time ({speakers.map((s) => s.short).join(' → ')}), same {pf.aspect} + {device} + {vibe.toLowerCase()} vibe.</>) : (<>Repeat per part — different voice each time ({speakers.map((s) => s.voice).join(' → ')}), same {pf.aspect} + {device} + {vibe.toLowerCase()} vibe. Voiceover only, no person on camera.</>)} </li><li>On the LAST part, the prompt asks Meta.ai to stitch all parts into one {durationSec}s video — download that finished file. If Meta.ai only gives separate parts, stitch them in order in the Export step → one {durationSec}s {pf.label} {showPerson ? 'testimonial' : 'voiceover'} (our in-app stitch is the fallback).</li></ol>)}
         {msg && <p className="text-sm bg-neutral-100 border rounded-xl p-3 whitespace-pre-wrap">{msg}</p>}
+        {attachPopup !== null && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4" style={{ zIndex: 50 }} onClick={() => setAttachPopup(null)}>
+            <div className="bg-white rounded-2xl shadow-card border border-neutral-200 p-5 max-w-sm w-full space-y-3" onClick={(e) => e.stopPropagation()}>
+              <p className="font-semibold text-base">📎 Attach your images with Part {attachPopup + 1}</p>
+              <p className="text-sm text-neutral-700">Part {attachPopup + 1} copied! In meta.ai, paste the prompt <b>AND attach</b> your {source.toLowerCase()} screenshots{shots.length > 0 ? ` (${shots.length} saved above)` : ''} — plus any Business photos — before you hit generate. Meta.ai can't see your site without them.</p>
+              <div className="flex flex-wrap gap-2">
+                <a className="btn-primary" href={META_AI_URL} target="_blank" rel="noreferrer" onClick={() => setAttachPopup(null)}>Open meta.ai →</a>
+                <button className="btn-secondary" onClick={() => setAttachPopup(null)}>Got it</button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
       <div className="flex justify-between items-center"><button className="btn-secondary" onClick={onBack}>← Back</button><button className="btn-primary" onClick={goNext}>Looks good — continue to export →</button></div>
     </div>
