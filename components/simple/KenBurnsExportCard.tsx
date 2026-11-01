@@ -18,11 +18,14 @@ function probeSpans(parts: File[]): Promise<(number | undefined)[]> {
   })));
 }
 
+const voiceKey = (pid: string, i: number) => `${pid}:voice-part-${i + 1}`;
+
 export default function KenBurnsExportCard() {
-  const { platform, durationSec, projectId, voicePartNames } = useProject();
+  const { platform, durationSec, projectId, set, voicePartUrls, voicePartNames } = useProject();
   const pf = PLATFORMS[platform as keyof typeof PLATFORMS];
   const [images, setImages] = useState<File[]>([]);
   const [voices, setVoices] = useState<(File | null)[]>([]);
+  const [voiceBusy, setVoiceBusy] = useState<number | null>(null);
   const need = Math.max(1, Math.ceil(durationSec / 10));
   const voiceDone = voices.filter(Boolean).length;
   const [busy, setBusy] = useState(false);
@@ -44,12 +47,61 @@ export default function KenBurnsExportCard() {
         if (found.length && live) {
           const arr: (File | null)[] = Array(Math.max(need, found.length)).fill(null);
           for (const f of found) arr[f.index] = new File([f.blob], f.name, { type: f.mime || 'audio/mpeg' });
+          const cur = (await import('@/stores/projectStore')).useProject.getState();
+          const urls: string[] = [...(cur.voicePartUrls || [])];
+          const names: string[] = [...(cur.voicePartNames || [])];
+          for (const f of found) {
+            if (!urls[f.index]) { try { urls[f.index] = URL.createObjectURL(f.blob); } catch {} }
+            if (!names[f.index]) names[f.index] = f.name;
+          }
           setVoices(arr);
+          set({ voicePartUrls: urls, voicePartNames: names });
         }
       } catch {}
     })();
     return () => { live = false; };
   }, [projectId, need]);
+
+  const onVoiceFile = async (i: number, files: FileList | null) => {
+    const f = files?.[0];
+    if (!f) return;
+    if (!/audio/i.test(f.type) && !/mp3|wav|m4a|aac|ogg|mp4/i.test(f.name)) {
+      setMsg(`Part ${i + 1}: that is not audio — pick the MP3 from meta.ai.`);
+      return;
+    }
+    setVoiceBusy(i); setMsg(`Attaching voice Part ${i + 1}…`);
+    try {
+      const pid = projectId || 'unassigned';
+      try {
+        const { saveStoredBlob } = await import('@/lib/clips/db');
+        await saveStoredBlob({ key: voiceKey(pid, i), projectId: pid, sceneId: `part-${i + 1}`, kind: 'voice-part', blob: f, name: f.name, mime: f.type || 'audio/mpeg', updatedAt: Date.now() });
+      } catch {}
+      const url = URL.createObjectURL(f);
+      setVoices((prev) => { const arr = [...prev]; while (arr.length < need) arr.push(null); arr[i] = f; return arr; });
+      const urls = [...(voicePartUrls || [])];
+      const names = [...(voicePartNames || [])];
+      try { if (urls[i]?.startsWith('blob:')) URL.revokeObjectURL(urls[i]); } catch {}
+      urls[i] = url; names[i] = f.name;
+      set({ voicePartUrls: urls, voicePartNames: names });
+      setMsg(`Voice Part ${i + 1} attached (${f.name}).`);
+    } catch (e: unknown) { setMsg(e instanceof Error ? e.message : 'Voice attach failed.'); }
+    finally { setVoiceBusy(null); }
+  };
+
+  const removeVoice = async (i: number) => {
+    try {
+      setVoices((prev) => { const arr = [...prev]; arr[i] = null; return arr; });
+      const urls = [...(voicePartUrls || [])]; const names = [...(voicePartNames || [])];
+      try { if (urls[i]?.startsWith('blob:')) URL.revokeObjectURL(urls[i]); } catch {}
+      urls[i] = ''; names[i] = '';
+      set({ voicePartUrls: urls, voicePartNames: names });
+      try {
+        const { removeStoredBlob } = await import('@/lib/clips/db');
+        await removeStoredBlob(voiceKey(projectId || 'unassigned', i));
+      } catch {}
+      setMsg(`Voice Part ${i + 1} removed.`);
+    } catch {}
+  };
 
   const onImages = (files: FileList | null) => {
     if (!files) return;
@@ -83,15 +135,32 @@ export default function KenBurnsExportCard() {
     <div className="card space-y-3">
       <h3 className="font-semibold">Voice MP3s + Ken Burns — one final MP4</h3>
       <p className="text-sm text-neutral-600">Your {need} voice part(s) join in order; each image gets equal time (slow zoom). Nothing uploads.</p>
-      <div className="rounded-xl border bg-neutral-50 p-3 text-sm space-y-1">
+      <div className="rounded-xl border bg-neutral-50 p-3 text-sm space-y-2">
         <p className="font-medium">Voice parts: {voiceDone}/{need} attached</p>
-        <p className="text-xs text-neutral-500">Attach in Story card 2 (voice mode) — they restore here.</p>
+        <p className="text-xs text-neutral-500">Attach here or in Story card 2 (voice mode) — both stay in sync.</p>
+        {Array.from({ length: need }, (_, i) => (
+          <div key={i} className="border rounded-xl p-2 bg-white space-y-1">
+            <p className="text-xs font-medium">Part {i + 1} MP3 {voices[i] ? `— ${voices[i]?.name}` : (voicePartNames?.[i] ? `— ${voicePartNames[i]}` : '— missing')}</p>
+            <input type="file" accept="audio/*,.mp3,.wav,.m4a,.aac,.ogg,.mp4" className="text-xs" onChange={(e) => { onVoiceFile(i, e.target.files); e.target.value = ''; }} />
+            {voiceBusy === i && <p className="text-xs text-neutral-500">Attaching…</p>}
+            {(voices[i] || voicePartUrls?.[i]) && (
+              <div className="space-y-1">
+                {voicePartUrls?.[i] && <audio src={voicePartUrls[i]} controls className="w-full" />}
+                <button className="text-xs underline text-red-600" onClick={() => removeVoice(i)}>Remove Part {i + 1}</button>
+              </div>
+            )}
+          </div>
+        ))}
       </div>
       <div className="space-y-2">
-        <p className="font-medium text-sm">Images ({images.length}/12)</p>
+        <p className="font-medium text-sm">Images ({images.length}/12) — 1 is enough to build</p>
         <input ref={imgRef} type="file" accept="image/*,.png,.jpg,.jpeg,.webp,.gif" multiple className="hidden" onChange={(e) => { onImages(e.target.files); e.target.value = ''; }} />
-        <button className="btn-secondary" onClick={() => imgRef.current?.click()}>Upload images ({images.length}/12)</button>
-        <p className="text-xs text-neutral-500">Save website screenshots on Story, then upload those files here.</p>
+        <div className="flex flex-wrap gap-2">
+          <button className="btn-secondary" onClick={() => imgRef.current?.click()}>Upload images ({images.length}/12)</button>
+          {images.length > 0 && <button className="btn-secondary" onClick={() => { setImages([]); setOutUrl(''); setMsg('Images cleared.'); }}>Clear</button>}
+        </div>
+        {images.length > 0 && <ol className="list-decimal ml-5 text-xs text-neutral-700">{images.map((f, i) => <li key={i}>{f.name} <button className="underline text-red-600" onClick={() => setImages((prev) => prev.filter((_, j) => j !== i))}>remove</button></li>)}</ol>}
+        <p className="text-xs text-neutral-500">Save website screenshots on Story, then upload those files here. 1 image builds fine; up to 12 just adds variety (each part cycles images).</p>
       </div>
       <button className="btn-primary" disabled={busy || voiceDone < need || !images.length} onClick={build}>{busy ? `Building ${pct}%` : failed ? 'Retry build' : `Build ${durationSec}s commercial`}</button>
       {busy && <div className="h-2 bg-neutral-200 rounded-full overflow-hidden"><div className="h-full bg-black transition-all" style={{ width: `${pct}%` }} /></div>}
