@@ -55,7 +55,7 @@ export default function ModelPicker({ onDone, onBack }: { onDone: () => void; on
           );
         })}
       </div>
-      <div className="flex justify-between items-center"><button className="btn-secondary" onClick={onBack}>← Back</button><button className="btn-primary" onClick={onDone}>Continue →</button></div>
+      <div className={`flex items-center ${onBack ? 'justify-between' : 'justify-end'}`}>{onBack && <button className="btn-secondary" onClick={onBack}>← Back</button>}<button className="btn-primary" onClick={onDone}>Continue →</button></div>
     </div>
   );
 }
