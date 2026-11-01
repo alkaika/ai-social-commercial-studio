@@ -50,7 +50,7 @@ export default function ExportStep({ onBack }: { onBack?: () => void }) {
     try {
       const r = await stitchParts(parts, { width: pf.width, height: pf.height, onProgress: setPct, onStep: setStep });
       setOutUrl(r.url); setOutMB(`${(r.sizeBytes / 1048576).toFixed(1)} MB`); setStep('');
-      setMsg((r.usedRecode ? 'Joined with re-encode (clips differed). ' : 'Joined losslessly — preview + download below. ') + (r.log ? 'Tap "what happened" for the technical log.' : ''));
+      setMsg(('Joined + normalized — preview + download below. ') + (r.log ? 'Tap "what happened" for the technical log.' : ''));
       if (r.log) setShowTech(true);
     } catch (e: unknown) {
       setFailed(true);
@@ -86,7 +86,7 @@ export default function ExportStep({ onBack }: { onBack?: () => void }) {
         {busy && <div className="h-2 bg-neutral-200 rounded-full overflow-hidden"><div className="h-full bg-black transition-all" style={{ width: `${pct}%` }} /></div>}
         {busy && step && <p className="text-xs text-neutral-500">{step}</p>}
         {outUrl && <div className="space-y-2"><video src={outUrl} controls playsInline className="w-full max-w-sm mx-auto rounded-xl border" style={{ aspectRatio: pf.aspect.replace(':', '/') }} /><p className="text-xs text-neutral-500 text-center">{finalName} · {outMB}</p><div className="flex justify-center"><a className="btn-primary" href={outUrl} download={finalName}>Download final MP4</a></div></div>}
-        <details className="text-xs text-neutral-600"><summary className="cursor-pointer underline">Manual fallback (ffmpeg CLI)</summary><pre className="whitespace-pre-wrap bg-neutral-100 rounded-xl p-3 mt-2">{`ffmpeg -f concat -safe 0 -i list.txt -c copy ${finalName}`}</pre></details>
+        <details className="text-xs text-neutral-600"><summary className="cursor-pointer underline">Manual fallback (ffmpeg CLI)</summary><pre className="whitespace-pre-wrap bg-neutral-100 rounded-xl p-3 mt-2">{`# parts must be listed in order in list.txt as:\n# file 'part1.mp4'\n# file 'part2.mp4'\nffmpeg -fflags +genpts -f concat -safe 0 -i list.txt -vf "scale=${pf.width}:${pf.height}:force_original_aspect_ratio=increase,crop=${pf.width}:${pf.height},setsar=1,fps=30" -c:v libx264 -preset veryfast -crf 20 -pix_fmt yuv420p -r 30 -c:a aac -b:a 128k -ar 44100 -ac 2 -movflags +faststart -avoid_negative_ts make_zero ${finalName}`}</pre></details>
         {msg && <p className="text-sm bg-neutral-100 border rounded-xl p-3 whitespace-pre-wrap">{msg}</p>}
         {msg && msg.includes('Technical detail') && (
           <details className="text-xs text-neutral-600"><summary className="cursor-pointer underline">Copy technical detail for me</summary><pre className="whitespace-pre-wrap bg-neutral-100 rounded-xl p-3 mt-2">{msg}</pre></details>

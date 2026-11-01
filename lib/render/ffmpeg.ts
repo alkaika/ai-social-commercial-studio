@@ -135,21 +135,48 @@ export async function stitchParts(
   }
   const out = 'final.mp4';
   try { await ffmpeg.deleteFile(out); } catch { /* fresh run */ }
-  opts.onStep?.('Joining (lossless)…');
+  // FIX (2026-11-01: 20s duration but freezes at ~9s): `-c copy` via the
+  // concat demuxer exits 0 even when the parts differ (codec/timebase/
+  // fps/size/audio) — the 2nd part's packets keep overlapping timestamps
+  // so players show summed duration but stall after part 1. Always
+  // normalize with a re-encode: uniform size/fps/pix_fmt + AAC audio,
+  // regenerated PTS (+genpts/make_zero) and faststart for preview.
+  const w = opts.width || 1080;
+  const h = opts.height || 1920;
+  opts.onStep?.('Joining + normalizing clips…');
   let code: number;
+  let usedRecode = true;
+  const baseArgs = [
+    '-fflags', '+genpts',
+    '-f', 'concat', '-safe', '0', '-i', 'list.txt',
+    '-vf', `scale=${w}:${h}:force_original_aspect_ratio=increase,crop=${w}:${h},setsar=1,fps=30`,
+    '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '20', '-pix_fmt', 'yuv420p', '-r', '30',
+    '-c:a', 'aac', '-b:a', '128k', '-ar', '44100', '-ac', '2',
+    '-movflags', '+faststart',
+    '-avoid_negative_ts', 'make_zero',
+    out,
+  ];
   try {
-    code = await ffmpeg.exec(['-f', 'concat', '-safe', '0', '-i', 'list.txt', '-c', 'copy', out]);
+    code = await ffmpeg.exec(baseArgs);
   } catch (e) {
     throw new Error(`Join could not start (${errText(e)}). Reload the page and press Retry.\n\nTechnical detail:\n${tailLog()}`);
   }
-  let usedRecode = false;
   if (code !== 0) {
-    usedRecode = true;
-    const w = opts.width || 1080;
-    const h = opts.height || 1920;
-    opts.onStep?.('Clips differ — re-encoding to match…');
+    // One/all parts may have no audio track — retry as video-only.
+    opts.onStep?.('No audio track detected — joining video…');
+    try { await ffmpeg.deleteFile(out); } catch { /* retry fresh */ }
+    const noAudioArgs = [
+      '-fflags', '+genpts',
+      '-f', 'concat', '-safe', '0', '-i', 'list.txt',
+      '-vf', `scale=${w}:${h}:force_original_aspect_ratio=increase,crop=${w}:${h},setsar=1,fps=30`,
+      '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '20', '-pix_fmt', 'yuv420p', '-r', '30',
+      '-an',
+      '-movflags', '+faststart',
+      '-avoid_negative_ts', 'make_zero',
+      out,
+    ];
     try {
-      code = await ffmpeg.exec(['-f', 'concat', '-safe', '0', '-i', 'list.txt', '-vf', `scale=${w}:${h}:force_original_aspect_ratio=increase,crop=${w}:${h}`, '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '20', '-c:a', 'aac', out]);
+      code = await ffmpeg.exec(noAudioArgs);
     } catch (e) {
       throw new Error(`Re-encode could not start (${errText(e)}). Reload and press Retry.\n\nTechnical detail:\n${tailLog()}`);
     }
