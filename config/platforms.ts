@@ -13,10 +13,10 @@ export const PLATFORMS: Record<
 };
 
 export const DURATIONS = [
-  { sec: 10, label: '10s', desc: 'One message · 1 part', scenes: 1, words: 25 },
-  { sec: 20, label: '20s', desc: 'TikTok / Reels / Shorts · 2 parts', scenes: 2, words: 50 },
-  { sec: 30, label: '30s', desc: 'Tell a story · 3 parts', scenes: 3, words: 75 },
-  { sec: 60, label: '60s', desc: 'Full showcase · 6 parts', scenes: 6, words: 150 },
+  { sec: 10, label: '10s', desc: 'One message · 1 part', scenes: 1, words: 35 },
+  { sec: 20, label: '20s', desc: 'TikTok / Reels / Shorts · 2 parts', scenes: 2, words: 70 },
+  { sec: 30, label: '30s', desc: 'Tell a story · 3 parts', scenes: 3, words: 105 },
+  { sec: 60, label: '60s', desc: 'Full showcase · 6 parts', scenes: 6, words: 210 },
 ];
 
 // Scripts are built in 10s batches — only multiples of 10 are valid.

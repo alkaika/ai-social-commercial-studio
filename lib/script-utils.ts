@@ -58,12 +58,12 @@ export interface ScriptScene {
 export function masterFit(masterScript: string, durationSec: number) {
   const wc = countWords(masterScript || '');
   const { target, max, hardMax } = targetWordRange(durationSec);
-  const atMax = Math.round((wc / 2.5 / 1.2) * 10) / 10;
+  const atMax = Math.round((wc / WORDS_PER_SEC / MAX_CADENCE) * 10) / 10;
   return {
     wordCount: wc,
     targetWords: target,
     targetSec: durationSec,
-    secAtNatural: Math.round((wc / 2.5) * 10) / 10,
+    secAtNatural: Math.round((wc / WORDS_PER_SEC) * 10) / 10,
     secAtMax: atMax,
     fitsNatural: wc <= max,
     fitsWithCadence: wc <= hardMax,
@@ -75,7 +75,7 @@ export interface AdScript {
   sparkModel: SparkModelId;
 }
 
-export const WORDS_PER_SEC = 2.5; // ~150 wpm at 1.0x cadence
+export const WORDS_PER_SEC = 3.5; // ~210 wpm at 1.0x cadence — 35 words per 10s, 210 per 60s
 
 // Cadence bounds: 0.85x (slow, emphatic) to 1.2x (brisk, energetic).
 // Outside this range speech sounds unnatural — that's the trim trigger.

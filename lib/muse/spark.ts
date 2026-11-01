@@ -3,7 +3,7 @@ import { endpointModelForSpark } from './models.config';
 import { normalizeDurationSec } from '@/config/platforms';
 import type { SparkModelId } from '@/config/pricing';
 import type { AdScript, BrandKit } from '@/lib/script-utils';
-import { countWords, targetWordRange, constrainToWordRange } from '@/lib/script-utils';
+import { countWords, targetWordRange, constrainToWordRange, WORDS_PER_SEC } from '@/lib/script-utils';
 import { mockScript, mockMasterScript } from './mocks';
 
 export interface MasterScriptInput {
@@ -20,7 +20,7 @@ export interface MasterScriptInput {
 export function buildMasterScriptPrompt(i: MasterScriptInput) {
   const dSec = normalizeDurationSec(i.durationSec);
   const { target, min, max } = targetWordRange(dSec);
-  const setting = `SETTINGS THIS SCRIPT IS WRITTEN FOR: ${dSec}s cut${i.platform ? ` for ${i.platform}` : ''}, ${i.tone} vibe at a natural speaking pace (~2.5 words/sec). Write the master at ~${target} words — acceptable ${min}-${max} words. This length IS the product: it must be deliverable in ${dSec}s at 1.0x without cutting a word. Hook first, offer near the end, CTA last. Shorter is better than longer — never exceed ${max} words.`;
+  const setting = `SETTINGS THIS SCRIPT IS WRITTEN FOR: ${dSec}s cut${i.platform ? ` for ${i.platform}` : ''}, ${i.tone} vibe at a natural speaking pace (~3.5 words/sec). Write the master at ~${target} words — acceptable ${min}-${max} words. This length IS the product: it must be deliverable in ${dSec}s at 1.0x without cutting a word. Hook first, offer near the end, CTA last. Shorter is better than longer — never exceed ${max} words.`;
   const story = i.brand.aboutStory
     ? `BRAND STORY (from about page ${i.brand.aboutSource || ''}):\n${i.brand.aboutStory}\nStory beats: ${(i.brand.aboutPoints || []).join(' | ') || 'none'}`
     : 'BRAND STORY: none found (homepage only). Lean on homepage description + offer.';
@@ -90,7 +90,7 @@ export interface ScriptInput {
 
 export function buildScriptPrompt(i: ScriptInput) {
   const dSec = normalizeDurationSec((i as any).durationSec);
-  const words = Math.round(dSec * 2.5);
+  const words = Math.round(dSec * WORDS_PER_SEC);
   const master = i.masterScript?.trim()
     ? `FINAL APPROVED MASTER SCRIPT — USE EVERY WORD of it, organized across scenes. Do NOT summarize, shorten, or drop lines to hit the time slot. If the words exceed ~${words} spoken words, still emit scenes covering the ENTIRE script in order (hook first, CTA last) and flag the overflow in storyBeat — timing will be handled with voice cadence (0.85x–1.2x), never by cutting your output:\n${i.masterScript.trim().slice(0, 2500)}`
     : (i.brand.aboutStory

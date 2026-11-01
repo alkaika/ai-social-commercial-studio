@@ -4,6 +4,7 @@
 // copy-paste prompts that yield consistent voice + on-brand visuals.
 
 import type { ScriptScene } from '@/lib/script-utils';
+import { WORDS_PER_SEC } from '@/lib/script-utils';
 import type { ClipKind } from './types';
 
 export const META_AI_URL = 'https://www.meta.ai/';
@@ -141,7 +142,7 @@ export function checkBatchBalance(batches: StoryBatch[], durationSec: number): B
     const drift = Math.abs(b.wordCount - expectedFor(b.batchSec));
     maxDriftWords = Math.max(maxDriftWords, drift);
   }
-  const natural = batches.map((b) => Math.round((b.wordCount / 2.5) * 10) / 10);
+  const natural = batches.map((b) => Math.round((b.wordCount / WORDS_PER_SEC) * 10) / 10);
   const overflow = batches
     .map((b, i) => ({ b, spoken: natural[i] }))
     .filter(({ b, spoken }) => spoken > b.batchSec + 1);
@@ -397,7 +398,7 @@ export function buildCombinedStoryPrompt(input: CombinedStoryPromptInput): strin
     const totalWords = batches.reduce((a, b) => a + b.wordCount, 0);
     const totalSecs = batches.reduce((a, b) => a + b.batchSec, 0) || durationSec;
     const targetFor = (secs: number) => Math.round((totalWords * secs) / totalSecs);
-    lines.push(`DOUBLE-CHECK BEFORE RENDERING — script must stay evenly spread across ${batches.length} segments (total ~${totalWords} words / ${totalSecs}s, ~2.5 words per second):`);
+    lines.push(`DOUBLE-CHECK BEFORE RENDERING — script must stay evenly spread across ${batches.length} segments (total ~${totalWords} words / ${totalSecs}s, ~${WORDS_PER_SEC} words per second):`);
     batches.forEach((b) => {
       lines.push(`- Segment ${b.index}: ~${b.wordCount} words for ~${b.batchSec}s (proportional target ~${targetFor(b.batchSec)} words for this ${b.batchSec}s slot). If any segment is much longer or shorter than its proportional target, rebalance the lines proportionally before rendering — do NOT render an uneven split.`);
     });
