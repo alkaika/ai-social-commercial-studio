@@ -3,7 +3,7 @@ import type { AdScript, BrandKit } from '@/lib/script-utils';
 import type { SparkModelId } from '@/config/pricing';
 import { normalizeDurationSec, type PlatformId } from '@/config/platforms';
 import { usePrefs } from '@/stores/preferences';
-import { JUDGING_MODE } from '@/lib/judging';
+import { JUDGING_BUILD } from '@/lib/judging';
 
 export type Step = 'key' | 'writer' | 'sources' | 'brand' | 'configure' | 'script' | 'review' | 'export';
 
@@ -74,8 +74,10 @@ const defaultBrand: BrandKit = {
 };
 
 export const useProject = create<ProjectState>((set) => ({
-  // Judging mode boots straight at Writer (Key step hidden); normal BYOK boots at Key.
-  step: JUDGING_MODE ? 'writer' : 'key',
+  // Boot/new step follows the BUILD flag (SSR-safe: judging builds boot at
+  // Writer, BYOK builds at Key). The studio page corrects to the runtime view
+  // (?build=byok preview) client-side once the toggle resolves.
+  step: JUDGING_BUILD ? 'writer' : 'key',
   projectId: freshId(),
   projectName: '',
   durationSec: 20,
@@ -101,8 +103,8 @@ export const useProject = create<ProjectState>((set) => ({
       : p
   ),
   newFreshProject: () => set({
-    // New projects also skip Key while judging (fresh start lands on Writer).
-    step: JUDGING_MODE ? 'writer' : 'key',
+    // New projects also skip Key in judging builds (fresh start lands on Writer).
+    step: JUDGING_BUILD ? 'writer' : 'key',
     projectId: freshId(),
     projectName: '',
     durationSec: 20,
