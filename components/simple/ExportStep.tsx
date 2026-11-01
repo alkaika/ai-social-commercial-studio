@@ -3,10 +3,12 @@ import { useMemo, useRef, useState } from 'react';
 import { useProject } from '@/stores/projectStore';
 import { PLATFORMS } from '@/config/platforms';
 import { stitchParts, resetFFmpeg, errText } from '@/lib/render/ffmpeg';
+import KenBurnsExportCard from '@/components/simple/KenBurnsExportCard';
 
 export default function ExportStep({ onBack }: { onBack?: () => void }) {
-  const { script, platform, brand, durationSec } = useProject();
-  const pf = PLATFORMS[platform];
+  const { script, platform, brand, durationSec, storyMode } = useProject();
+  const kbMode = (storyMode as string) === 'voice-kenburns';
+  const pf = PLATFORMS[platform as keyof typeof PLATFORMS];
   const [parts, setParts] = useState<File[]>([]);
   const [busy, setBusy] = useState(false);
   const [pct, setPct] = useState(0);
@@ -70,6 +72,7 @@ export default function ExportStep({ onBack }: { onBack?: () => void }) {
           <p className="text-xs opacity-70">Phone preview — final MP4 renders at full {pf.width}x{pf.height}.</p>
         </div>
       </div>
+      {kbMode ? (<KenBurnsExportCard />) : (
       <div className="card space-y-3">
         <h3 className="font-semibold">Stitch my parts — one final MP4 (free, in browser)</h3>
         <p className="text-sm text-neutral-600">Upload the {need} Part MP4(s) from meta.ai in order. Open-source FFmpeg joins them on your device — nothing uploads.</p>
@@ -89,6 +92,7 @@ export default function ExportStep({ onBack }: { onBack?: () => void }) {
           <details className="text-xs text-neutral-600"><summary className="cursor-pointer underline">Copy technical detail for me</summary><pre className="whitespace-pre-wrap bg-neutral-100 rounded-xl p-3 mt-2">{msg}</pre></details>
         )}
       </div>
+      )}
       <div className="card space-y-3">
         <h3 className="font-semibold">Captions + backup</h3>
         <div className="flex flex-wrap gap-2">

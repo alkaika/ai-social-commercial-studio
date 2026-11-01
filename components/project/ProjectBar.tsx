@@ -35,6 +35,7 @@ export default function ProjectBar() {
     snippets: proj.snippets, assets: proj.assets, script: proj.script,
     masterScript: proj.masterScript, masterApproved: proj.masterApproved,
     scriptGuidance: proj.scriptGuidance, step: proj.step,
+    storyMode: proj.storyMode, voiceMp3Name: proj.voiceMp3Name,
   });
 
   const doSave = async () => {
@@ -63,6 +64,7 @@ export default function ProjectBar() {
         revokeUrls([
           ...(cur.assets || []).map((a) => a.url),
           ...(cur.script?.scenes || []).flatMap((s) => [s.voiceClipUrl || '', s.voiceUrl || '', s.videoUrl || '']),
+          (cur as any).voiceMp3Url || '',
         ]);
       } catch {}
       const { useClipJobs } = await import('@/stores/clipJobsStore');
@@ -71,7 +73,7 @@ export default function ProjectBar() {
       proj.set({ projectName: rec.name });
       setName(rec.name);
       try {
-        const { getBlobsForProject } = await import('@/lib/clips/db');
+        const { getBlobsForProject, getStoredBlob } = await import('@/lib/clips/db');
         const blobs = await getBlobsForProject(rec.id);
         const byAsset = new Map<string, string>();
         for (const b of blobs) {
@@ -84,6 +86,13 @@ export default function ProjectBar() {
           st.set({ assets: (st.assets || []).map((a) => (byAsset.has(a.id) ? { ...a, url: byAsset.get(a.id)! } : a)) });
         }
         await useClipJobs.getState().hydrateForProject(rec.id);
+        try {
+          const v = await getStoredBlob(`${rec.id}:voice-full`);
+          if (v?.blob) {
+            const u = URL.createObjectURL(v.blob);
+            useProject.getState().set({ voiceMp3Url: u, voiceMp3Name: v.name || (rec as any).voiceMp3Name || '' });
+          }
+        } catch { /* text loads even if voice is gone */ }
       } catch { /* text loads even if footage is gone */ }
       setOpen(false);
       setMsg('Opened "' + rec.name + '".');
@@ -98,6 +107,7 @@ export default function ProjectBar() {
       revokeUrls([
         ...(cur.assets || []).map((a) => a.url),
         ...(cur.script?.scenes || []).flatMap((s) => [s.voiceClipUrl || '', s.voiceUrl || '', s.videoUrl || '']),
+        (cur as any).voiceMp3Url || '',
       ]);
       const { useClipJobs } = await import('@/stores/clipJobsStore');
       useClipJobs.getState().resetForProject();

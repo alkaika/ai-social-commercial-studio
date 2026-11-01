@@ -9,7 +9,7 @@ import type { AdScript, BrandKit } from '@/lib/script-utils';
 import type { PlatformId } from '@/config/platforms';
 import { normalizeDurationSec } from '@/config/platforms';
 import type { SparkModelId } from '@/config/pricing';
-import type { Step } from '@/stores/projectStore';
+import type { Step, StoryMode } from '@/stores/projectStore';
 
 export interface PersistedProject {
   v: 1;
@@ -26,6 +26,8 @@ export interface PersistedProject {
   masterApproved: boolean;
   scriptGuidance: string;
   step?: Step;
+  storyMode?: StoryMode;
+  voiceMp3Name?: string;
   savedAt: number;
 }
 
@@ -41,7 +43,7 @@ const LIB_KEY = 'meta-studio-projects-v1';
 function stripBlobUrls<T>(v: T): T {
   try {
     const s = JSON.stringify(v, (k, val) => {
-      if ((k === 'url' || k === 'voiceClipUrl' || k === 'voiceUrl' || k === 'videoUrl') && typeof val === 'string' && val.startsWith('blob:')) return '';
+      if ((k === 'url' || k === 'voiceClipUrl' || k === 'voiceUrl' || k === 'videoUrl' || k === 'voiceMp3Url') && typeof val === 'string' && val.startsWith('blob:')) return '';
       return val;
     });
     return JSON.parse(s);

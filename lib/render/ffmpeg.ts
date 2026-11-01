@@ -167,6 +167,110 @@ export async function stitchParts(
   return { blob, url: URL.createObjectURL(blob), sizeBytes: blob.size, usedRecode, log: tailLog(30) };
 }
 
+/** Ken Burns commercial: slow zoom over each still + the Meta.ai voice MP3.
+ * Meta.ai easily voices ~1 minute in ONE file, so no batching here — the
+ * full MP3 plays straight through while each image gets an equal share of
+ * the runtime with an alternating zoom in/out. All in-browser, free. */
+export async function buildKenBurnsCommercial(opts: {
+  images: File[]; audio: File; audioSec?: number;
+  width?: number; height?: number; fps?: number;
+  onProgress?: (p: number) => void; onStep?: (s: string) => void; onLog?: (m: string) => void;
+}): Promise<{ blob: Blob; url: string; sizeBytes: number; log: string }> {
+  const { images, audio } = opts;
+  const W = opts.width || 1080;
+  const H = opts.height || 1920;
+  const fps = opts.fps || 30;
+  if (!images.length) throw new Error('Add at least one image — save screenshots on the Story step first.');
+  if (!audio) throw new Error('Add your Meta.ai voice MP3 first.');
+  if (images.length > 12) throw new Error('Keep it to 12 images max (one per page).');
+  const totalSec = opts.audioSec && Number.isFinite(opts.audioSec) && opts.audioSec > 0
+    ? opts.audioSec
+    : 5 * images.length;
+  const segDur = Math.max(2, totalSec / images.length);
+  const frames = Math.max(30, Math.round(segDur * fps));
+  opts.onStep?.('Loading studio renderer…');
+  const ffmpeg = await loadFFmpeg(opts.onLog);
+  latestProgress = opts.onProgress ?? null;
+  if (!progressWired) { progressWired = true; ffmpeg.on('progress', ({ progress }: { progress: number }) => latestProgress?.(Math.round(progress * 100))); }
+  const imgNames: string[] = [];
+  opts.onStep?.(`Loading ${images.length} image(s)…`);
+  for (let i = 0; i < images.length; i++) {
+    const f = images[i];
+    const m = (f.name || '').toLowerCase().match(/\.([a-z0-9]+)$/);
+    const ext = m ? `.${m[1]}` : '.jpg';
+    const n = `kb_img${i}${ext}`;
+    try {
+      await ffmpeg.writeFile(n, await fetchFile(f));
+    } catch (e) {
+      throw new Error(`Could not load image "${f.name}" (${errText(e)}). Try a JPG/PNG export of the page.`);
+    }
+    imgNames.push(n);
+  }
+  const am = (audio.name || '').toLowerCase().match(/\.([a-z0-9]+)$/);
+  const aName = `kb_voice${am ? `.${am[1]}` : '.mp3'}`;
+  try {
+    await ffmpeg.writeFile(aName, await fetchFile(audio));
+  } catch (e) {
+    throw new Error(`Could not load voice file "${audio.name}" (${errText(e)}). Re-download the MP3 from meta.ai.`);
+  }
+  const segNames: string[] = [];
+  for (let i = 0; i < imgNames.length; i++) {
+    const seg = `kb_seg${i}.mp4`;
+    try { await ffmpeg.deleteFile(seg); } catch { /* fresh */ }
+    const zin = `1+0.12*on/${frames}`;
+    const zout = `1.12-0.12*on/${frames}`;
+    const z = i % 2 === 0 ? zin : zout;
+    opts.onStep?.(`Animating image ${i + 1}/${imgNames.length}…`);
+    let code: number;
+    try {
+      code = await ffmpeg.exec([
+        '-loop', '1', '-framerate', String(fps), '-t', segDur.toFixed(2), '-i', imgNames[i],
+        '-vf', `scale=${W * 2}:${H * 2}:force_original_aspect_ratio=increase,crop=${W * 2}:${H * 2},zoompan=z='${z}':d=1:x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':s=${W}x${H}:fps=${fps}`,
+        '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '20', '-pix_fmt', 'yuv420p',
+        '-an', seg,
+      ]);
+    } catch (e) {
+      throw new Error(`Motion build could not start (${errText(e)}). Reload and press Retry.\n\nTechnical detail:\n${tailLog()}`);
+    }
+    if (code !== 0) throw new Error(`Could not animate image ${i + 1} (exit ${code}). Try fewer/smaller images.\n\nTechnical detail:\n${tailLog()}`);
+    segNames.push(seg);
+  }
+  try {
+    await ffmpeg.writeFile('kb_list.txt', segNames.map((n) => `file '${n}'`).join('\n'));
+  } catch (e) {
+    throw new Error(`Could not start the join (${errText(e)}). Reload and press Retry.`);
+  }
+  const silent = 'kb_silent.mp4';
+  try { await ffmpeg.deleteFile(silent); } catch { /* fresh */ }
+  opts.onStep?.('Joining motion…');
+  let code: number;
+  try {
+    code = await ffmpeg.exec(['-f', 'concat', '-safe', '0', '-i', 'kb_list.txt', '-c', 'copy', silent]);
+  } catch (e) {
+    throw new Error(`Join could not start (${errText(e)}). Reload and press Retry.\n\nTechnical detail:\n${tailLog()}`);
+  }
+  if (code !== 0) throw new Error(`Join failed (exit ${code}). Try fewer images.\n\nTechnical detail:\n${tailLog()}`);
+  const out = 'kb_final.mp4';
+  try { await ffmpeg.deleteFile(out); } catch { /* fresh */ }
+  opts.onStep?.('Laying your Meta.ai voice over the motion…');
+  try {
+    code = await ffmpeg.exec(['-i', silent, '-i', aName, '-c:v', 'copy', '-c:a', 'aac', '-b:a', '128k', '-shortest', '-movflags', '+faststart', out]);
+  } catch (e) {
+    throw new Error(`Voice mix could not start (${errText(e)}). Reload and press Retry.\n\nTechnical detail:\n${tailLog()}`);
+  }
+  if (code !== 0) throw new Error(`Voice mix failed (exit ${code}). The MP3 may be DRM'd — re-download from meta.ai.\n\nTechnical detail:\n${tailLog()}`);
+  let data: Uint8Array;
+  try {
+    data = (await ffmpeg.readFile(out)) as unknown as Uint8Array;
+  } catch {
+    throw new Error(`Finished but produced no file. Retry.\n\nTechnical detail:\n${tailLog()}`);
+  }
+  const bytes = new Uint8Array(data);
+  if (!bytes.length) throw new Error(`Produced an empty file. Retry.\n\nTechnical detail:\n${tailLog()}`);
+  const blob = new Blob([bytes.buffer as ArrayBuffer], { type: 'video/mp4' });
+  return { blob, url: URL.createObjectURL(blob), sizeBytes: blob.size, log: tailLog(30) };
+}
+
 export function motionPlan(scenes: { id: string; videoUrl?: string; motionSource?: string; imageUrl?: string; voiceSource?: string; voiceClipUrl?: string; cadence?: number }[]) {
   const { resolveMotionTier } = require('@/lib/muse/visual') as typeof import('@/lib/muse/visual');
   return scenes.map((s) => ({ id: s.id, tier: resolveMotionTier(s), src: s.videoUrl || s.imageUrl || '', vo: s.voiceClipUrl || null, voSource: s.voiceSource || 'script', cadence: s.cadence ?? 1 }));

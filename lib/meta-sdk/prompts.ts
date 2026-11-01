@@ -454,3 +454,19 @@ export function copyText(text: string): Promise<void> {
   return Promise.reject(new Error('Clipboard unavailable'));
 }
 
+/** Voice-only MP3 prompt for Meta.ai — NO batching needed.
+ * Meta.ai easily reads ~1 minute of text-to-voice in one file, so the
+ * full commercial script goes in a single paste. The returned MP3 is
+ * paired with the user's screenshots in-app (Ken Burns) or with
+ * Meta.ai video parts. */
+export function buildVoiceOnlyPrompt(fullText: string, voice: string): string {
+  const line = (fullText || '').trim().replace(/\s+/g, ' ');
+  return [
+    `Make an audio-only voiceover MP3 of a ${voice} voice saying word-for-word: "${line}"`,
+    ``,
+    `Voice only — no video, no music, no sound effects, no background noise.`,
+    `Clear studio quality, natural pacing, exact words only, in order.`,
+    `One take, no intro/outro. A full ~1-minute script in one file is fine — do NOT split it.`,
+  ].join('\n');
+}
+
