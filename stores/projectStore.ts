@@ -41,6 +41,11 @@ interface ProjectState {
   // original file names. Blobs live in Dexie (`{projectId}:voice-part-{i}`).
   voicePartUrls: string[];
   voicePartNames: string[];
+  // Meta.ai's already-stitched voice file (MP3/MP4) + its name. When set,
+  // Export skips the per-part join — the app only adds Ken Burns motion.
+  // Blob lives in Dexie (`{projectId}:voice-stitched`).
+  stitchedVoiceUrl: string;
+  stitchedVoiceName: string;
   // Master (final) script: cohesive brand narrative drafted on the Business
   // page right after the website scan, edited + approved by the user.
   // The timed Storyboard script is ORGANIZED from this — never reinvented.
@@ -59,7 +64,7 @@ interface ProjectState {
     assets: { id: string; name: string; url: string; tag: string }[];
     script: AdScript | null; masterScript: string; masterApproved: boolean;
     scriptGuidance: string; step?: Step; storyMode?: StoryMode;
-    voicePartNames?: string[];
+    voicePartNames?: string[]; stitchedVoiceName?: string;
   }) => void;
 }
 
@@ -85,6 +90,8 @@ export const useProject = create<ProjectState>((set) => ({
   storyMode: 'people',
   voicePartUrls: [],
   voicePartNames: [],
+  stitchedVoiceUrl: '',
+  stitchedVoiceName: '',
   masterScript: '',
   masterApproved: false,
   scriptGuidance: '',
@@ -110,6 +117,8 @@ export const useProject = create<ProjectState>((set) => ({
     storyMode: 'people',
     voicePartUrls: [],
     voicePartNames: [],
+    stitchedVoiceUrl: '',
+    stitchedVoiceName: '',
     masterScript: '',
     masterApproved: false,
     scriptGuidance: '',
@@ -130,6 +139,8 @@ export const useProject = create<ProjectState>((set) => ({
     storyMode: (p as any).storyMode || 'people',
     voicePartUrls: [],
     voicePartNames: (p as any).voicePartNames || [],
+    stitchedVoiceUrl: '',
+    stitchedVoiceName: (p as any).stitchedVoiceName || '',
     masterScript: p.masterScript || '',
     masterApproved: !!p.masterApproved,
     scriptGuidance: p.scriptGuidance || '',

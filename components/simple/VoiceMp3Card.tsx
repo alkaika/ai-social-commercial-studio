@@ -10,9 +10,14 @@ import { useProject } from '@/stores/projectStore';
 
 const voiceKey = (pid: string, i: number) => `${pid}:voice-part-${i + 1}`;
 
+const stitchedKey = (pid: string) => `${pid}:voice-stitched`;
+
 export default function VoiceMp3Card({ batches }: { batches: StoryBatch[] }) {
-  const { projectId, set, voicePartUrls, voicePartNames, durationSec } = useProject();
+  const { projectId, set, voicePartUrls, voicePartNames, durationSec, stitchedVoiceUrl, stitchedVoiceName } = useProject();
   const [voice, setVoice] = useState<string>(STORY_VOICES[0] as string);
+  const [stitchedBusy, setStitchedBusy] = useState(false);
+  const hasStitched = !!stitchedVoiceUrl;
+  const stitchedIsVideo = /\.mp4|m4v|mov|webm/i.test(stitchedVoiceName || '');
   const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
   const [msg, setMsg] = useState('');
   const [busyIdx, setBusyIdx] = useState<number | null>(null);
@@ -47,6 +52,13 @@ export default function VoiceMp3Card({ batches }: { batches: StoryBatch[] }) {
           }
           set({ voicePartUrls: urls, voicePartNames: names });
         }
+        try {
+          const { getStitchedVoice } = await import('@/lib/clips/db');
+          const st = await getStitchedVoice(projectId || 'unassigned');
+          if (st && live) {
+            try { set({ stitchedVoiceUrl: URL.createObjectURL(st.blob), stitchedVoiceName: st.name }); } catch {}
+          }
+        } catch {}
       } catch {}
     })();
     return () => { live = false; };
@@ -90,11 +102,58 @@ export default function VoiceMp3Card({ batches }: { batches: StoryBatch[] }) {
     } catch {}
   };
 
+  const onStitchedFile = async (files: FileList | null) => {
+    const f = files?.[0];
+    if (!f) return;
+    if (!/audio|video/i.test(f.type) && !/mp3|wav|m4a|aac|ogg|mp4|m4v|mov|webm/i.test(f.name)) {
+      setMsg('That is not a media file — pick the finished file Meta.ai stitched (MP3 or MP4).');
+      return;
+    }
+    setStitchedBusy(true); setMsg('Attaching your finished voice file…');
+    try {
+      const pid = projectId || 'unassigned';
+      try {
+        const { saveStoredBlob } = await import('@/lib/clips/db');
+        await saveStoredBlob({ key: stitchedKey(pid), projectId: pid, sceneId: 'stitched', kind: 'voice-stitched', blob: f, name: f.name, mime: f.type || 'audio/mpeg', updatedAt: Date.now() });
+      } catch {}
+      const url = URL.createObjectURL(f);
+      try { if (stitchedVoiceUrl?.startsWith('blob:')) URL.revokeObjectURL(stitchedVoiceUrl); } catch {}
+      set({ stitchedVoiceUrl: url, stitchedVoiceName: f.name });
+      setMsg(`Finished voice attached (${f.name}). In Export, the app will only add Ken Burns motion over your images.`);
+    } catch (e: any) { setMsg(e?.message || 'Attach failed.'); }
+    finally { setStitchedBusy(false); }
+  };
+
+  const removeStitched = async () => {
+    try {
+      try { if (stitchedVoiceUrl?.startsWith('blob:')) URL.revokeObjectURL(stitchedVoiceUrl); } catch {}
+      set({ stitchedVoiceUrl: '', stitchedVoiceName: '' });
+      try {
+        const { removeStoredBlob } = await import('@/lib/clips/db');
+        await removeStoredBlob(stitchedKey(projectId || 'unassigned'));
+      } catch {}
+      setMsg('Finished voice removed — upload the separate parts instead.');
+    } catch {}
+  };
+
   const done = (voicePartUrls || []).filter(Boolean).length;
 
   return (
     <div className="space-y-3 border rounded-xl p-3">
       <p className="font-medium text-sm">Voice MP3s — one per part ({done}/{total})</p>
+      <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 space-y-2">
+        <p className="font-medium text-sm">✂ Meta.ai stitched your voice already? Upload the finished file — Ken Burns only</p>
+        <p className="text-xs text-neutral-600">The LAST part's prompt asks Meta.ai to join all parts into one finished ~{durationSec}s voice file. If you got that single file, upload it here (MP3 or MP4) — no per-part uploads needed, and in Export the app only adds the slow-zoom motion.</p>
+        <input type="file" accept="audio/*,video/mp4,video/*,.mp3,.wav,.m4a,.aac,.ogg,.mp4,.m4v,.mov,.webm" className="text-xs" onChange={(e) => { onStitchedFile(e.target.files); e.target.value = ''; }} />
+        {stitchedBusy && <p className="text-xs text-neutral-500">Attaching…</p>}
+        {hasStitched && (
+          <div className="space-y-1">
+            <p className="text-xs font-medium">✅ Finished voice — {stitchedVoiceName || 'attached'}</p>
+            {stitchedIsVideo ? <video src={stitchedVoiceUrl} controls playsInline className="w-full rounded-xl border" /> : <audio src={stitchedVoiceUrl} controls className="w-full" />}
+            <button className="text-xs underline text-red-600" onClick={removeStitched}>Remove finished file</button>
+          </div>
+        )}
+      </div>
       <p className="text-xs text-neutral-600">Meta.ai caps voice at ~10s too. Same narrator voice for all parts. The LAST part asks Meta.ai to stitch all MP3s into one file — download that first; our Export join is the fallback.</p>
       <label className="block text-sm space-y-1">
         <span className="font-medium">Narrator voice (all parts)</span>
@@ -118,9 +177,8 @@ export default function VoiceMp3Card({ batches }: { batches: StoryBatch[] }) {
       ))}
       <ol className="list-decimal ml-5 text-sm text-neutral-700 space-y-1">
         <li>Copy Part 1, open meta.ai, generate + download the MP3. Repeat per part (same voice).</li>
-        <li>The LAST part asks Meta.ai to stitch all MP3s — download that finished file first.</li>
-        <li>Upload each MP3 under its part (or just the stitched file under Part 1).</li>
-        <li>Export: add images, Build — parts join in order (fallback if Meta.ai did not stitch).</li>
+        <li>The LAST part asks Meta.ai to stitch all MP3s — download that finished file first (upload it above, or under its part).</li>
+        <li>Export: add images, Build — the parts join in order, or your one finished file goes straight under the Ken Burns motion.</li>
       </ol>
       {msg && <p className="text-sm bg-neutral-100 border rounded-xl p-3">{msg}</p>}
     </div>

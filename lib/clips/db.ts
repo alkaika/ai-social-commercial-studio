@@ -122,6 +122,19 @@ export async function migrateLegacyBlobsToProject(projectId: string): Promise<nu
 export const voicePartKey = (projectId: string, index: number) =>
   `${projectId}:voice-part-${index + 1}`;
 
+/** Meta.ai's already-stitched voice file (mode 3 shortcut): one finished
+ *  MP3/MP4 — the app skips the join and only adds Ken Burns motion. */
+export const stitchedVoiceKey = (projectId: string) =>
+  `${projectId}:voice-stitched`;
+
+export async function getStitchedVoice(projectId: string): Promise<VoicePartBlob | null> {
+  try {
+    const rec = await clipsDb.blobs.get(stitchedVoiceKey(projectId));
+    if (!rec?.blob) return null;
+    return { index: 0, blob: rec.blob, name: rec.name || 'stitched-voice.mp3', mime: rec.mime || 'audio/mpeg' };
+  } catch { return null; }
+}
+
 export interface VoicePartBlob { index: number; blob: Blob; name: string; mime: string }
 
 /** All saved per-part voice MP3s for a project (index = 0-based part order). */

@@ -28,6 +28,7 @@ export interface PersistedProject {
   step?: Step;
   storyMode?: StoryMode;
   voicePartNames?: string[];
+  stitchedVoiceName?: string;
   savedAt: number;
 }
 
@@ -43,8 +44,8 @@ const LIB_KEY = 'meta-studio-projects-v1';
 function stripBlobUrls<T>(v: T): T {
   try {
     const s = JSON.stringify(v, (k, val) => {
-      if ((k === 'url' || k === 'voiceClipUrl' || k === 'voiceUrl' || k === 'videoUrl' || k === 'voicePartUrls') && typeof val !== 'string') return Array.isArray(val) ? val.map((u) => (typeof u === 'string' && u.startsWith('blob:') ? '' : u)) : val;
-      if ((k === 'url' || k === 'voiceClipUrl' || k === 'voiceUrl' || k === 'videoUrl') && typeof val === 'string' && val.startsWith('blob:')) return '';
+      if ((k === 'url' || k === 'voiceClipUrl' || k === 'voiceUrl' || k === 'videoUrl' || k === 'voicePartUrls' || k === 'stitchedVoiceUrl') && typeof val !== 'string') return Array.isArray(val) ? val.map((u) => (typeof u === 'string' && u.startsWith('blob:') ? '' : u)) : val;
+      if ((k === 'url' || k === 'voiceClipUrl' || k === 'voiceUrl' || k === 'videoUrl' || k === 'stitchedVoiceUrl') && typeof val === 'string' && val.startsWith('blob:')) return '';
       return val;
     });
     return JSON.parse(s);

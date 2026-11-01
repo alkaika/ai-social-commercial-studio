@@ -36,6 +36,7 @@ export default function ProjectBar() {
     masterScript: proj.masterScript, masterApproved: proj.masterApproved,
     scriptGuidance: proj.scriptGuidance, step: proj.step,
     storyMode: proj.storyMode, voicePartNames: proj.voicePartNames,
+    stitchedVoiceName: proj.stitchedVoiceName,
   });
 
   const doSave = async () => {
@@ -65,6 +66,7 @@ export default function ProjectBar() {
           ...(cur.assets || []).map((a) => a.url),
           ...(cur.script?.scenes || []).flatMap((s) => [s.voiceClipUrl || '', s.voiceUrl || '', s.videoUrl || '']),
           ...((cur as any).voicePartUrls || []),
+          (cur as any).stitchedVoiceUrl || '',
         ]);
       } catch {}
       const { useClipJobs } = await import('@/stores/clipJobsStore');
@@ -89,7 +91,7 @@ export default function ProjectBar() {
         try {
           // Per-part voice MP3s: N blobs voice-part-1..N for this project.
           const want = Math.max(1, Math.ceil((rec.durationSec || 20) / 10));
-          const { listVoiceParts } = await import('@/lib/clips/db');
+          const { listVoiceParts, getStitchedVoice } = await import('@/lib/clips/db');
           const found = await listVoiceParts(rec.id, want);
           if (found.length) {
             const urls: string[] = [];
@@ -103,6 +105,15 @@ export default function ProjectBar() {
             }
             useProject.getState().set({ voicePartUrls: urls, voicePartNames: names });
           }
+          try {
+            const stitched = await getStitchedVoice(rec.id);
+            if (stitched) {
+              try {
+                const u = URL.createObjectURL(stitched.blob);
+                useProject.getState().set({ stitchedVoiceUrl: u, stitchedVoiceName: (rec as any).stitchedVoiceName || stitched.name });
+              } catch {}
+            }
+          } catch { /* text loads even if voice is gone */ }
         } catch { /* text loads even if voice is gone */ }
       } catch { /* text loads even if footage is gone */ }
       setOpen(false);
@@ -119,6 +130,7 @@ export default function ProjectBar() {
         ...(cur.assets || []).map((a) => a.url),
         ...(cur.script?.scenes || []).flatMap((s) => [s.voiceClipUrl || '', s.voiceUrl || '', s.videoUrl || '']),
         ...((cur as any).voicePartUrls || []),
+        (cur as any).stitchedVoiceUrl || '',
       ]);
       const { useClipJobs } = await import('@/stores/clipJobsStore');
       useClipJobs.getState().resetForProject();
