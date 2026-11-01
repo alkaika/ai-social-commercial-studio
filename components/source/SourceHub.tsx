@@ -2,6 +2,7 @@
 import { useMemo, useState } from 'react';
 import { useProject } from '@/stores/projectStore';
 import { useKeyStore } from '@/stores/keyStore';
+import { JUDGING_MODE, SERVER_KEY_PLACEHOLDER } from '@/lib/judging';
 import { masterFit } from '@/lib/script-utils';
 import ShotImg from '@/components/simple/ShotImg';
 import { downloadWebsiteShot, screenshotCandidates, type WebsiteShot } from '@/lib/screenshots';
@@ -96,7 +97,13 @@ export default function SourceHub({ onDone, onBack }: { onDone: () => void; onBa
     set({ assets: next });
   };
 
-  const hdr = () => ({ 'Content-Type': 'application/json', 'x-meta-key': key || 'DEMO', 'x-meta-base-url': baseUrl || '' });
+  const hdr = () => {
+    // Judging mode: key store holds '__SERVER__' — API routes swap it for
+    // the host's server key (META_API_KEY). Never send a real key from client.
+    // Normal + demo: real BYOK key, or 'DEMO' for free mocks.
+    const k = key || (JUDGING_MODE ? SERVER_KEY_PLACEHOLDER : 'DEMO');
+    return { 'Content-Type': 'application/json', 'x-meta-key': k, 'x-meta-base-url': baseUrl || '' };
+  };
   // Legacy: pre-2026-10-31 projects may carry snippets (paste-card). No UI to add
   // new ones - the Final script box is the single place to write/paste.
 

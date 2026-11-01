@@ -1,4 +1,8 @@
-// Stateless BYOK client. Key arrives per-request, is forwarded to Meta, never stored/logged.
+// Stateless BYOK client with optional server-key fallback for judging.
+// - Normal (BYOK): key arrives per-request in x-meta-key, forwarded to Meta, never stored/logged.
+// - Judging: if header is missing / DEMO / __SERVER__ and META_API_KEY is set
+//   on the server, use that server key. No secret ever goes to the client.
+//   After judging, delete META_API_KEY (+ NEXT_PUBLIC_JUDGING_MODE) to return to pure BYOK.
 export interface MuseCallOpts {
   key: string;
   baseUrl: string; // e.g. https://your-meta-gateway.example (with or without trailing /v1)
@@ -65,12 +69,45 @@ export async function callMuseGet<T = any>(opts: { key: string; baseUrl: string;
   }
 }
 
-export function byokHeaders(req: Request): { key: string; baseUrl: string } {
-  const key = req.headers.get('x-meta-key') ?? '';
+export const SERVER_KEY_PLACEHOLDER = '__SERVER__';
+
+function serverKey(): string {
+  // Server-only env. Never prefixed with NEXT_PUBLIC_ so it never leaks to the client bundle.
+  return process.env.META_API_KEY || (process.env as any).META_SERVER_KEY || '';
+}
+
+export function isJudgingServerMode(): boolean {
+  return !!serverKey() || process.env.JUDGING_MODE === '1';
+}
+
+export function byokHeaders(req: Request): { key: string; baseUrl: string; source: 'byok' | 'server' } {
+  const headerKey = (req.headers.get('x-meta-key') ?? '').trim();
+  const headerBase = (req.headers.get('x-meta-base-url') ?? '').trim();
   const baseUrl =
-    req.headers.get('x-meta-base-url') ??
-    process.env.META_GATEWAY_URL ??
+    headerBase ||
+    process.env.META_GATEWAY_URL ||
     'https://api.meta.ai/v1';
-  if (!key) throw new Error('Missing API key. Add your Meta key first — it is sent with this request only.');
-  return { key, baseUrl };
+
+  // 1) Real BYOK key from the user — always preferred (works before, during, and after judging).
+  if (headerKey && headerKey !== 'DEMO' && headerKey !== SERVER_KEY_PLACEHOLDER) {
+    return { key: headerKey, baseUrl, source: 'byok' };
+  }
+
+  // 2) Judging fallback — host's own key from server env. Judges send no key.
+  const srv = serverKey();
+  if (srv) {
+    return { key: srv, baseUrl: process.env.META_GATEWAY_URL || baseUrl, source: 'server' };
+  }
+
+  // 3) No server key configured.
+  // - Explicit judging placeholder without a server key = misconfigured
+  //   deploy (judges would silently get mocks thinking it's live AI).
+  //   Throw so routes return a clear 400 instead of silent demo output.
+  // - Plain DEMO passes through so /studio?demo=1 keeps returning free mocks.
+  // - Truly missing key also throws (KeySetup shows the message).
+  if (headerKey === SERVER_KEY_PLACEHOLDER) {
+    throw new Error('Judging mode is on but META_API_KEY is missing on the server. Add it to host env (see JUDGING.md) or turn off NEXT_PUBLIC_JUDGING_MODE to return to BYOK.');
+  }
+  if (!headerKey) throw new Error('Missing API key. Add your Meta key first — it is sent with this request only.');
+  return { key: headerKey, baseUrl, source: 'byok' };
 }

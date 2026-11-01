@@ -3,6 +3,7 @@ import type { AdScript, BrandKit } from '@/lib/script-utils';
 import type { SparkModelId } from '@/config/pricing';
 import { normalizeDurationSec, type PlatformId } from '@/config/platforms';
 import { usePrefs } from '@/stores/preferences';
+import { JUDGING_MODE } from '@/lib/judging';
 
 export type Step = 'key' | 'writer' | 'sources' | 'brand' | 'configure' | 'script' | 'review' | 'export';
 
@@ -67,7 +68,8 @@ const defaultBrand: BrandKit = {
 };
 
 export const useProject = create<ProjectState>((set) => ({
-  step: 'key',
+  // Judging mode boots straight at Writer (Key step hidden); normal BYOK boots at Key.
+  step: JUDGING_MODE ? 'writer' : 'key',
   projectId: freshId(),
   projectName: '',
   durationSec: 20,
@@ -91,7 +93,8 @@ export const useProject = create<ProjectState>((set) => ({
       : p
   ),
   newFreshProject: () => set({
-    step: 'key',
+    // New projects also skip Key while judging (fresh start lands on Writer).
+    step: JUDGING_MODE ? 'writer' : 'key',
     projectId: freshId(),
     projectName: '',
     durationSec: 20,

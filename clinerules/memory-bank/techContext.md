@@ -10,7 +10,7 @@ npm install
 npm run dev   # http://localhost:3000/studio?demo=1
 npm run build # passes, 13 routes
 ```
-No ffmpeg needed (wasm stub). No DB. `.env.example` defaults META_GATEWAY_URL to the verified Meta Model API (`https://api.meta.ai/v1`).
+No ffmpeg needed (wasm stub). No DB. `.env.example` defaults META_GATEWAY_URL to the verified Meta Model API (`https://api.meta.ai/v1`). Judging-mode env (`META_API_KEY` server-only + `NEXT_PUBLIC_JUDGING_MODE=1` flag) lives on the HOST or `.env.local` (git-ignored, never committed) — see `JUDGING.md`; delete both to return to pure BYOK.
 
 ## Constraints
 - simplewebauthn/browser v9: `startRegistration(opts)` / `startAuthentication(opts)` take options directly (NOT `{optionsJSON}`) → code uses `as any` casts. Verified via .d.ts.

@@ -4,7 +4,8 @@
 Next.js App Router. Client wizard (`app/studio/page.tsx` + `stores/projectStore.ts`) → API routes (`app/api/scrape`, `app/api/muse/*`) → Muse gateway via `lib/muse/client.ts:callMuse`. Key NEVER persisted server-side.
 
 ## Key Decisions
-- `byokHeaders(req)`: reads `x-meta-key`/`x-meta-base-url`; throws if missing → routes fall back to DEMO mocks.
+- `byokHeaders(req)`: real BYOK key in `x-meta-key` always wins; else if server-only `META_API_KEY` set, placeholder `__SERVER__`/missing/`DEMO` falls back to it (judging mode, source:'server'); else `DEMO` returns mocks, truly-missing/placeholder-without-server-key throws 400. Real key never logged/stored.
+- Judging mode (temporary, env-only): `NEXT_PUBLIC_JUDGING_MODE=1` hides Key step (boot/new at `writer`, breadcrumb + PREV skip `key`), landing copy switches; `lib/judging.ts` holds only the flag + `__SERVER__` placeholder (no secret); `META_API_KEY` stays server-only. Delete both env vars → pure BYOK. See `JUDGING.md`.
 - Project state: single Zustand object (`projectStore.ts`) + `projectId/projectName/newFreshProject/openProject`. NO autosave — studio boots fresh; explicit Save/Open only via `ProjectBar`.
 - Library: text/config in localStorage `meta-studio-projects-v1` ({id,name,updatedAt,savedAt} + PersistedProject; blob: URLs stripped on save); footage in Dexie `meta-studio-clips` v3 (`blobs: key,projectId,sceneId,kind,assetId` + `prefs: key`). Keys `blobKeyForScene(pid,s,k)` / `blobKeyForAsset(pid,id)`. Open revokes live blob URLs first (leak/bleed guard), loads text, then re-attaches this project's Dexie blobs (assets → `getBlobsForProject` + URL map; scenes → `hydrateForProject`). Delete removes entry + `removeBlobsForProject`. One-time migration: legacy `meta-studio-project-v1` → "Recovered project" + `migrateLegacyBlobsToProject`, legacy slot cleared.
 - Model adapters isolated in `lib/muse/{spark,voice,visual,mocks}.ts` — only files needing change for real gateway shapes.

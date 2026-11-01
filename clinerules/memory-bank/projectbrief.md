@@ -10,6 +10,7 @@ Web app that generates 10/20/30/60s social commercials from a company website + 
 - Users bring ONE Meta API key powering all 5 Muse models via REST gateway.
 - Key sent per-request in `x-meta-key` header, forwarded to Meta, never logged/stored server-side.
 - Free platform; user pays Meta directly. Cost estimator shown before every AI action.
+- Judging mode (temporary, env-only, 2026-11-01): host sets server-only `META_API_KEY` + `NEXT_PUBLIC_JUDGING_MODE=1`; client boots at Writer (Key step hidden) and sends placeholder `__SERVER__`; `byokHeaders()` swaps it for the server key. Real BYOK keys still win if sent. Delete both env vars to return to pure BYOK. See `JUDGING.md`.
 
 ## Models & Roles (`lib/muse/`): Spark does EVERYTHING textual
 - Spark 1.3 Standard (`muse-spark-1.3`) OR Contributor (`muse-spark-1.3-contributor`) — user's chosen writer handles master script, timed organize, and Director's Notes revision planning.
@@ -39,7 +40,7 @@ Legacy per-scene detail (kept for reference, no longer on Story page):
 - Simple Mode default (storyboard cards), Advanced timeline hidden behind button.
 - Revision loop: manual edit + quick buttons + Director's Notes chat, preview-and-approve, locked scenes skipped, pinned preserved.
 - Exports: TikTok/Reels/Shorts 9:16, IG 4:5, Square 1:1, Landscape 16:9 + SRT + script.txt.
-- Fresh start EVERY load (2026-10-30, user request): studio boots blank on Key step, no auto-load, no silent autosave. Past work returns ONLY via explicit Save/Open in `ProjectBar` header (New / Save / Open(n) / Delete). Unsaved work shows amber warning; refresh wipes by design.
+- Fresh start EVERY load (2026-10-30, user request): studio boots blank on Key step (Writer step when `NEXT_PUBLIC_JUDGING_MODE=1`), no auto-load, no silent autosave. Past work returns ONLY via explicit Save/Open in `ProjectBar` header (New / Save / Open(n) / Delete). Unsaved work shows amber warning; refresh wipes by design.
 - Named project library: text/config in localStorage `meta-studio-projects-v1` ({id,name,updatedAt} + PersistedProject, blob URLs stripped); footage in Dexie `meta-studio-clips` v3 namespaced `{projectId}:scene:{s}:voice|video`, `{projectId}:asset:{id}`. One-time migration: legacy `meta-studio-project-v1` autosave -> "Recovered project" + legacy blobs copied into its namespace.
 
 ## Non-Goals (MVP)
