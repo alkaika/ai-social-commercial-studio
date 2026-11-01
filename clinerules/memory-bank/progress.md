@@ -3,6 +3,8 @@
 > Living note — status as of last push. `clinerules/` is intentionally committed (no secrets inside) so clones carry the why, not just the what.
 
 ## What Works ✅
+- Story auto-rebalance, zero manual work (2026-11-01): `splitScriptIntoBalancedBatches()` (sentence-aware + auto-rebalance on drift >6/empty) drives `Storyboard` live; manual Rebalance button + copy/continue gates removed. `tsc --noEmit` ✅.
+- Export stitch freeze fixed (2026-11-01, pushed `8302257`): `stitchParts()` always normalizes + re-encodes (`+genpts`, 30fps/yuv420p + AAC, `make_zero`, `faststart`, `-an` fallback) — 20s-but-stalls-at-9s concat-copy bug gone. `tsc --noEmit` ✅.
 - Export MP3 uploads fixed + 1-image build (2026-11-01): `KenBurnsExportCard` has its own per-part MP3 upload/remove rows (Dexie + store sync, previews) — no more Story-only uploads; images 1–12, build gates on `voiceDone >= need && images.length >= 1`. Build ✅.
 - Natural pace 35 words per 10s (2026-11-01, user request — 1-min video = 210 words): `WORDS_PER_SEC` 2.5→3.5 (`lib/script-utils.ts`, ~210 wpm); Spark master/organize prompts, batch timing, `DURATIONS` hints (35/70/105/210), demo mocks resized + verified. Build ✅ 13 routes.
 - `npm run build` passes (13 routes: /, /studio, 8 APIs) in BOTH modes (BYOK default and `NEXT_PUBLIC_JUDGING_MODE=1` judging flag).

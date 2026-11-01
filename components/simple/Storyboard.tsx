@@ -1,8 +1,8 @@
 'use client';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useProject } from '@/stores/projectStore';
 import { PLATFORMS, TONES } from '@/config/platforms';
-import { META_AI_URL, STORY_DEVICES, STORY_DEVICE_ICONS, STORY_MUSIC, STORY_TESTIMONIAL_PERSONAS, STORY_VOICES, voicePerson, deviceSourceLabel, splitScriptIntoBatches, rebalanceBatches, checkBatchBalance, assignBatchSpeakers, assignBatchVoices, buildBatchTestimonialPrompt, copyText, type BatchSpeaker } from '@/lib/meta-sdk/prompts';
+import { META_AI_URL, STORY_DEVICES, STORY_DEVICE_ICONS, STORY_MUSIC, STORY_TESTIMONIAL_PERSONAS, STORY_VOICES, voicePerson, deviceSourceLabel, splitScriptIntoBalancedBatches, checkBatchBalance, assignBatchSpeakers, assignBatchVoices, buildBatchTestimonialPrompt, copyText, type BatchSpeaker } from '@/lib/meta-sdk/prompts';
 import { masterFit } from '@/lib/script-utils';
 import ShotImg from '@/components/simple/ShotImg';
 import VoiceMp3Card from '@/components/simple/VoiceMp3Card';
@@ -33,14 +33,11 @@ export default function Storyboard({ onDone, onBack }: { onDone: () => void; onB
   const vibe = TONES.find((t) => t.id === tone)?.label || 'Friendly';
   const fit = masterFit(scriptText || '', durationSec);
   const source = deviceSourceLabel(device);
-  const autoBatches = useMemo(() => splitScriptIntoBatches(scriptText || '', durationSec), [scriptText, durationSec]);
-  const [rebalanced, setRebalanced] = useState<typeof autoBatches | null>(null);
-  const batches = rebalanced ?? autoBatches;
-  const balance = useMemo(() => checkBatchBalance(autoBatches, durationSec), [autoBatches, durationSec]);
+  // Auto-balanced on every keystroke: the split re-evens itself, so the user
+  // never taps Rebalance or counts words. No manual state needed.
+  const batches = useMemo(() => splitScriptIntoBalancedBatches(scriptText || '', durationSec), [scriptText, durationSec]);
   const effectiveBalance = useMemo(() => checkBatchBalance(batches, durationSec), [batches, durationSec]);
-  useEffect(() => { setRebalanced(null); }, [scriptText, durationSec]);
   const autoSpeakers = useMemo(() => showPerson ? assignBatchSpeakers(Math.max(1, batches.length)) : assignBatchVoices(Math.max(1, batches.length)), [batches.length, showPerson]);
-  useEffect(() => { setSpeakerIdx(autoSpeakers.map((_, i) => i % (showPerson ? STORY_TESTIMONIAL_PERSONAS.length : STORY_VOICES.length))); }, [autoSpeakers.length, showPerson]);
   const speakers: BatchSpeaker[] = batches.map((b, i) => {
     if (!showPerson) {
       const voice = (STORY_VOICES[(speakerIdx[i] ?? i) % STORY_VOICES.length] as string) || STORY_VOICES[0];
@@ -55,14 +52,12 @@ export default function Storyboard({ onDone, onBack }: { onDone: () => void; onB
     brandName: brand.brandName || undefined, device, musicId, showPerson,
   })), [batches, speakers]);
   const doCopy = async (i: number) => {
-    if (!effectiveBalance.even) { setMsg('Split is uneven — tap Rebalance first, then copy.'); return; }
     try { await copyText(prompts[i]); setCopiedIdx(i); setMsg(`Part ${i + 1} copied — paste into meta.ai (attach ${source} screenshots). ${showPerson ? `Speaker: ${speakers[i]?.short} (${speakers[i]?.voice}).` : `Voice: ${speakers[i]?.voice} (voiceover only, no person on camera).`}`); setTimeout(() => setCopiedIdx(null), 2500); }
     catch { setMsg('Copy blocked — select the prompt manually.'); }
   };
   const goNext = () => {
     const t = scriptText.trim();
     if (!t) { setMsg('Add your script text first.'); return; }
-    if (!effectiveBalance.even) { setMsg('Split is uneven — tap Rebalance first.'); return; }
     set({ masterScript: t, masterApproved: true,
       script: { scenes: batches.map((b, i) => ({ id: `batch-${b.index}`, heading: b.total > 1 ? (showPerson ? `Part ${b.index} of ${b.total} — ${speakers[i]?.short}` : `Part ${b.index} of ${b.total} — Voice: ${speakers[i]?.voice}`) : (showPerson ? `Full commercial — ${speakers[i]?.short}` : `Full commercial — Voice: ${speakers[i]?.voice}`), voiceover: b.text, onScreenText: brand.tagline || brand.brandName || '', visualPrompt: showPerson ? `${speakers[i]?.appearance} testimonial on ${device} — part ${b.index}` : `Full-screen ${source} on ${device} — voiceover ${speakers[i]?.voice} — part ${b.index}`, durationSec: b.batchSec })), totalSec: durationSec, sparkModel } });
     onDone();
@@ -79,10 +74,10 @@ export default function Storyboard({ onDone, onBack }: { onDone: () => void; onB
         <textarea className="input" rows={5} value={scriptText} onChange={(e) => setScriptText(e.target.value)} placeholder="Your full commercial script…" />
         <p className="text-xs text-neutral-500">{fit.wordCount} words · ~{fit.targetWords} for {durationSec}s{batches.length > 1 ? ` · parts: ${batches.map((b) => `P${b.index} ~${b.wordCount}w/${b.batchSec}s`).join(' · ')}` : ''}</p>
         <div className={`rounded-xl border p-3 text-sm space-y-1 ${effectiveBalance.even ? 'border-green-300 bg-green-50' : 'border-amber-300 bg-amber-50'}`}>
-          <p className="font-semibold">{effectiveBalance.even ? `✅ Split check: even across ${batches.length || 1} part(s)` : `⚠️ Split check: uneven — fix before copying`}</p>
-          {effectiveBalance.even ? <p className="text-neutral-700">Re-checked on every edit. Each part fits its ~10s slot.</p> : <>
+          <p className="font-semibold">{effectiveBalance.even ? `✅ Split check: even across ${batches.length || 1} part(s) — auto-balanced` : `⚠️ Split check: one part runs long — trim a few words`}</p>
+          {effectiveBalance.even ? <p className="text-neutral-700">Auto-balanced on every edit. Each part fits its ~10s slot — just copy.</p> : <>
             <ul className="list-disc ml-5 text-neutral-700 space-y-0.5">{effectiveBalance.warnings.map((w, i) => <li key={i}>{w}</li>)}</ul>
-            {balance.needsRebalance && batches.length > 1 && <button className="btn-secondary" onClick={() => { setRebalanced(rebalanceBatches(autoBatches)); setMsg('Rebalanced — parts evened out.'); }}>⚖️ Rebalance parts evenly</button>}
+            <p className="text-neutral-600 text-xs">Tip: delete a sentence or shorten a long part — the split re-evens itself.</p>
           </>}
         </div>
       </div>
