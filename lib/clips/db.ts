@@ -118,6 +118,24 @@ export async function migrateLegacyBlobsToProject(projectId: string): Promise<nu
   }
 }
 
+/** Per-part voice MP3 keys: {projectId}:voice-part-{1..N} (Story mode 3). */
+export const voicePartKey = (projectId: string, index: number) =>
+  `${projectId}:voice-part-${index + 1}`;
+
+export interface VoicePartBlob { index: number; blob: Blob; name: string; mime: string }
+
+/** All saved per-part voice MP3s for a project (index = 0-based part order). */
+export async function listVoiceParts(projectId: string, want: number): Promise<VoicePartBlob[]> {
+  const out: VoicePartBlob[] = [];
+  try {
+    for (let i = 0; i < Math.max(1, want); i++) {
+      const rec = await clipsDb.blobs.get(voicePartKey(projectId, i));
+      if (rec?.blob) out.push({ index: i, blob: rec.blob, name: rec.name || `part-${i + 1}.mp3`, mime: rec.mime || 'audio/mpeg' });
+    }
+  } catch { /* ignore */ }
+  return out;
+}
+
 export async function getAllStoredBlobs(): Promise<StoredBlob[]> {
   try {
     return await clipsDb.blobs.toArray();

@@ -48,6 +48,9 @@ export const STORY_VOICE_STYLES = [
   'confident and bold',
 ] as const;
 
+// Voice-only choices for 🎙 Voices + screenshots and 🎧 Voice MP3 modes —
+// voice description ONLY, never a physical description (no hair/age/outfit).
+// 🧍 People + app keeps using STORY_TESTIMONIAL_PERSONAS below (face + voice).
 export const STORY_VOICES = [
   'warm female, energetic',
   'warm female, calm and friendly',
@@ -72,6 +75,11 @@ export const STORY_TESTIMONIAL_PERSONAS = [
   { voice: 'warm female, professional', person: 'woman' as const, appearance: 'professional woman in her 40s with shoulder-length brown hair in a blazer', short: 'Professional woman - blazer' },
   { voice: 'warm male, professional', person: 'man' as const, appearance: 'professional man in his 40s with neat short hair in a button-down shirt', short: 'Professional man - button-down' },
 ];
+
+// 🧍 People + app only — physical cast lives here. Voice-only modes
+// (🎙 Voices + screenshots, 🎧 Voice MP3 + Ken Burns) use STORY_VOICES
+// above precisely so no hair/age/outfit text ever leaks into voice pickers,
+// headers, or Meta.ai prompts.
 
 export const STORY_DEVICE_ICONS: Record<string, string> = {
   'Mobile phone': '📱',
@@ -286,11 +294,24 @@ export interface BatchSpeaker {
 }
 
 /** Assign a DIFFERENT voice + face to every 10s batch (testimonial style). */
+/** 🧍 People + app only — DIFFERENT face + voice per part. */
 export function assignBatchSpeakers(total: number): BatchSpeaker[] {
   const out: BatchSpeaker[] = [];
   for (let i = 0; i < total; i++) {
     const p = STORY_TESTIMONIAL_PERSONAS[i % STORY_TESTIMONIAL_PERSONAS.length];
     out.push({ batchIndex: i + 1, voice: p.voice, person: p.person, appearance: p.appearance, short: p.short });
+  }
+  return out;
+}
+
+/** 🎙 Voices + screenshots only — DIFFERENT voice per part, NO face/appearance.
+ *  Cycles the 10 voice-only options so voice pickers/headers/prompts never
+ *  leak hair/age/outfit text. `appearance` stays '' and `short` === voice. */
+export function assignBatchVoices(total: number): BatchSpeaker[] {
+  const out: BatchSpeaker[] = [];
+  for (let i = 0; i < total; i++) {
+    const voice = STORY_VOICES[i % STORY_VOICES.length] as string;
+    out.push({ batchIndex: i + 1, voice, person: voicePerson(voice), appearance: '', short: voice });
   }
   return out;
 }
@@ -429,12 +450,18 @@ export function buildBatchTestimonialPrompt(input: BatchTestimonialPromptInput):
   const openLine = showPerson
     ? `Make a video of a ${speaker.voice} voice saying: "${batch.text}" while showing ${speaker.appearance} speaking directly to camera as testimonial speaker ${batch.index}, using the app on ${poss} ${input.device} with the attached screenshots.`
     : `Make a voiceover video with a ${speaker.voice} voice saying: "${batch.text}" over full-screen app footage from the attached screenshots on ${screenNoun} — voiceover only, no person on camera, no actor, no avatar. This is Part ${batch.index} of ${batch.total}.`;
+  const titleLine = showPerson
+    ? `Make a ${batch.batchSec}-second ${orientation} customer-testimonial video (Part ${batch.index} of ${batch.total}, ${input.aspect}, ${input.width}x${input.height}) for ${input.platformLabel}${brandBit} with a ${input.vibeLabel.toLowerCase()} vibe.`
+    : `Make a ${batch.batchSec}-second ${orientation} voiceover video (Part ${batch.index} of ${batch.total}, ${input.aspect}, ${input.width}x${input.height}) for ${input.platformLabel}${brandBit} with a ${input.vibeLabel.toLowerCase()} vibe.`;
+  const continuityLine = showPerson
+    ? `This is a DIFFERENT speaker from the other parts — new face, new voice. Keep the SAME ${input.aspect} framing, SAME ${input.device} screen, SAME ${input.vibeLabel.toLowerCase()} style so the parts stitch into one ${batch.total}-person testimonial commercial. Do NOT repeat other parts' lines. Do NOT add an intro/outro.`
+    : `This is a DIFFERENT voice from the other parts — new voice, same delivery style. Keep the SAME ${input.aspect} framing, SAME ${input.device} screen, SAME ${input.vibeLabel.toLowerCase()} style so the parts stitch into one ${batch.total}-part voiceover commercial. Do NOT repeat other parts' lines. Do NOT add an intro/outro.`;
   return [
-    `Make a ${batch.batchSec}-second ${orientation} customer-testimonial video (Part ${batch.index} of ${batch.total}, ${input.aspect}, ${input.width}x${input.height}) for ${input.platformLabel}${brandBit} with a ${input.vibeLabel.toLowerCase()} vibe.`,
+    titleLine,
     ``,
     openLine,
     ``,
-    `This is a DIFFERENT speaker from the other parts — new face, new voice. Keep the SAME ${input.aspect} framing, SAME ${input.device} screen, SAME ${input.vibeLabel.toLowerCase()} style so the parts stitch into one ${batch.total}-person testimonial commercial. Do NOT repeat other parts' lines. Do NOT add an intro/outro.`,
+    continuityLine,
     ``,
     `Requirements:`,
     `- Total runtime: exactly ${batch.batchSec} seconds — voiceover starts immediately and ends the instant the last word is spoken: cut immediately, no pause, no trailing silence, no hold on the last frame, so the stitched video flows with no gaps.`,
@@ -454,19 +481,34 @@ export function copyText(text: string): Promise<void> {
   return Promise.reject(new Error('Clipboard unavailable'));
 }
 
-/** Voice-only MP3 prompt for Meta.ai — NO batching needed.
- * Meta.ai easily reads ~1 minute of text-to-voice in one file, so the
- * full commercial script goes in a single paste. The returned MP3 is
- * paired with the user's screenshots in-app (Ken Burns) or with
- * Meta.ai video parts. */
+/** Voice-only MP3 prompt for Meta.ai — 10s batches, like video.
+ * Meta.ai caps voice at ~10s per file too, so each ~10s part gets its own
+ * paste + MP3. The N MP3s are concatenated in-app under Ken Burns motion. */
 export function buildVoiceOnlyPrompt(fullText: string, voice: string): string {
   const line = (fullText || '').trim().replace(/\s+/g, ' ');
+  return buildVoiceBatchPrompt({ text: line, index: 1, total: 1, batchSec: 10, voice });
+}
+
+export interface VoiceBatchPromptInput {
+  text: string;
+  index: number;
+  total: number;
+  batchSec: number;
+  voice: string;
+}
+
+/** One voice-only MP3 prompt per ~10s batch: Part i of n with its own lines.
+ * Same voice across all parts of the commercial (one narrator), so parts
+ * join seamlessly under the Ken Burns motion. */
+export function buildVoiceBatchPrompt(input: VoiceBatchPromptInput): string {
+  const line = (input.text || '').trim().replace(/\s+/g, ' ');
+  const partBit = input.total > 1 ? ` (Part ${input.index} of ${input.total})` : '';
   return [
-    `Make an audio-only voiceover MP3 of a ${voice} voice saying word-for-word: "${line}"`,
+    `Make a ${input.batchSec}-second audio-only voiceover MP3 of a ${input.voice} voice saying word-for-word${partBit}: "${line}"`,
     ``,
     `Voice only — no video, no music, no sound effects, no background noise.`,
-    `Clear studio quality, natural pacing, exact words only, in order.`,
-    `One take, no intro/outro. A full ~1-minute script in one file is fine — do NOT split it.`,
+    `Clear studio quality, natural pacing, exact words only, in order. SAME voice as the other parts — one narrator for the whole commercial.`,
+    `One take, no intro/outro. Exactly ~${input.batchSec} seconds — start immediately, end the instant the last word is spoken, no trailing silence so the parts join with no gaps.`,
   ].join('\n');
 }
 

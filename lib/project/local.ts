@@ -27,7 +27,7 @@ export interface PersistedProject {
   scriptGuidance: string;
   step?: Step;
   storyMode?: StoryMode;
-  voiceMp3Name?: string;
+  voicePartNames?: string[];
   savedAt: number;
 }
 
@@ -43,7 +43,8 @@ const LIB_KEY = 'meta-studio-projects-v1';
 function stripBlobUrls<T>(v: T): T {
   try {
     const s = JSON.stringify(v, (k, val) => {
-      if ((k === 'url' || k === 'voiceClipUrl' || k === 'voiceUrl' || k === 'videoUrl' || k === 'voiceMp3Url') && typeof val === 'string' && val.startsWith('blob:')) return '';
+      if ((k === 'url' || k === 'voiceClipUrl' || k === 'voiceUrl' || k === 'videoUrl' || k === 'voicePartUrls') && typeof val !== 'string') return Array.isArray(val) ? val.map((u) => (typeof u === 'string' && u.startsWith('blob:') ? '' : u)) : val;
+      if ((k === 'url' || k === 'voiceClipUrl' || k === 'voiceUrl' || k === 'videoUrl') && typeof val === 'string' && val.startsWith('blob:')) return '';
       return val;
     });
     return JSON.parse(s);

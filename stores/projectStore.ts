@@ -33,13 +33,14 @@ interface ProjectState {
   // Story mode: how voice + visuals are produced.
   // 'people' = Meta.ai testimonial video parts (person on camera).
   // 'voices-meta' = Meta.ai voiceover video parts over screenshots.
-  // 'voice-kenburns' = Meta.ai voice-only MP3 (single file, no batching)
-  //   + in-app Ken Burns over the user's screenshots/images.
+  // 'voice-kenburns' = Meta.ai voice-only MP3s, one per ~10s part (same
+  //   10s cap as video) + in-app Ken Burns over screenshots/images.
+  //   N MP3s are concatenated in Export under the motion.
   storyMode: StoryMode;
-  // Voice-only MP3 (mode 3): object URL for the uploaded Meta.ai MP3 +
-  // original file name. Blob itself lives in Dexie (`{projectId}:voice-full`).
-  voiceMp3Url: string;
-  voiceMp3Name: string;
+  // Voice-only MP3s (mode 3): object URLs for the uploaded per-part MP3s +
+  // original file names. Blobs live in Dexie (`{projectId}:voice-part-{i}`).
+  voicePartUrls: string[];
+  voicePartNames: string[];
   // Master (final) script: cohesive brand narrative drafted on the Business
   // page right after the website scan, edited + approved by the user.
   // The timed Storyboard script is ORGANIZED from this — never reinvented.
@@ -58,7 +59,7 @@ interface ProjectState {
     assets: { id: string; name: string; url: string; tag: string }[];
     script: AdScript | null; masterScript: string; masterApproved: boolean;
     scriptGuidance: string; step?: Step; storyMode?: StoryMode;
-    voiceMp3Name?: string;
+    voicePartNames?: string[];
   }) => void;
 }
 
@@ -82,8 +83,8 @@ export const useProject = create<ProjectState>((set) => ({
   assets: [],
   script: null,
   storyMode: 'people',
-  voiceMp3Url: '',
-  voiceMp3Name: '',
+  voicePartUrls: [],
+  voicePartNames: [],
   masterScript: '',
   masterApproved: false,
   scriptGuidance: '',
@@ -107,8 +108,8 @@ export const useProject = create<ProjectState>((set) => ({
     assets: [],
     script: null,
     storyMode: 'people',
-    voiceMp3Url: '',
-    voiceMp3Name: '',
+    voicePartUrls: [],
+    voicePartNames: [],
     masterScript: '',
     masterApproved: false,
     scriptGuidance: '',
@@ -127,8 +128,8 @@ export const useProject = create<ProjectState>((set) => ({
     assets: p.assets || [],
     script: p.script,
     storyMode: (p as any).storyMode || 'people',
-    voiceMp3Url: '',
-    voiceMp3Name: (p as any).voiceMp3Name || '',
+    voicePartUrls: [],
+    voicePartNames: (p as any).voicePartNames || [],
     masterScript: p.masterScript || '',
     masterApproved: !!p.masterApproved,
     scriptGuidance: p.scriptGuidance || '',

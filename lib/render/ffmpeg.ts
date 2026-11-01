@@ -167,27 +167,29 @@ export async function stitchParts(
   return { blob, url: URL.createObjectURL(blob), sizeBytes: blob.size, usedRecode, log: tailLog(30) };
 }
 
-/** Ken Burns commercial: slow zoom over each still + the Meta.ai voice MP3.
- * Meta.ai easily voices ~1 minute in ONE file, so no batching here — the
- * full MP3 plays straight through while each image gets an equal share of
- * the runtime with an alternating zoom in/out. All in-browser, free. */
+/** Ken Burns commercial: slow zoom over each still + per-part Meta.ai voice.
+ * Meta.ai caps voice at ~10s per file too, so each ~10s part has its own
+ * MP3; they are concatenated in order and each motion segment is timed to
+ * its own part's real duration (fallback ~10s each). Alternating zoom
+ * in/out. All in-browser, free. */
 export async function buildKenBurnsCommercial(opts: {
-  images: File[]; audio: File; audioSec?: number;
+  images: File[]; audioParts: File[]; audioSecs?: (number | undefined)[];
   width?: number; height?: number; fps?: number;
   onProgress?: (p: number) => void; onStep?: (s: string) => void; onLog?: (m: string) => void;
 }): Promise<{ blob: Blob; url: string; sizeBytes: number; log: string }> {
-  const { images, audio } = opts;
+  const { images, audioParts } = opts;
   const W = opts.width || 1080;
   const H = opts.height || 1920;
   const fps = opts.fps || 30;
   if (!images.length) throw new Error('Add at least one image — save screenshots on the Story step first.');
-  if (!audio) throw new Error('Add your Meta.ai voice MP3 first.');
+  if (!audioParts?.length) throw new Error('Add your Meta.ai voice MP3s first (one per 10s part).');
   if (images.length > 12) throw new Error('Keep it to 12 images max (one per page).');
-  const totalSec = opts.audioSec && Number.isFinite(opts.audioSec) && opts.audioSec > 0
-    ? opts.audioSec
-    : 5 * images.length;
-  const segDur = Math.max(2, totalSec / images.length);
-  const frames = Math.max(30, Math.round(segDur * fps));
+  // Each motion segment follows its own voice part's duration (fallback 10s).
+  const segDurs = audioParts.map((_, i) => {
+    const d = opts.audioSecs?.[i];
+    return d && Number.isFinite(d) && d > 0 ? Math.min(15, Math.max(2, d)) : 10;
+  });
+  const totalSec = segDurs.reduce((a, b) => a + b, 0);
   opts.onStep?.('Loading studio renderer…');
   const ffmpeg = await loadFFmpeg(opts.onLog);
   latestProgress = opts.onProgress ?? null;
@@ -206,25 +208,52 @@ export async function buildKenBurnsCommercial(opts: {
     }
     imgNames.push(n);
   }
-  const am = (audio.name || '').toLowerCase().match(/\.([a-z0-9]+)$/);
-  const aName = `kb_voice${am ? `.${am[1]}` : '.mp3'}`;
-  try {
-    await ffmpeg.writeFile(aName, await fetchFile(audio));
-  } catch (e) {
-    throw new Error(`Could not load voice file "${audio.name}" (${errText(e)}). Re-download the MP3 from meta.ai.`);
+  const aNames: string[] = [];
+  opts.onStep?.(`Loading ${audioParts.length} voice part(s)…`);
+  for (let i = 0; i < audioParts.length; i++) {
+    const f = audioParts[i];
+    const m = (f.name || '').toLowerCase().match(/\.([a-z0-9]+)$/);
+    const n = `kb_voice${i}${m ? `.${m[1]}` : '.mp3'}`;
+    try {
+      await ffmpeg.writeFile(n, await fetchFile(f));
+    } catch (e) {
+      throw new Error(`Could not load voice Part ${i + 1} "${f.name}" (${errText(e)}). Re-download the MP3 from meta.ai.`);
+    }
+    aNames.push(n);
   }
+  // Concatenate the per-part MP3s in order → one voice track.
+  const vName = 'kb_voice_full.m4a';
+  try { await ffmpeg.deleteFile(vName); } catch { /* fresh */ }
+  try {
+    await ffmpeg.writeFile('kb_voices.txt', aNames.map((n) => `file '${n}'`).join('\n'));
+  } catch (e) {
+    throw new Error(`Could not start the voice join (${errText(e)}). Reload and press Retry.`);
+  }
+  opts.onStep?.('Joining voice parts…');
+  let vcode: number;
+  try {
+    vcode = await ffmpeg.exec(['-f', 'concat', '-safe', '0', '-i', 'kb_voices.txt', '-c:a', 'aac', '-b:a', '128k', vName]);
+  } catch (e) {
+    throw new Error(`Voice join could not start (${errText(e)}). Reload and press Retry.\n\nTechnical detail:\n${tailLog()}`);
+  }
+  if (vcode !== 0) throw new Error(`Voice join failed (exit ${vcode}). Re-download the part MP3s.\n\nTechnical detail:\n${tailLog()}`);
   const segNames: string[] = [];
-  for (let i = 0; i < imgNames.length; i++) {
+  // One motion segment per voice part (image i covers voice part i; extra
+  // images cycle if there are more images than parts).
+  for (let i = 0; i < segDurs.length; i++) {
+    const segDur = segDurs[i];
+    const frames = Math.max(30, Math.round(segDur * fps));
     const seg = `kb_seg${i}.mp4`;
     try { await ffmpeg.deleteFile(seg); } catch { /* fresh */ }
     const zin = `1+0.12*on/${frames}`;
     const zout = `1.12-0.12*on/${frames}`;
     const z = i % 2 === 0 ? zin : zout;
-    opts.onStep?.(`Animating image ${i + 1}/${imgNames.length}…`);
+    const img = imgNames[i % imgNames.length];
+    opts.onStep?.(`Animating part ${i + 1}/${segDurs.length}…`);
     let code: number;
     try {
       code = await ffmpeg.exec([
-        '-loop', '1', '-framerate', String(fps), '-t', segDur.toFixed(2), '-i', imgNames[i],
+        '-loop', '1', '-framerate', String(fps), '-t', segDur.toFixed(2), '-i', img,
         '-vf', `scale=${W * 2}:${H * 2}:force_original_aspect_ratio=increase,crop=${W * 2}:${H * 2},zoompan=z='${z}':d=1:x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':s=${W}x${H}:fps=${fps}`,
         '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '20', '-pix_fmt', 'yuv420p',
         '-an', seg,
@@ -254,7 +283,7 @@ export async function buildKenBurnsCommercial(opts: {
   try { await ffmpeg.deleteFile(out); } catch { /* fresh */ }
   opts.onStep?.('Laying your Meta.ai voice over the motion…');
   try {
-    code = await ffmpeg.exec(['-i', silent, '-i', aName, '-c:v', 'copy', '-c:a', 'aac', '-b:a', '128k', '-shortest', '-movflags', '+faststart', out]);
+    code = await ffmpeg.exec(['-i', silent, '-i', vName, '-c:v', 'copy', '-c:a', 'aac', '-b:a', '128k', '-shortest', '-movflags', '+faststart', out]);
   } catch (e) {
     throw new Error(`Voice mix could not start (${errText(e)}). Reload and press Retry.\n\nTechnical detail:\n${tailLog()}`);
   }

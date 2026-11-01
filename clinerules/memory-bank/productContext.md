@@ -11,7 +11,7 @@ Small businesses need high-quality social ads without expensive subscriptions or
 - Platform fragmentation → one project, multi-aspect export with safe zones.
 
 ## How It Works
-Key → Writer (factual table) → Setup (duration/platform/vibe) → Business (scrape/uploads/Final script + photo gallery + page screenshots with save-for-Meta.ai) → Story (pick path: People + app / Voices-only / Voice MP3 + Ken Burns + same screenshot gallery) → Export (stitch parts OR Ken Burns MP4 + SRT+txt+backup).
+Key → Writer (factual table) → Setup (duration/platform/vibe) → Business (scrape/uploads/Final script + photo gallery + page screenshots with save-for-Meta.ai) → Story (pick path: People + app / Voices-only / Voice MP3s per 10s part + Ken Burns + same screenshot gallery) → Export (stitch parts OR join voice MP3s under Ken Burns MP4 + SRT+txt+backup).
 
 ## UX Goals
 - One main button per screen. Smart defaults (brand colors, captions ON, music ducked, 9:16).
