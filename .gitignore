@@ -7,3 +7,4 @@ public/ffmpeg/*
 !.gitkeep
 .env*.local
 *.tsbuildinfo
+.env
