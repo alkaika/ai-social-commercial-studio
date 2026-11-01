@@ -72,7 +72,7 @@ export default function Storyboard({ onDone, onBack }: { onDone: () => void; onB
       <div className="card space-y-2">
         <h3 className="font-semibold">1 · Full script (auto-split, re-checked on every edit)</h3>
         <textarea className="input" rows={5} value={scriptText} onChange={(e) => setScriptText(e.target.value)} placeholder="Your full commercial script…" />
-        <p className="text-xs text-neutral-500">{fit.wordCount} words · ~{fit.targetWords} for {durationSec}s{batches.length > 1 ? ` · parts: ${batches.map((b) => `P${b.index} ~${b.wordCount}w/${b.batchSec}s`).join(' · ')}` : ''}</p>
+        <p className="text-xs text-neutral-500">{fit.wordCount} words · exactly {fit.targetWords} for {durationSec}s{fit.isExact ? ' ✅ exact' : ` · ${fit.wordsDelta > 0 ? '+' + fit.wordsDelta + ' over' : fit.wordsDelta + ' short'}`}{batches.length > 1 ? ` · parts: ${batches.map((b) => `P${b.index} ~${b.wordCount}w/${b.batchSec}s`).join(' · ')}` : ''}</p>
         <div className={`rounded-xl border p-3 text-sm space-y-1 ${effectiveBalance.even ? 'border-green-300 bg-green-50' : 'border-amber-300 bg-amber-50'}`}>
           <p className="font-semibold">{effectiveBalance.even ? `✅ Split check: even across ${batches.length || 1} part(s) — auto-balanced` : `⚠️ Split check: one part runs long — trim a few words`}</p>
           {effectiveBalance.even ? <p className="text-neutral-700">Auto-balanced on every edit. Each part fits its ~10s slot — just copy.</p> : <>

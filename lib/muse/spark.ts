@@ -16,11 +16,11 @@ export interface MasterScriptInput {
   guidance?: string; // user focus/exclude notes from the Business page box
 }
 
-/** Draft the master narrative sized to the selected slot, then machine-enforced to fit it. */
+/** Draft the master narrative at the EXACT word target for the slot. */
 export function buildMasterScriptPrompt(i: MasterScriptInput) {
   const dSec = normalizeDurationSec(i.durationSec);
-  const { target, min, max } = targetWordRange(dSec);
-  const setting = `SETTINGS THIS SCRIPT IS WRITTEN FOR: ${dSec}s cut${i.platform ? ` for ${i.platform}` : ''}, ${i.tone} vibe at a natural speaking pace (~3.5 words/sec). Write the master at ~${target} words — acceptable ${min}-${max} words. This length IS the product: it must be deliverable in ${dSec}s at 1.0x without cutting a word. Hook first, offer near the end, CTA last. Shorter is better than longer — never exceed ${max} words.`;
+  const { target } = targetWordRange(dSec);
+  const setting = 'SETTINGS: ' + dSec + 's cut for ' + (i.platform || 'video') + ', ' + i.tone + ' vibe, EXACTLY ' + target + ' words at natural pace. Count before returning. Hook first, offer near end, CTA last. Never under or over.';
   const story = i.brand.aboutStory
     ? `BRAND STORY (from about page ${i.brand.aboutSource || ''}):\n${i.brand.aboutStory}\nStory beats: ${(i.brand.aboutPoints || []).join(' | ') || 'none'}`
     : 'BRAND STORY: none found (homepage only). Lean on homepage description + offer.';
@@ -35,7 +35,7 @@ Must-use-verbatim lines: ${(i.brand.pinned || []).join(' | ') || 'none'}
 Avoid words: ${(i.brand.avoidWords || []).join(', ') || 'none'}
 Extra: ${i.extraContext || 'none'}
 USER GUIDANCE (what to focus on / exclude — honor this over defaults): ${i.guidance?.trim() || 'none given'}
-RULES: Write ${min}-${max} words (≈${target}) as flowing paragraphs (hook, story, proof, offer, CTA). ONE cohesive narrative — no scene breaks, no timestamps, no slogans list. Every word must be speakable in ${dSec}s at 1.0x. Ground every claim in the story above — never invent dates, awards, or stats.
+RULES: Write EXACTLY ${target} words as flowing paragraphs (hook, story, proof, offer, CTA). ONE cohesive narrative — no scene breaks, no timestamps, no slogans list. Every word must be speakable in ${dSec}s at 1.0x. Ground every claim in the story above — never invent dates, awards, or stats.
 Return STRICT JSON: {"masterScript": "..."} (paragraphs separated by \\n\\n).`;
 }
 
@@ -44,9 +44,9 @@ Return STRICT JSON: {"masterScript": "..."} (paragraphs separated by \\n\\n).`;
 // (constrainToWordRange as a final backstop) so Story starts clean.
 export async function generateMasterScript(opts: { key: string; baseUrl: string } & MasterScriptInput): Promise<string> {
   const dSec = normalizeDurationSec(opts.durationSec);
-  const { target, max } = targetWordRange(dSec);
+  const { target } = targetWordRange(dSec);
   const finish = (draft: string) => constrainToWordRange(draft, dSec).text;
-  if (!opts.key || opts.key === 'DEMO') return mockMasterScript(opts.brand.brandName || 'this business', dSec);
+  if (!opts.key || opts.key === 'DEMO') return finish(mockMasterScript(opts.brand.brandName || 'this business', dSec));
   const data: any = await callMuse({
     key: opts.key, baseUrl: opts.baseUrl, path: '/v1/chat/completions',
     body: { model: endpointModelForSpark(opts.sparkModel), messages: [{ role: 'user', content: buildMasterScriptPrompt(opts) }], temperature: 0.8 },
@@ -58,15 +58,15 @@ export async function generateMasterScript(opts: { key: string; baseUrl: string 
     if (typeof parsed.masterScript === 'string' && parsed.masterScript.length > 40) draft = parsed.masterScript;
   } catch {}
   if (!draft && text.trim().length > 40) draft = text.trim().slice(0, 2000);
-  if (!draft) return mockMasterScript(opts.brand.brandName || 'this business', dSec);
-  if (countWords(draft) <= max) return draft;
-  // Over budget: one tighter retry so the edit is Spark's wording, not a slice.
+  if (!draft) return finish(mockMasterScript(opts.brand.brandName || 'this business', dSec));
+  if (countWords(draft) === target) return draft.trim();
+  // Off target: retry with the delta spelled out (expand or tighten).
   try {
     const retry: any = await callMuse({
       key: opts.key, baseUrl: opts.baseUrl, path: '/v1/chat/completions',
       body: {
         model: endpointModelForSpark(opts.sparkModel), temperature: 0.6,
-        messages: [{ role: 'user', content: `Rewrite this into a tight ~${target}-word commercial master for a ${dSec}-second slot. Keep hook, one proof beat, offer, CTA. Never exceed ${max} words. Return STRICT JSON {"masterScript":"..."}.\n\n${draft.slice(0, 1800)}` }],
+        messages: [{ role: 'user', content: `Rewrite this into a tight ~${target}-word commercial master for a ${dSec}-second slot. Keep hook, one proof beat, offer, CTA. Hit EXACTLY ${target} words. Return STRICT JSON {"masterScript":"..."}.\n\n${draft.slice(0, 1800)}` }],
       },
     });
     const rText: string = retry?.choices?.[0]?.message?.content ?? '';

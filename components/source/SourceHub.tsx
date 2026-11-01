@@ -245,7 +245,7 @@ export default function SourceHub({ onDone, onBack }: { onDone: () => void; onBa
         <textarea className="input" rows={8} value={masterScript} onChange={(e) => set({ masterScript: e.target.value, masterApproved: false })} placeholder="Or write/paste your final script here…" />
         {masterScript.trim() ? (
           <div className="flex justify-between items-center text-xs text-neutral-500">
-            <span>{(() => { const f = masterFit(masterScript, durationSec); return `${f.wordCount} words · target ~${f.targetWords} for ${durationSec}s · runs ~${f.secAtNatural}s at natural pace${f.fitsNatural ? ' ✅ fits' : f.fitsWithCadence ? ' · fits with cadence' : ` · needs cadence or trim (~${f.secAtMax}s even at 1.2x)`}`; })()}</span>
+            <span>{(() => { const f = masterFit(masterScript, durationSec); return `${f.wordCount} words · exactly ${f.targetWords} for ${durationSec}s · runs ~${f.secAtNatural}s at natural pace${f.isExact ? ' ✅ exact' : f.wordsDelta > 0 ? ` · +${f.wordsDelta} over — edit down or re-draft` : ` · ${f.wordsDelta} short — add lines or re-draft`}`; })()}</span>
             <button className="underline" onClick={() => { set({ masterScript: '', masterApproved: false }); }}>Clear draft</button>
           </div>
         ) : (

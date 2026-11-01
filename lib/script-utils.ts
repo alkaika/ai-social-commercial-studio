@@ -57,15 +57,17 @@ export interface ScriptScene {
 /** Live timing readout for the Business page master editor. */
 export function masterFit(masterScript: string, durationSec: number) {
   const wc = countWords(masterScript || '');
-  const { target, max, hardMax } = targetWordRange(durationSec);
+  const { target, hardMax } = targetWordRange(durationSec);
   const atMax = Math.round((wc / WORDS_PER_SEC / MAX_CADENCE) * 10) / 10;
   return {
     wordCount: wc,
     targetWords: target,
     targetSec: durationSec,
+    wordsDelta: wc - target,
+    isExact: wc === target,
     secAtNatural: Math.round((wc / WORDS_PER_SEC) * 10) / 10,
     secAtMax: atMax,
-    fitsNatural: wc <= max,
+    fitsNatural: wc === target,
     fitsWithCadence: wc <= hardMax,
   };
 }
@@ -109,25 +111,47 @@ export function countWords(text: string) {
   return text.trim().split(/\s+/).filter(Boolean).length;
 }
 
-/** Natural-pace word budget for a slot. Drafts aim inside [min, max] at 1.0x. */
+/** Neutral, brand-safe filler words used ONLY as a last-resort local backstop
+ *  to pad a short draft up to the exact target (LLM retry is tried first).
+ *  Generic commercial language — no invented claims, dates, or stats. */
+const EXACT_FILLER_WORDS =
+  `Bring a friend, stay for the flavor, come back soon. Fresh daily, made with care, served with a smile. Taste the difference today and see you soon again`.split(/\s+/).filter(Boolean);
+
+/** Deterministically fit any text to EXACTLY targetWords.
+ *  Over → trimWords (hook + CTA preserved). Under → append filler words
+ *  sliced to the exact deficit. */
+export function fitToExactWordCount(text: string, targetWords: number): string {
+  const words = text.trim().split(/\s+/).filter(Boolean);
+  if (words.length === targetWords) return text.trim();
+  if (words.length > targetWords) return trimWords(text, targetWords);
+  const need = targetWords - words.length;
+  const pad: string[] = [];
+  for (let i = 0; pad.length < need; i++) pad.push(EXACT_FILLER_WORDS[i % EXACT_FILLER_WORDS.length]);
+  return [...words, ...pad].join(' ');
+}
+
+/** Natural-pace word budget for a slot. Drafts aim for EXACTLY target at 1.0x. */
 export function targetWordRange(durationSec: number): { target: number; min: number; max: number; hardMax: number } {
   const target = Math.round(durationSec * WORDS_PER_SEC);
   return {
     target,
-    min: Math.max(5, Math.floor(target * 0.85)),
-    max: target + 2,
+    min: target,
+    max: target,
     // Fastest natural cadence ceiling — beyond this even 1.2x cannot fit.
     hardMax: Math.floor(durationSec * WORDS_PER_SEC * MAX_CADENCE),
   };
 }
 
-/** Guarantee a draft fits the slot before approval: trim (hook + CTA preserved) only when over the natural max. */
+/** Guarantee a draft hits the EXACT word target: over → trimWords
+ *  (hook + CTA preserved); under → local filler backstop so the draft is
+ *  never short. LLM retry is always tried first (see spark.ts) — this is
+ *  the deterministic last resort. */
 export function constrainToWordRange(text: string, durationSec: number): { text: string; wordCount: number; targetWords: number; adjusted: boolean } {
   const range = targetWordRange(durationSec);
   const wc = countWords(text);
-  if (wc <= range.max) return { text: text.trim(), wordCount: wc, targetWords: range.target, adjusted: false };
-  const trimmed = trimWords(text, range.target);
-  return { text: trimmed, wordCount: countWords(trimmed), targetWords: range.target, adjusted: true };
+  if (wc === range.target) return { text: text.trim(), wordCount: wc, targetWords: range.target, adjusted: false };
+  const fitted = fitToExactWordCount(text, range.target);
+  return { text: fitted, wordCount: countWords(fitted), targetWords: range.target, adjusted: true };
 }
 
 export function trimWords(masterScript: string, targetWords: number) {
