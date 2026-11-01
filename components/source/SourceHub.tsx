@@ -1,8 +1,10 @@
 'use client';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useProject } from '@/stores/projectStore';
 import { useKeyStore } from '@/stores/keyStore';
 import { masterFit } from '@/lib/script-utils';
+import ShotImg from '@/components/simple/ShotImg';
+import { downloadWebsiteShot, screenshotCandidates, type WebsiteShot } from '@/lib/screenshots';
 
 export default function SourceHub({ onDone, onBack }: { onDone: () => void; onBack?: () => void }) {
   const { urls, set, assets, brand, durationSec, platform, tone, sparkModel, masterScript, masterApproved, scriptGuidance, projectId } = useProject();
@@ -11,6 +13,34 @@ export default function SourceHub({ onDone, onBack }: { onDone: () => void; onBa
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState('');
   const [drafting, setDrafting] = useState(false);
+  const [selected, setSelected] = useState<Record<string, boolean>>({});
+  const [dlMsg, setDlMsg] = useState('');
+  const [dlBusy, setDlBusy] = useState(false);
+
+  const shots: WebsiteShot[] = useMemo(
+    () => screenshotCandidates(urls, brand.aboutSource || '', brand.sitePages || []),
+    [urls, brand.aboutSource, brand.sitePages]
+  );
+  const selectedShots = shots.filter((s) => selected[s.id]);
+  const toggleShot = (id: string) => setSelected((prev) => ({ ...prev, [id]: !prev[id] }));
+
+  const downloadMany = async (list: WebsiteShot[]) => {
+    if (!list.length || dlBusy) return;
+    setDlBusy(true); setDlMsg(`Saving ${list.length} screenshot${list.length > 1 ? 's' : ''}…`);
+    let saved = 0; let opened = 0;
+    for (let i = 0; i < list.length; i++) {
+      const shot = list[i];
+      const idx = shots.findIndex((s) => s.id === shot.id);
+      try {
+        const r = await downloadWebsiteShot(shot, idx >= 0 ? idx : i);
+        if (r === 'saved') saved++; else opened++;
+      } catch { opened++; }
+      // Small pause so the browser doesn't block rapid downloads.
+      await new Promise((r) => setTimeout(r, 400));
+    }
+    setDlMsg(saved ? `Saved ${saved} to your downloads${opened ? ` (${opened} opened in a tab — right-click → Save image)` : ''}. Attach them in meta.ai.` : 'Downloads blocked — opened in tabs instead. Right-click → Save image.');
+    setDlBusy(false);
+  };
 
   const addUrl = () => {
     if (!urlInput.trim()) return;
@@ -32,8 +62,9 @@ export default function SourceHub({ onDone, onBack }: { onDone: () => void; onBa
         const points = Array.from(new Set<string>(good.flatMap((r: any) => r.data?.aboutPoints || []))).slice(0, 8);
         const aboutStory = stories.join(' ').slice(0, 1200);
         const aboutSource = good.map((r: any) => r.data?.aboutSource).filter(Boolean).join(', ') || '';
+        const sitePages = Array.from(new Set<string>(good.flatMap((r: any) => r.data?.sitePages || []))).slice(0, 12);
         const needsJs = good.some((r: any) => r.data?.needsJs);
-        set({ brand: { brandName: first.brandName || '', tagline: first.tagline || '', description: first.description || '', colors: first.colors || ['#111111'], logoUrl: first.logoUrl, cta: first.cta || 'Shop now', offer: '', testimonials: good.flatMap((r: any) => r.data?.testimonials || []).slice(0, 5), pinned: [], avoidWords: [], aboutStory, aboutPoints: points, aboutSource } });
+        set({ brand: { brandName: first.brandName || '', tagline: first.tagline || '', description: first.description || '', colors: first.colors || ['#111111'], logoUrl: first.logoUrl, cta: first.cta || 'Shop now', offer: '', testimonials: good.flatMap((r: any) => r.data?.testimonials || []).slice(0, 5), pinned: [], avoidWords: [], aboutStory, aboutPoints: points, aboutSource, sitePages } });
         const imgs = good.flatMap((r: any) => r.data?.heroImages || []).map((u: string, i: number) => ({ id: `web-${i}`, name: 'Website image', url: u, tag: 'Website' }));
         set({ assets: [...assets, ...imgs] });
         if (aboutStory) {
@@ -147,6 +178,44 @@ export default function SourceHub({ onDone, onBack }: { onDone: () => void; onBa
               </div>
             ))}
           </div>
+        )}
+      </div>
+
+      <div className="card space-y-3">
+        <h3 className="font-semibold">🌐 Website page screenshots ({shots.length || 'none yet'} — free)</h3>
+        <p className="text-sm text-neutral-600">Your main pages (up to 12 — home, about, services, pricing…) so meta.ai sees your real site. Tap to select, then save to your drive and attach them in meta.ai.</p>
+        {shots.length === 0 ? (
+          <p className="text-sm text-neutral-500 border border-dashed rounded-xl p-3">No pages yet — add your website above and tap “Read my website(s)” to fill this gallery. Fewer than 10 just means a smaller site — we show whatever exists.</p>
+        ) : (
+          <>
+            <div className="flex flex-wrap gap-2 items-center text-sm">
+              <button className="btn-secondary !py-1" onClick={() => setSelected(Object.fromEntries(shots.map((s) => [s.id, true])))}>Select all {shots.length}</button>
+              <button className="btn-secondary !py-1" onClick={() => setSelected({})}>Clear</button>
+              <button className="btn-primary !py-1" disabled={dlBusy || selectedShots.length === 0} onClick={() => downloadMany(selectedShots)}>{dlBusy ? 'Saving…' : `💾 Save selected (${selectedShots.length})`}</button>
+              <button className="btn-secondary !py-1" disabled={dlBusy} onClick={() => downloadMany(shots)}>{dlBusy ? 'Saving…' : `💾 Save all ${shots.length}`}</button>
+            </div>
+            {dlMsg && <p className="text-sm bg-neutral-100 border rounded-xl p-3">{dlMsg}</p>}
+            <div className="grid grid-cols-2 gap-2">
+              {shots.map((sh, i) => {
+                const on = !!selected[sh.id];
+                return (
+                  <div key={sh.id} className={`relative rounded-xl overflow-hidden border text-left ${on ? 'border-black ring-2 ring-black' : 'border-neutral-200'}`}>
+                    <button onClick={() => toggleShot(sh.id)} className="block w-full" title={`${sh.pageUrl} — tap to ${on ? 'deselect' : 'select'}`}>
+                      <ShotImg shot={sh} alt={sh.label} />
+                    </button>
+                    <div className="absolute top-1 left-1 flex gap-1">
+                      <button onClick={() => toggleShot(sh.id)} className={`text-[11px] font-medium rounded-lg px-2 py-0.5 ${on ? 'bg-black text-white' : 'bg-white/90 border'}`}>{on ? '✓ Selected' : 'Select'}</button>
+                    </div>
+                    <div className="absolute top-1 right-1">
+                      <button onClick={() => downloadWebsiteShot(sh, i).then((r) => setDlMsg(r === 'saved' ? `Saved ${i + 1} of ${shots.length} — attach it in meta.ai.` : 'Opened in a tab — right-click → Save image.'))} className="text-[11px] font-medium rounded-lg px-2 py-0.5 bg-white/90 border" title="Save this page to your drive">💾 Save</button>
+                    </div>
+                    <p className="text-[11px] px-2 py-1 truncate bg-white/95">{i + 1}. {sh.label}</p>
+                  </div>
+                );
+              })}
+            </div>
+            <p className="text-xs text-neutral-500">Same pages appear under each Story prompt — attach the saved files in meta.ai so every part shows your real site.</p>
+          </>
         )}
       </div>
 

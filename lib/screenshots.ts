@@ -65,15 +65,62 @@ function shortLabel(pageUrl: string): string {
   }
 }
 
+function fileSafe(s: string): string {
+  return (s || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60) || 'page';
+}
+
 const ABOUT_PATHS = ['/about', '/about-us', '/our-story', '/story', '/pricing', '/services'];
 
-/** Build homepage + about-variant screenshot candidates from scanned urls. */
-export function screenshotCandidates(urls: string[], aboutSource = ''): WebsiteShot[] {
+/** Download-friendly filename: brand-host + path, e.g. example-com-pricing.jpg */
+export function shotFileName(shot: WebsiteShot, index: number): string {
+  try {
+    const u = new URL(shot.pageUrl);
+    const host = fileSafe(u.hostname.replace(/^www\./, ''));
+    const path = u.pathname.replace(/\/$/, '') || 'homepage';
+    return `${String(index + 1).padStart(2, '0')}-${host}${path === 'homepage' ? '-homepage' : `-${fileSafe(path)}`}.jpg`;
+  } catch {
+    return `website-shot-${index + 1}.jpg`;
+  }
+}
+
+/** Best-effort download of a rendered screenshot (mShots -> thum.io -> open tab). */
+export async function downloadWebsiteShot(shot: WebsiteShot, index: number): Promise<'saved' | 'opened'> {
+  const name = shotFileName(shot, index);
+  const tries = [shot.imageUrl, shot.fallbackUrl, microlinkUrl(shot.pageUrl)];
+  for (const url of tries) {
+    try {
+      const res = await fetch(url, { mode: 'cors' });
+      if (!res.ok) continue;
+      const blob = await res.blob();
+      // Skip tiny error payloads (<15KB) — try the next renderer instead.
+      if (blob.size < 15000) continue;
+      const obj = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = obj;
+      a.download = name;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(obj), 8000);
+      return 'saved';
+    } catch { /* try next renderer */ }
+  }
+  window.open(shot.imageUrl, '_blank', 'noopener');
+  return 'opened';
+}
+
+/** Build screenshot candidates: discovered site pages (up to 12) + homepage + about variants. */
+export function screenshotCandidates(urls: string[], aboutSource = '', sitePages: string[] = []): WebsiteShot[] {
   const pages: string[] = [];
   const push = (p: string) => {
     const n = normalizePageUrl(p);
     if (n && !pages.includes(n)) pages.push(n);
   };
+  // Discovered main pages first (sitemap + nav, up to 12) — the 10+ gallery.
+  for (const sp of sitePages || []) {
+    push(sp);
+    if (pages.length >= 12) break;
+  }
   for (const u of urls || []) {
     const home = normalizePageUrl(u);
     if (!home) continue;
@@ -97,7 +144,7 @@ export function screenshotCandidates(urls: string[], aboutSource = ''): WebsiteS
       }
     } catch { /* ignore */ }
   }
-  return pages.slice(0, 8).map((pageUrl, i) => ({
+  return pages.slice(0, 12).map((pageUrl, i) => ({
     id: `shot-${i}-${pageUrl}`,
     pageUrl,
     imageUrl: mshotsUrl(pageUrl, 1080),

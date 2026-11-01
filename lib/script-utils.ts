@@ -14,6 +14,7 @@ export interface BrandKit {
   aboutStory?: string;   // cohesive brand story (homepage + about page merged)
   aboutPoints?: string[]; // story beats: founding, mission, differentiators
   aboutSource?: string;   // which about URL it came from
+  sitePages?: string[];   // main site pages (sitemap + nav, up to 12) for screenshots
 }
 
 export type MotionSource = 'metai-upload' | 'kenburns' | 'screenshot';

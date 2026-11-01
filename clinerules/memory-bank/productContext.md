@@ -11,7 +11,7 @@ Small businesses need high-quality social ads without expensive subscriptions or
 - Platform fragmentation → one project, multi-aspect export with safe zones.
 
 ## How It Works
-Key → Writer (factual table) → Sources (scrape/uploads/paste) → Configure (duration/platform/tone) → Generate script → Revise (edit/quick/AI chat, approve plan+cost, old-vs-new) → Export (MP4+SRT+txt+backup).
+Key → Writer (factual table) → Setup (duration/platform/vibe) → Business (scrape/uploads/Final script + photo gallery + page screenshots with save-for-Meta.ai) → Story (10s testimonial batches + same screenshot gallery) → Export (MP4+SRT+txt+backup).
 
 ## UX Goals
 - One main button per screen. Smart defaults (brand colors, captions ON, music ducked, 9:16).

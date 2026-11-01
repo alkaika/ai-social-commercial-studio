@@ -4,6 +4,9 @@ export interface ScrapeResult {
   brandName: string; tagline: string; description: string;
   colors: string[]; logoUrl?: string; heroImages: string[];
   cta: string; testimonials: string[];
+  // Main site pages discovered (sitemap + nav, same-origin, capped ~12) —
+  // Business page renders these as screenshot candidates (10+ when available).
+  sitePages: string[];
   // About-page enrichment (new): story + proof scraped from /about, /story,
   // /our-story, /mission, /team, /company variants.
   aboutSummary?: string;   // cohesive 2–4 sentence story (Spark-ready)
@@ -17,6 +20,74 @@ const TIMEOUT = Number(process.env.SCRAPE_TIMEOUT_MS || 15000);
 const MAX_BYTES = Number(process.env.SCRAPE_MAX_BYTES || 2000000);
 
 const ABOUT_PATHS = ['/about', '/about-us', '/our-story', '/story', '/mission', '/team', '/company', '/who-we-are'];
+
+// Main-page discovery for the Business screenshot gallery (10+ when available).
+// Merges (1) same-origin sitemap URLs + (2) same-origin nav links, prioritizes
+// short human pages, dedupes by pathname, caps at 12.
+const PAGE_EXT_RE = /\.(pdf|jpg|jpeg|png|gif|webp|svg|ico|css|js|json|xml|zip|mp4|mov|avi|mp3|wav)$/i;
+const MAIN_PAGE_KEYWORDS = [
+  'about', 'services', 'service', 'products', 'product', 'shop', 'store', 'menu',
+  'pricing', 'plans', 'contact', 'portfolio', 'work', 'gallery', 'testimonials',
+  'reviews', 'team', 'faq', 'blog', 'features', 'book', 'reserve', 'order',
+];
+
+async function fetchSitemapPages(base: URL): Promise<string[]> {
+  try {
+    const res = await fetch(new URL('/sitemap.xml', base).toString(), {
+      headers: { 'User-Agent': 'Mozilla/5.0 (AI Commercial Studio)' },
+      signal: AbortSignal.timeout(6000),
+    });
+    if (!res.ok) return [];
+    const xml = await res.text();
+    if (xml.length > 500000) return [];
+    const $x = cheerio.load(xml, { xmlMode: true });
+    const locs = $x('loc').map((_, e) => $x(e).text().trim()).get().filter(Boolean).slice(0, 40);
+    const out: string[] = [];
+    for (const loc of locs) {
+      try {
+        if (/\.xml$/i.test(loc)) continue; // sitemap index — skip nested fetches
+        const u = new URL(loc, base);
+        if (u.origin !== base.origin) continue;
+        if (PAGE_EXT_RE.test(u.pathname)) continue;
+        out.push(u.toString());
+        if (out.length >= 20) break;
+      } catch { /* skip bad loc */ }
+    }
+    return out;
+  } catch {
+    return [];
+  }
+}
+
+function discoverSitePages($: cheerio.CheerioAPI, base: URL, extra: string[] = []): string[] {
+  const byPath = new Map<string, string>();
+  const add = (href: string) => {
+    try {
+      if (!href || href.startsWith('#') || /^(mailto|tel|javascript):/i.test(href)) return;
+      const u = new URL(href, base);
+      if (u.origin !== base.origin) return;
+      if (PAGE_EXT_RE.test(u.pathname)) return;
+      u.hash = '';
+      const key = u.pathname.replace(/\/+$/, '').toLowerCase() || '/';
+      if (!byPath.has(key)) byPath.set(key, u.toString());
+    } catch { /* skip */ }
+  };
+  // Homepage always first.
+  add(base.toString());
+  for (const e of extra) add(e);
+  $('a[href]').each((_, el) => add($(el).attr('href') || ''));
+  const all = Array.from(byPath.entries());
+  const score = ([path]: [string, string]): number => {
+    if (path === '/') return -100;
+    for (let i = 0; i < MAIN_PAGE_KEYWORDS.length; i++) {
+      if (path.includes(MAIN_PAGE_KEYWORDS[i])) return i - 50;
+    }
+    const depth = path.split('/').filter(Boolean).length;
+    return depth * 10 + Math.min(path.length / 20, 10);
+  };
+  all.sort((a, b) => score(a) - score(b) || a[0].localeCompare(b[0]));
+  return all.slice(0, 12).map(([, url]) => url);
+}
 
 function cleanText(t: string, max = 2000) {
   return t.replace(/\s+/g, ' ').replace(/(cookie|privacy policy|terms of service|subscribe|newsletter).{0,80}/gi, '').trim().slice(0, max);
@@ -241,7 +312,14 @@ export async function scrapeSite(rawUrl: string): Promise<ScrapeResult> {
       } catch { /* try next candidate */ }
     }
 
-    return { brandName: title.split('|')[0].split('—')[0].trim() || u.hostname, tagline, description: desc, colors, logoUrl: abs(logo || undefined), heroImages, cta, testimonials, aboutSummary, aboutPoints, aboutSource, needsJs };
+    // Main-page gallery for Business screenshots (sitemap + nav links, ≤12).
+    let sitePages: string[] = [];
+    try {
+      const sitemapPages = await fetchSitemapPages(u);
+      sitePages = discoverSitePages($, u, sitemapPages);
+    } catch { try { sitePages = discoverSitePages($, u, []); } catch { sitePages = []; } }
+
+    return { brandName: title.split('|')[0].split('—')[0].trim() || u.hostname, tagline, description: desc, colors, logoUrl: abs(logo || undefined), heroImages, cta, testimonials, sitePages, aboutSummary, aboutPoints, aboutSource, needsJs };
   } catch (e: any) {
     if (e?.name === 'AbortError') throw new Error('That website took too long to respond. Try pasting your text instead.');
     throw e instanceof Error ? e : new Error('Could not read that website. Paste your text instead.');

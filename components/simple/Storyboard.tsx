@@ -4,9 +4,11 @@ import { useProject } from '@/stores/projectStore';
 import { PLATFORMS, TONES } from '@/config/platforms';
 import { META_AI_URL, STORY_DEVICES, STORY_DEVICE_ICONS, STORY_MUSIC, STORY_TESTIMONIAL_PERSONAS, deviceSourceLabel, splitScriptIntoBatches, rebalanceBatches, checkBatchBalance, assignBatchSpeakers, buildBatchTestimonialPrompt, copyText, type BatchSpeaker } from '@/lib/meta-sdk/prompts';
 import { masterFit } from '@/lib/script-utils';
+import ShotImg from '@/components/simple/ShotImg';
+import { downloadWebsiteShot, screenshotCandidates } from '@/lib/screenshots';
 
 export default function Storyboard({ onDone, onBack }: { onDone: () => void; onBack?: () => void }) {
-  const { set, durationSec, brand, tone, platform, sparkModel, script, masterScript } = useProject();
+  const { set, durationSec, brand, urls, tone, platform, sparkModel, script, masterScript } = useProject();
   const seed = useMemo(() => {
     if (masterScript?.trim()) return masterScript.trim();
     if (script?.scenes?.length) return script.scenes.map((s) => s.voiceover).join(' ');
@@ -19,6 +21,11 @@ export default function Storyboard({ onDone, onBack }: { onDone: () => void; onB
   const [speakerIdx, setSpeakerIdx] = useState<number[]>([]);
   const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
   const [msg, setMsg] = useState('');
+  const [shotMsg, setShotMsg] = useState('');
+  const shots = useMemo(
+    () => screenshotCandidates(urls, (brand as any)?.aboutSource || '', (brand as any)?.sitePages || []),
+    [urls, (brand as any)?.aboutSource, (brand as any)?.sitePages]
+  );
   const pf = PLATFORMS[platform];
   const vibe = TONES.find((t) => t.id === tone)?.label || 'Friendly';
   const fit = masterFit(scriptText || '', durationSec);
@@ -82,6 +89,27 @@ export default function Storyboard({ onDone, onBack }: { onDone: () => void; onB
       <div className="card space-y-4">
         <h3 className="font-semibold">3 · Copy each 10s part into meta.ai</h3>
         <div className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm space-y-1"><p className="font-semibold">🧠 Pick the right mode in Meta.ai</p><p className="text-neutral-700">No Meta One Core subscription → use <b>Instant</b> mode. Have a Meta One Core sub → use <b>Thinking</b> mode.</p></div>
+        {shots.length > 0 && (
+          <div className="space-y-2 border rounded-xl p-3 bg-neutral-50">
+            <p className="font-medium text-sm">🌐 Your website pages ({shots.length}) — save + attach these in meta.ai</p>
+            <p className="text-xs text-neutral-600">Same gallery as Business. Save the pages to your drive, then attach them alongside each prompt paste.</p>
+            <div className="flex flex-wrap gap-2">
+              <button className="btn-secondary !py-1" onClick={async () => { setShotMsg('Saving all…'); let n = 0; for (let i = 0; i < shots.length; i++) { try { if ((await downloadWebsiteShot(shots[i], i)) === 'saved') n++; } catch {} await new Promise((r) => setTimeout(r, 400)); } setShotMsg(n ? `Saved ${n} of ${shots.length} — attach them in meta.ai.` : 'Opened in tabs — right-click → Save image.'); }}>💾 Save all {shots.length} for meta.ai</button>
+            </div>
+            {shotMsg && <p className="text-xs bg-white border rounded-xl p-2">{shotMsg}</p>}
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {shots.map((sh, i) => (
+                <div key={sh.id} className="relative rounded-xl overflow-hidden border bg-white">
+                  <ShotImg shot={sh} alt={sh.label} />
+                  <div className="absolute bottom-1 left-1 right-1 flex gap-1">
+                    <span className="text-[11px] font-medium bg-black/70 text-white rounded-lg px-2 py-0.5 truncate flex-1">{i + 1}. {sh.label}</span>
+                    <button className="text-[11px] font-medium rounded-lg px-2 py-0.5 bg-white/95 border shrink-0" title={`Save ${sh.label} to your drive`} onClick={() => downloadWebsiteShot(sh, i).then((r) => setShotMsg(r === 'saved' ? `Saved ${i + 1} of ${shots.length} — attach it in meta.ai.` : 'Opened in a tab — right-click → Save image.'))}>💾</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
         {prompts.map((p, i) => (
           <div key={i} className="space-y-2 border rounded-xl p-3">
             <p className="font-medium text-sm">Part {i + 1} of {prompts.length} · {batches[i]?.batchSec}s · {batches[i]?.wordCount} words · {speakers[i]?.short} · {speakers[i]?.voice}</p>
