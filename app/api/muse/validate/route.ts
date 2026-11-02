@@ -76,7 +76,7 @@ export async function POST(req: NextRequest) {
         if (hit) {
           mark('ok', `Model catalog lists "${hit}" (docs ID "${GATEWAY_MODELS.sam}" returned model_not_found for this key — using "${hit}" instead). Segmentation via POST /v1/responses.`);
         } else {
-          mark('fail', `Tried ${tried.join(' | ')}. Catalog (${ids.length} models) contains no SAM-like ID: [${ids.slice(0, 20).join(', ')}${ids.length > 20 ? ', …' : ''}]. SAM preview mode stays on — script, voice captions, and images are unaffected.`);
+          mark('fail', `Tried ${tried.join(' | ')}. Catalog (${ids.length} models) contains no SAM-like ID: [${ids.slice(0, 20).join(', ')}${ids.length > 20 ? ', …' : ''}]. SAM segmentation is unavailable — script, voice captions, and images are unaffected.`);
         }
       } catch (e: any) {
         const [s, d] = failFrom(e, `${base}/v1/models`);

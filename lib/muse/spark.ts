@@ -4,7 +4,6 @@ import { normalizeDurationSec } from '@/config/platforms';
 import type { SparkModelId } from '@/config/pricing';
 import type { AdScript, BrandKit } from '@/lib/script-utils';
 import { countWords, targetWordRange, constrainToWordRange, WORDS_PER_SEC } from '@/lib/script-utils';
-import { mockScript, mockMasterScript } from './mocks';
 
 export interface MasterScriptInput {
   brand: BrandKit;
@@ -46,7 +45,7 @@ export async function generateMasterScript(opts: { key: string; baseUrl: string 
   const dSec = normalizeDurationSec(opts.durationSec);
   const { target } = targetWordRange(dSec);
   const finish = (draft: string) => constrainToWordRange(draft, dSec).text;
-  if (!opts.key || opts.key === 'DEMO') return finish(mockMasterScript(opts.brand.brandName || 'this business', dSec));
+  if (!opts.key) throw new Error('Missing API key. Add your Meta key first — it is sent with this request only.');
   const data: any = await callMuse({
     key: opts.key, baseUrl: opts.baseUrl, path: '/v1/chat/completions',
     body: { model: endpointModelForSpark(opts.sparkModel), messages: [{ role: 'user', content: buildMasterScriptPrompt(opts) }], temperature: 0.8 },
@@ -58,7 +57,7 @@ export async function generateMasterScript(opts: { key: string; baseUrl: string 
     if (typeof parsed.masterScript === 'string' && parsed.masterScript.length > 40) draft = parsed.masterScript;
   } catch {}
   if (!draft && text.trim().length > 40) draft = text.trim().slice(0, 2000);
-  if (!draft) return finish(mockMasterScript(opts.brand.brandName || 'this business', dSec));
+  if (!draft) throw new Error('Script draft came back empty — try again.');
   if (countWords(draft) === target) return draft.trim();
   // Off target: retry with the delta spelled out (expand or tighten).
   try {
@@ -112,7 +111,7 @@ Return STRICT JSON: {"scenes":[{"id":"s1","heading":"...","voiceover":"...","onS
 
 export async function generateScript(opts: { key: string; baseUrl: string } & ScriptInput): Promise<AdScript> {
   const dSec = normalizeDurationSec((opts as any).durationSec);
-  if (!opts.key || opts.key === 'DEMO') return mockScript(dSec, opts.sparkModel);
+  if (!opts.key) throw new Error('Missing API key. Add your Meta key first — it is sent with this request only.');
   const data: any = await callMuse({
     key: opts.key, baseUrl: opts.baseUrl, path: '/v1/chat/completions',
     body: { model: endpointModelForSpark(opts.sparkModel), messages: [{ role: 'user', content: buildScriptPrompt(opts) }], temperature: 0.8 },
@@ -127,6 +126,10 @@ export async function generateScript(opts: { key: string; baseUrl: string } & Sc
       visualPrompt: s.visualPrompt || '', durationSec: Number(s.durationSec) || 5,
       storyBeat: s.storyBeat || '', cadence: 1,
     }));
+    if (!scenes.length) throw new Error('Script organize came back empty — try again.');
     return { scenes, totalSec: dSec, sparkModel: opts.sparkModel };
-  } catch { return mockScript(dSec, opts.sparkModel); }
+  } catch (e: any) {
+    if (e?.message?.includes('came back empty')) throw e;
+    throw new Error('Script organize failed — try again.');
+  }
 }

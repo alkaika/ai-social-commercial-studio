@@ -6,12 +6,11 @@ import { checkCaptionsAvailability } from '@/lib/muse/voice';
 // NOT voice synthesis — voice-over comes from meta.ai text-to-voice clips.
 export async function POST(req: NextRequest) {
   try {
-    let key = 'DEMO', baseUrl = '';
-    try { ({ key, baseUrl } = byokHeaders(req)); } catch {}
+    const { key, baseUrl } = byokHeaders(req);
     const { text } = await req.json();
     const out = await checkCaptionsAvailability({ key, baseUrl, text });
     return NextResponse.json({ ...out, captions: true, synthesis: false });
   } catch (e: any) {
-    return NextResponse.json({ error: e?.message || 'Captions check failed.' }, { status: 500 });
+    return NextResponse.json({ error: e?.message || 'Captions check failed.' }, { status: 400 });
   }
 }

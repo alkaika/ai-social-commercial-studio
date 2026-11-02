@@ -4,11 +4,10 @@ import { generateImage } from '@/lib/muse/visual';
 
 export async function POST(req: NextRequest) {
   try {
-    let key = 'DEMO', baseUrl = '';
-    try { ({ key, baseUrl } = byokHeaders(req)); } catch {}
+    const { key, baseUrl } = byokHeaders(req);
     const { prompt, aspect } = await req.json();
     return NextResponse.json(await generateImage({ key, baseUrl, prompt, aspect }));
   } catch (e: any) {
-    return NextResponse.json({ error: e?.message || 'Image failed.' }, { status: 500 });
+    return NextResponse.json({ error: e?.message || 'Image failed.' }, { status: 400 });
   }
 }

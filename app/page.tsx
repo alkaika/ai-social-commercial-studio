@@ -2,17 +2,16 @@
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
-import { BUILD_VIEW_KEY, JUDGING_BUILD, getStoredBuildView, setStoredBuildView, type BuildView } from '@/lib/judging';
+import { JUDGING_BUILD, getStoredBuildView, setStoredBuildView, type BuildView } from '@/lib/judging';
 
 function HomeInner() {
   const params = useSearchParams();
   const [view, setView] = useState<BuildView>(JUDGING_BUILD ? 'judging' : 'byok');
-  const [showDemoInfo, setShowDemoInfo] = useState(false);
 
   // Landing runtime toggle (judging builds only):
   // - default = judging view ("Start judging run →" + "Switch to BYOK build")
   // - ?build=byok deep-links the BYOK preview; otherwise restore last toggle
-  // - "Switch to BYOK build" → BYOK view ("Start run →" + demo link + "Switch to Judging build")
+  // - "Switch to BYOK build" → BYOK view ("Start run →" + "Switch to Judging build")
   // - "Switch to Judging build" → back to judging view
   // Pure BYOK builds (flag off) always render BYOK, no toggle.
   // No secrets involved — this only swaps landing/studio copy + flow.
@@ -59,10 +58,7 @@ function HomeInner() {
             {JUDGING ? (
               <button className="btn-secondary flex-1 sm:flex-none" onClick={() => switchView('byok')}>Switch to BYOK build</button>
             ) : (
-              <>
-                <button className="btn-secondary flex-1 sm:flex-none" onClick={() => setShowDemoInfo(true)}>Try the demo</button>
-                {JUDGING_BUILD && <button className="btn-secondary flex-1 sm:flex-none" onClick={() => switchView('judging')}>Switch to Judging build</button>}
-              </>
+              JUDGING_BUILD && <button className="btn-secondary flex-1 sm:flex-none" onClick={() => switchView('judging')}>Switch to Judging build</button>
             )}
           </div>
           <p className="text-center text-[13px] text-muted mt-3">Free studio · your key stays in this tab · export for every platform</p>
@@ -94,18 +90,6 @@ function HomeInner() {
         <div className="card">
           <h2 className="font-semibold text-[18px] tracking-tight">Why bring your own key?</h2>
           <p className="text-muted text-[15px] mt-2 leading-relaxed">This studio is free to use. Your key is like a password that lets the app use AI. It is encrypted on your device, sent only with your own requests over HTTPS, and never stored on our server.</p>
-        </div>
-      )}
-      {showDemoInfo && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4" style={{ zIndex: 50 }} onClick={() => setShowDemoInfo(false)}>
-          <div className="bg-white rounded-2xl border border-line shadow-card p-5 max-w-sm w-full space-y-3" onClick={(e) => e.stopPropagation()}>
-            <p className="font-semibold text-base">Demo mode — mock data only</p>
-            <p className="text-sm text-muted">The demo runs on built-in mock data. No live AI calls are made and nothing you enter leaves this demo — explore freely, then connect your key for real results.</p>
-            <div className="flex flex-wrap gap-2 justify-end">
-              <button className="btn-secondary" onClick={() => setShowDemoInfo(false)}>Got it</button>
-              <Link className="btn-primary" href="/studio?demo=1">Continue to demo</Link>
-            </div>
-          </div>
         </div>
       )}
       </main>

@@ -4,8 +4,7 @@ import { generateMasterScript, generateScript } from '@/lib/muse/spark';
 
 export async function POST(req: NextRequest) {
   try {
-    let key = '', baseUrl = '';
-    try { ({ key, baseUrl } = byokHeaders(req)); } catch { key = 'DEMO'; baseUrl = ''; }
+    const { key, baseUrl } = byokHeaders(req);
     const body = await req.json();
     // mode: 'master' drafts the final narrative on the Business page;
     // default organizes the approved master into timed scenes.
@@ -16,6 +15,6 @@ export async function POST(req: NextRequest) {
     const script = await generateScript({ key, baseUrl, ...body });
     return NextResponse.json({ script });
   } catch (e: any) {
-    return NextResponse.json({ error: e?.message || 'Script failed.' }, { status: 500 });
+    return NextResponse.json({ error: e?.message || 'Script failed.' }, { status: 400 });
   }
 }

@@ -1,8 +1,5 @@
 import type { SparkModelId } from '@/config/pricing';
 import type { AdScript } from '@/lib/script-utils';
-import { mockScript } from './mocks';
-
-export function mockVoiceUrl(sceneId: string) { return ''; }
 
 // Captions adapter (KEPT per user decision 2026-10-27 — relabeled, not removed).
 // Verified against https://dev.meta.ai/docs:

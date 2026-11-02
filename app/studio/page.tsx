@@ -49,14 +49,11 @@ function StudioInner() {
     if (view === null) return; // wait until the runtime view resolves
     if (previewByok) setStoredBuildView('byok');
     if (JUDGING) {
-      if (!key || key === 'DEMO') setKey(SERVER_KEY_PLACEHOLDER, '');
+      if (!key) setKey(SERVER_KEY_PLACEHOLDER, '');
       if ((useProject.getState().step as string) === 'key') set({ step: 'writer' });
       return;
     }
-    if (params.get('demo') === '1') {
-      setKey('DEMO', '');
-      set({ step: 'writer' });
-    } else if ((useProject.getState().step as string) === 'writer') {
+    if ((useProject.getState().step as string) === 'writer') {
       // Entering the BYOK preview while the store still boots at Writer
       // (judging default) — correct back to the Key step.
       set({ step: 'key' });

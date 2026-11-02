@@ -119,9 +119,9 @@ export default function SourceHub({ onDone, onBack }: { onDone: () => void; onBa
   const hdr = () => {
     // Judging view: key store holds '__SERVER__' — API routes swap it for
     // the host's server key (META_API_KEY). Never send a real key from client.
-    // BYOK preview + normal + demo: real BYOK key, or 'DEMO' for free mocks.
+    // BYOK (normal + preview): real BYOK key required.
     const judgingView = JUDGING_BUILD && !isByokPreview();
-    const k = key || (judgingView ? SERVER_KEY_PLACEHOLDER : 'DEMO');
+    const k = key || (judgingView ? SERVER_KEY_PLACEHOLDER : '');
     return { 'Content-Type': 'application/json', 'x-meta-key': k, 'x-meta-base-url': baseUrl || '' };
   };
   // Legacy: pre-2026-10-31 projects may carry snippets (paste-card). No UI to add

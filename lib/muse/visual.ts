@@ -1,21 +1,19 @@
 import { callMuse } from './client';
-import { mockImage } from './mocks';
 
 export async function generateImage(opts: { key: string; baseUrl: string; prompt: string; aspect?: string }) {
-  if (!opts.key || opts.key === 'DEMO') return { url: mockImage(opts.prompt, opts.aspect || '9:16'), mock: true };
-  try {
-    const data: any = await callMuse({
-      key: opts.key, baseUrl: opts.baseUrl, path: '/v1/images/generations',
-      body: { model: 'muse-image-1.0', prompt: opts.prompt, size: opts.aspect === '16:9' ? '1792x1024' : opts.aspect === '1:1' ? '1024x1024' : '1024x1792' },
-      timeoutMs: 120000,
-    });
-    const url = data?.data?.[0]?.url || data?.data?.[0]?.b64_json ? `data:image/png;base64,${data.data[0].b64_json}` : mockImage(opts.prompt, opts.aspect || '');
-    return { url, mock: false };
-  } catch { return { url: mockImage(opts.prompt, opts.aspect || ''), mock: true }; }
+  if (!opts.key) throw new Error('Missing API key. Add your Meta key first — it is sent with this request only.');
+  const data: any = await callMuse({
+    key: opts.key, baseUrl: opts.baseUrl, path: '/v1/images/generations',
+    body: { model: 'muse-image-1.0', prompt: opts.prompt, size: opts.aspect === '16:9' ? '1792x1024' : opts.aspect === '1:1' ? '1024x1024' : '1024x1792' },
+    timeoutMs: 120000,
+  });
+  const url = data?.data?.[0]?.url || (data?.data?.[0]?.b64_json ? `data:image/png;base64,${data.data[0].b64_json}` : '');
+  if (!url) throw new Error('Image generation came back empty — try again.');
+  return { url, mock: false };
 }
 
 export async function segmentImage(opts: { key: string; baseUrl: string; imageUrl: string; prompt?: string }) {
-  if (!opts.key || opts.key === 'DEMO') return { maskUrl: '', mock: true };
+  if (!opts.key) throw new Error('Missing API key. Add your Meta key first — it is sent with this request only.');
   try {
     // SAM 3.1 via Responses API (model sam-3-1), verified against dev.meta.ai docs:
     // POST /v1/responses { model, input: [{ role:'user', content:[
@@ -34,7 +32,9 @@ export async function segmentImage(opts: { key: string; baseUrl: string; imageUr
       },
     });
     return { maskUrl: data?.output?.[0]?.content?.[0]?.mask_url || data?.mask_url || '', mock: false, raw: data };
-  } catch { return { maskUrl: '', mock: true }; }
+  } catch (e: any) {
+    throw new Error(e?.message || 'Segmentation failed — try again.');
+  }
 }
 
 export type MotionTier = 'metai-upload' | 'kenburns';

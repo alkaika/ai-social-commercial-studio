@@ -7,7 +7,7 @@ Next.js 14.2.5, React 18.3, TypeScript 5.4, Tailwind 3.4, Zustand 4.5, Dexie 4 (
 ```
 cd C:\Users\alana\meta-app
 npm install
-npm run dev   # http://localhost:3000/studio?demo=1
+npm run dev   # http://localhost:3000/studio
 npm run build # passes, 13 routes
 ```
 No ffmpeg needed (wasm stub). No DB. `.env.example` defaults META_GATEWAY_URL to the verified Meta Model API (`https://api.meta.ai/v1`). Judging-mode env (`META_API_KEY` server-only + `NEXT_PUBLIC_JUDGING_MODE=1` flag) lives on the HOST or `.env.local` (git-ignored, never committed) — see `JUDGING.md`; delete both to return to pure BYOK.

@@ -17,7 +17,6 @@ export default function KeySetup({ onDone, onBack }: { onDone: () => void; onBac
   // Client-only UI (vault + biometrics) must not render during SSR,
   // or React hydration fails: server HTML won't match the browser.
   const [mounted, setMounted] = useState(false);
-  const [showDemoInfo, setShowDemoInfo] = useState(false);
 
   useEffect(() => { setMounted(true); vaultHas().then(setHasVault).catch(() => {}); vaultHasPasskey().then(setHasPasskey).catch(() => {}); }, []);
 
@@ -36,11 +35,11 @@ export default function KeySetup({ onDone, onBack }: { onDone: () => void; onBac
       const authCount = Object.values(j.checks || {}).filter((v) => (v as any) === 'auth').length;
       const total = Object.keys(j.checks || {}).length;
       if (okCount === 0 && authCount === 0) {
-        setMsg(`Heads up: 0 of ${total} checks passed. This usually means the Gateway URL is wrong — not your key. This app expects the Meta Model API at https://api.meta.ai/v1 (…/v1/chat/completions). See the per-model reasons below, or tap Continue to use free preview mode.`);
+        setMsg(`Heads up: 0 of ${total} checks passed. This usually means the Gateway URL is wrong — not your key. This app expects the Meta Model API at https://api.meta.ai/v1 (…/v1/chat/completions). See the per-model reasons below.`);
       } else if (authCount > 0) {
-        setMsg(`Key reaches Meta (${okCount} working, ${authCount} endpoint-exists-but-key-rejected). Those 'auth' models need a different key scope or plan — the app will use a free preview for them.`);
+        setMsg(`Key reaches Meta (${okCount} working, ${authCount} endpoint-exists-but-key-rejected). Those 'auth' models need a different key scope or plan.`);
       } else {
-        setMsg(`Key works. ${okCount} of ${total} model checks passed. Anything that failed will use a free preview instead.`);
+        setMsg(`Key works. ${okCount} of ${total} model checks passed.`);
       }
     } catch (e: any) { setMsg(e.message); } finally { setBusy(false); }
   }
@@ -78,9 +77,6 @@ export default function KeySetup({ onDone, onBack }: { onDone: () => void; onBac
       <p className="meta-eyebrow">Key</p>
       <h2 className="font-semibold tracking-tight text-[22px] leading-tight">Connect your key</h2>
       <p className="text-muted text-[15px] leading-relaxed">Your key is like a password that lets this app use AI. It stays in this tab&apos;s memory and is sent only with your own requests. It is never stored on our server.</p>
-      <div>
-        <button className="btn-secondary" onClick={() => setShowDemoInfo(true)}>Try demo without a key</button>
-      </div>
       {mounted && hasVault && <button className="btn-secondary" onClick={unlock} disabled={busy}>🔓 Unlock with Face ID / fingerprint</button>}
       {mounted && hasPasskey && <button className="btn-secondary" onClick={unlockPasskey} disabled={busy}>🔑 Unlock with passkey</button>}
       <label className="block text-sm font-medium">Meta API key</label>
@@ -96,7 +92,7 @@ export default function KeySetup({ onDone, onBack }: { onDone: () => void; onBac
       </div>
       {Object.keys(modelStatus).length > 0 && (
         <div className="space-y-1 text-sm">
-          <div className="flex flex-wrap gap-2">{Object.entries(modelStatus).map(([m, s]) => <span key={m} className="badge">{m}: {s === 'ok' ? '✅' : s === 'auth' ? '🔑 endpoint exists, key rejected' : '⚠️ preview mode'}</span>)}</div>
+          <div className="flex flex-wrap gap-2">{Object.entries(modelStatus).map(([m, s]) => <span key={m} className="badge">{m}: {s === 'ok' ? '✅' : s === 'auth' ? '🔑 endpoint exists, key rejected' : '⚠️ failed'}</span>)}</div>
           {Object.keys(details).length > 0 && (
             <details className="border rounded-xl p-2 bg-neutral-50">
               <summary className="cursor-pointer font-medium">Why did checks fail? (tap to see)</summary>
@@ -127,18 +123,6 @@ export default function KeySetup({ onDone, onBack }: { onDone: () => void; onBac
         {onBack && <button className="btn-secondary" onClick={onBack}>← Back</button>}
         <button className="btn-primary" disabled={!key && !k} onClick={() => { if (k && !key) setKey(k, url); onDone(); }}>Continue →</button>
       </div>
-      {showDemoInfo && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4" style={{ zIndex: 50 }} onClick={() => setShowDemoInfo(false)}>
-          <div className="bg-white rounded-2xl border border-line shadow-card p-5 max-w-sm w-full space-y-3" onClick={(e) => e.stopPropagation()}>
-            <p className="font-semibold text-base">Demo mode — mock data only</p>
-            <p className="text-sm text-muted">The demo runs on built-in mock data. No live AI calls are made and nothing you enter leaves this demo — explore freely, then add your key for real results.</p>
-            <div className="flex flex-wrap gap-2 justify-end">
-              <button className="btn-secondary" onClick={() => setShowDemoInfo(false)}>Got it</button>
-              <button className="btn-primary" onClick={() => { setKey('DEMO', ''); setShowDemoInfo(false); onDone(); }}>Continue to demo</button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
