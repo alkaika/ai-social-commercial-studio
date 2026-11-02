@@ -6,7 +6,7 @@ import { stitchParts, resetFFmpeg, errText } from '@/lib/render/ffmpeg';
 import KenBurnsExportCard from '@/components/simple/KenBurnsExportCard';
 
 export default function ExportStep({ onBack }: { onBack?: () => void }) {
-  const { script, platform, brand, durationSec, storyMode } = useProject();
+  const { script, platform, durationSec, storyMode } = useProject();
   const kbMode = (storyMode as string) === 'voice-kenburns';
   const pf = PLATFORMS[platform as keyof typeof PLATFORMS];
   const [parts, setParts] = useState<File[]>([]);
@@ -21,20 +21,6 @@ export default function ExportStep({ onBack }: { onBack?: () => void }) {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const need = useMemo(() => Math.max(1, Math.ceil(durationSec / 10)), [durationSec]);
 
-  const download = (name: string, content: string | Blob) => {
-    const url = typeof content === 'string' ? URL.createObjectURL(new Blob([content], { type: 'text/plain' })) : URL.createObjectURL(content);
-    const a = document.createElement('a'); a.href = url; a.download = name; a.click();
-    setTimeout(() => URL.revokeObjectURL(url), 8000);
-  };
-  const srt = () => {
-    if (!script) return '';
-    let t = 0; let out = '';
-    script.scenes.forEach((s, i) => {
-      const f = (x: number) => new Date(x * 1000).toISOString().slice(11, 19) + ',000';
-      out += `${i + 1}\n${f(t)} --> ${f(t + s.durationSec)}\n${s.voiceover}\n\n`; t += s.durationSec;
-    });
-    return out;
-  };
   const onPick = (files: FileList | null) => {
     if (!files) return;
     const mp4 = Array.from(files).filter((f) => /mp4|video|quicktime|m4v/i.test(f.type) || /\.mp4$/i.test(f.name)).slice(0, 8);
@@ -63,18 +49,9 @@ export default function ExportStep({ onBack }: { onBack?: () => void }) {
   const finalName = `commercial-${platform}-${durationSec}s-final.mp4`;
   return (
     <div className="space-y-4">
-      <div className="card space-y-4">
-        <h2 className="text-xl font-bold">Export your commercial</h2>
-        <p className="text-sm text-neutral-600">{pf.label} · {pf.width}x{pf.height} · {durationSec}s · Safe zones: {pf.captionSafe}</p>
-        <div className="rounded-2xl border bg-neutral-900 text-white p-6 space-y-2 max-w-sm mx-auto" style={{ aspectRatio: pf.aspect.replace(':', '/') }}>
-          <p className="font-bold">{brand.brandName}</p>
-          {script.scenes.map((s) => <div key={s.id} className="text-sm opacity-90">🎬 {s.heading}</div>)}
-          <p className="text-xs opacity-70">Phone preview — final MP4 renders at full {pf.width}x{pf.height}.</p>
-        </div>
-      </div>
       {kbMode ? (<KenBurnsExportCard />) : (
       <div className="card space-y-3">
-        <h3 className="font-semibold">Fallback: stitch my parts — one final MP4 (free, in browser)</h3>
+        <h3 className="font-semibold">Stitch my parts — one final MP4 (free, in browser)</h3>
         <p className="text-sm text-neutral-600">Meta.ai should stitch the parts for you on the last paste — download that finished file first. Only use this if Meta.ai gave you separate Part MP4s: upload the {need} Part MP4(s) in order. Open-source FFmpeg joins them on your device — nothing uploads.</p>
         <input ref={inputRef} type="file" accept="video/mp4,video/*,.mp4" multiple className="hidden" onChange={(e) => onPick(e.target.files)} />
         <div className="flex flex-wrap gap-2">
@@ -93,15 +70,7 @@ export default function ExportStep({ onBack }: { onBack?: () => void }) {
         )}
       </div>
       )}
-      <div className="card space-y-3">
-        <h3 className="font-semibold">Captions + backup</h3>
-        <div className="flex flex-wrap gap-2">
-          <button className="btn-primary" onClick={() => download(`commercial-${platform}.srt`, srt())}>Download captions (.srt)</button>
-          <button className="btn-secondary" onClick={() => download('script.txt', script.scenes.map((s) => `${s.heading}\nVO: ${s.voiceover}\n`).join('\n'))}>Download script (.txt)</button>
-          <button className="btn-secondary" onClick={() => download('project-backup.json', JSON.stringify({ script, brand, platform, durationSec }, null, 2))}>Download backup</button>
-        </div>
-        <div className="flex justify-between items-center"><button className="btn-secondary" onClick={onBack}>← Back to story</button><span className="text-sm text-neutral-500">Nothing is final — go back, tweak, re-export anytime.</span></div>
-      </div>
+      <div className="flex justify-between items-center"><button className="btn-secondary" onClick={onBack}>← Back to story</button><span className="text-sm text-neutral-500">Nothing is final — go back, tweak, re-stitch anytime.</span></div>
     </div>
   );
 }

@@ -180,7 +180,7 @@ export default function Storyboard({ onDone, onBack }: { onDone: () => void; onB
           </div>
         )}
       </div>
-      <div className="flex justify-between items-center"><button className="btn-secondary" onClick={onBack}>← Back</button><button className="btn-primary" onClick={goNext}>{mode === 'voice-kenburns' ? 'Stitch Voice Files or Download Files →' : 'Stitch Video Files or Download Files →'}</button></div>
+      <div className="flex justify-between items-center"><button className="btn-secondary" onClick={onBack}>← Back</button><button className="btn-primary" onClick={goNext}>{mode === 'voice-kenburns' ? 'Stitch Voice Files →' : 'Stitch Video Files →'}</button></div>
     </div>
   );
 }
