@@ -66,8 +66,8 @@ function HomeInner() {
         </div>
       </div>
       <div className="flex gap-2 justify-center">
-        <button className={`border-2 rounded-full px-4 py-2 ${infoTab === 'how' ? 'border-black bg-neutral-100 font-semibold' : 'border-neutral-200'}`} onClick={() => setInfoTab('how')}>How the app works</button>
-        <button className={`border-2 rounded-full px-4 py-2 ${infoTab === 'workflow' ? 'border-black bg-neutral-100 font-semibold' : 'border-neutral-200'}`} onClick={() => setInfoTab('workflow')}>Workflow steps</button>
+        <button className={`border-2 rounded-full px-4 py-2 ${infoTab === 'how' ? 'border-black bg-neutral-100 font-semibold' : 'border-neutral-200'}`} onClick={() => setInfoTab('how')}>HOW THE APP WORKS</button>
+        <button className={`border-2 rounded-full px-4 py-2 ${infoTab === 'workflow' ? 'border-black bg-neutral-100 font-semibold' : 'border-neutral-200'}`} onClick={() => setInfoTab('workflow')}>WORKFLOW STEPS</button>
       </div>
       {infoTab === 'workflow' ? (
       <div className="grid sm:grid-cols-2 gap-3">
