@@ -118,8 +118,8 @@ function HomeInner() {
       )}
       {!JUDGING && (
         <div className="card">
-          <h2 className="font-semibold text-[18px] tracking-tight">Why bring your own key?</h2>
-          <p className="text-muted text-[15px] mt-2 leading-relaxed">This studio is free to use. Your key is like a password that lets the app use AI. It is encrypted on your device, sent only with your own requests over HTTPS, and never stored on our server.</p>
+          <h2 className="font-semibold text-[18px] tracking-tight">Why do you need an API key?</h2>
+          <p className="text-muted text-[15px] mt-2 leading-relaxed">Your key grants access to Meta's AI model to power the app's core features. It is encrypted on your device, sent only with your own requests over HTTPS, and never stored on our server.</p>
         </div>
       )}
       </main>
