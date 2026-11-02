@@ -71,19 +71,29 @@ function HomeInner() {
           <p className="text-[14.5px] text-muted mt-1 leading-relaxed">Checked once, optionally saved with biometrics. Encrypted on your device.</p>
         </div>
         <div className="meta-tile">
-          <p className="text-[13px] font-semibold uppercase tracking-[0.08em] text-muted mb-1">02 · Writer</p>
-          <p className="font-semibold text-[17px] leading-snug">Pick your writer</p>
-          <p className="text-[14.5px] text-muted mt-1 leading-relaxed">See exact costs and data rights in plain language, no jargon.</p>
+          <p className="text-[13px] font-semibold uppercase tracking-[0.08em] text-muted mb-1">02 · Script writer</p>
+          <p className="font-semibold text-[17px] leading-snug">Choose Muse Spark 1.3 Standard or Contributor</p>
+          <p className="text-[14.5px] text-muted mt-1 leading-relaxed">Compare input/output costs and data training rights.</p>
         </div>
         <div className="meta-tile">
-          <p className="text-[13px] font-semibold uppercase tracking-[0.08em] text-muted mb-1">03 · Business</p>
-          <p className="font-semibold text-[17px] leading-snug">Add your story</p>
-          <p className="text-[14.5px] text-muted mt-1 leading-relaxed">Website, photos, or pasted text. Preview, edit, or describe changes.</p>
+          <p className="text-[13px] font-semibold uppercase tracking-[0.08em] text-muted mb-1">03 · Choose Platform & Settings</p>
+          <p className="font-semibold text-[17px] leading-snug">Instagram, Facebook, TikTok, X, YouTube Shorts, YouTube Video</p>
+          <p className="text-[14.5px] text-muted mt-1 leading-relaxed">Select 10s, 20s, 30s, or 60s timeframe and vibe.</p>
         </div>
         <div className="meta-tile">
-          <p className="text-[13px] font-semibold uppercase tracking-[0.08em] text-muted mb-1">04 · Download commercial</p>
-          <p className="font-semibold text-[17px] leading-snug">Share anywhere</p>
-          <p className="text-[14.5px] text-muted mt-1 leading-relaxed">TikTok, Reels, Shorts, Instagram, YouTube, Facebook, X and LinkedIn.</p>
+          <p className="text-[13px] font-semibold uppercase tracking-[0.08em] text-muted mb-1">04 · Add company details</p>
+          <p className="font-semibold text-[17px] leading-snug">Add website</p>
+          <p className="text-[14.5px] text-muted mt-1 leading-relaxed">AI model analyzes the website, compiles screenshots, and drafts the script. User reviews, edits (if needed), and finalizes the script.</p>
+        </div>
+        <div className="meta-tile">
+          <p className="text-[13px] font-semibold uppercase tracking-[0.08em] text-muted mb-1">05 · Choose your preferences</p>
+          <p className="font-semibold text-[17px] leading-snug">🧍 People + app (Meta.ai), 🎙 Voices + screenshots only (Meta.ai), 🎧 Voice MP3 (Meta.ai) + Ken Burns in app</p>
+          <p className="text-[14.5px] text-muted mt-1 leading-relaxed">AI model drafts your 10-second part prompts to use on Meta.ai. Meta.ai generates your commercial. Download completed file.</p>
+        </div>
+        <div className="meta-tile">
+          <p className="text-[13px] font-semibold uppercase tracking-[0.08em] text-muted mb-1">06 · Stitch files if needed</p>
+          <p className="font-semibold text-[17px] leading-snug">Use the Stitch feature as a fallback</p>
+          <p className="text-[14.5px] text-muted mt-1 leading-relaxed">Our Stitch feature is available if Meta.ai has issues stitching your files.</p>
         </div>
       </div>
       {!JUDGING && (
