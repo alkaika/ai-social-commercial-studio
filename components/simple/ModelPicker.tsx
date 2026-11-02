@@ -30,7 +30,7 @@ export default function ModelPicker({ onDone, onBack }: { onDone: () => void; on
 
   const handlePick = (m: SparkModelId) => {
     if (JUDGING && m === 'spark-standard') {
-      setJudgeMsg('Muse Spark 1.3 Contributor is the default in judging mode — Standard is turned off to keep judging runs consistent. Continue with Contributor.');
+      setJudgeMsg('Muse Spark 1.3 Contributor is the default in judging mode to keep judging evaluations cost effective.');
       return;
     }
     setJudgeMsg('');
@@ -68,7 +68,7 @@ export default function ModelPicker({ onDone, onBack }: { onDone: () => void; on
       <p className="text-[14px] text-muted">Standard: your business content is not used for model training. Contributor: provider may use prompts &amp; completions.</p>
       {JUDGING && (
         <p className="text-sm bg-green-50 border border-green-200 text-green-800 rounded-xl p-3">
-          Judging default: Muse Spark 1.3 Contributor — picked for you. Standard is dimmed so every judging run stays consistent.
+          Judging default: Muse Spark 1.3 Contributor — picked for you to keep judging evaluations cost effective.
         </p>
       )}
       <div className="grid sm:grid-cols-2 gap-3">
