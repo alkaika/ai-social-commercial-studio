@@ -2,7 +2,7 @@
 import { useMemo, useRef, useState } from 'react';
 import { useProject } from '@/stores/projectStore';
 import { PLATFORMS } from '@/config/platforms';
-import { stitchParts, resetFFmpeg, errText } from '@/lib/render/ffmpeg';
+import { stitchParts, stitchAudioParts, resetFFmpeg, errText } from '@/lib/render/ffmpeg';
 import KenBurnsExportCard from '@/components/simple/KenBurnsExportCard';
 
 export default function ExportStep({ onBack }: { onBack?: () => void }) {
@@ -10,6 +10,7 @@ export default function ExportStep({ onBack }: { onBack?: () => void }) {
   const kbMode = (storyMode as string) === 'voice-kenburns';
   const pf = PLATFORMS[platform as keyof typeof PLATFORMS];
   const [parts, setParts] = useState<File[]>([]);
+  const [partKind, setPartKind] = useState<'video' | 'audio'>('video');
   const [busy, setBusy] = useState(false);
   const [pct, setPct] = useState(0);
   const [step, setStep] = useState('');
@@ -23,18 +24,29 @@ export default function ExportStep({ onBack }: { onBack?: () => void }) {
 
   const onPick = (files: FileList | null) => {
     if (!files) return;
-    const mp4 = Array.from(files).filter((f) => /mp4|video|quicktime|m4v/i.test(f.type) || /\.mp4$/i.test(f.name)).slice(0, 8);
-    if (!mp4.length) { setMsg('Pick the .mp4 files you downloaded from meta.ai.'); return; }
-    const sorted = [...mp4].sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
-    setParts(sorted); setOutUrl('');
-    setMsg(`${sorted.length} part(s) queued: ${sorted.map((f) => f.name).join(', ')}`);
+    const isAudio = (f: File) => /mp3|mpeg|m4a|aac|wav|ogg|audio/i.test(f.type) || /\.(mp3|m4a|aac|wav|ogg|mp4)$/i.test(f.name);
+    const isVideo = (f: File) => /mp4|video|quicktime|m4v/i.test(f.type) || /\.mp4$/i.test(f.name);
+    // Keep the batch single-type: if the first accepted file is audio, take
+    // audio files; otherwise take video files. Mixed drops go video-first.
+    const arr = Array.from(files);
+    const firstVideoIdx = arr.findIndex(isVideo);
+    const firstAudioOnlyIdx = arr.findIndex((f) => isAudio(f) && !isVideo(f));
+    const wantAudio = firstAudioOnlyIdx !== -1 && (firstVideoIdx === -1 || firstAudioOnlyIdx < firstVideoIdx);
+    const picked = arr.filter((f) => (wantAudio ? (isAudio(f) && !isVideo(f)) : isVideo(f))).slice(0, 8);
+    if (!picked.length) { setMsg('Pick the files you downloaded from meta.ai (.mp4 video parts or .mp3 audio parts).'); return; }
+    const kind = wantAudio ? 'audio' : 'video';
+    const sorted = [...picked].sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
+    setParts(sorted); setPartKind(kind); setOutUrl('');
+    setMsg(`${sorted.length} ${kind} part(s) queued: ${sorted.map((f) => f.name).join(', ')}`);
   };
   const stitch = async () => {
-    if (!parts.length) { setMsg(`Upload your Part MP4s first (need ${need} for ${durationSec}s).`); return; }
+    if (!parts.length) { setMsg(`Upload your Part ${partKind === 'audio' ? 'MP3s' : 'MP4s'} first (need ${need} for ${durationSec}s).`); return; }
     if (failed) { resetFFmpeg(); setFailed(false); setShowTech(false); }
     setBusy(true); setPct(0); setStep('Starting…'); setMsg('Loading stitcher (~30MB first time)…');
     try {
-      const r = await stitchParts(parts, { width: pf.width, height: pf.height, onProgress: setPct, onStep: setStep });
+      const r = partKind === 'audio'
+        ? await stitchAudioParts(parts, { onProgress: setPct, onStep: setStep })
+        : await stitchParts(parts, { width: pf.width, height: pf.height, onProgress: setPct, onStep: setStep });
       setOutUrl(r.url); setOutMB(`${(r.sizeBytes / 1048576).toFixed(1)} MB`); setStep('');
       setMsg(('Joined + normalized — preview + download below. ') + (r.log ? 'Tap "what happened" for the technical log.' : ''));
       if (r.log) setShowTech(true);
@@ -47,22 +59,25 @@ export default function ExportStep({ onBack }: { onBack?: () => void }) {
   };
   if (!script) return <div className="card">Generate your commercial first.</div>;
   const finalName = `commercial-${platform}-${durationSec}s-final.mp4`;
+  const finalNameAudio = `commercial-${platform}-${durationSec}s-final.mp3`;
   return (
     <div className="space-y-4">
       {kbMode ? (<KenBurnsExportCard />) : (
       <div className="card space-y-3">
-        <h3 className="font-semibold">Stitch my parts — one final MP4 (free, in browser)</h3>
-        <p className="text-sm text-neutral-600">Meta.ai should stitch the parts for you on the last paste — download that finished file first. Only use this if Meta.ai gave you separate Part MP4s: upload the {need} Part MP4(s) in order. Open-source FFmpeg joins them on your device — nothing uploads.</p>
-        <input ref={inputRef} type="file" accept="video/mp4,video/*,.mp4" multiple className="hidden" onChange={(e) => onPick(e.target.files)} />
+        <h3 className="font-semibold">Stitch my parts — one final file (free, in browser)</h3>
+        <p className="text-sm text-neutral-600">Meta.ai should stitch the parts for you on the last paste — download that finished file first. Only use this if Meta.ai gave you separate part files: upload the {need} Part MP4s or Part MP3s in order. Open-source FFmpeg joins them on your device — nothing uploads.</p>
+        <input ref={inputRef} type="file" accept="video/mp4,video/*,audio/mpeg,audio/*,.mp4,.mp3,.m4a,.aac,.wav,.ogg" multiple className="hidden" onChange={(e) => { onPick(e.target.files); e.target.value = ''; }} />
         <div className="flex flex-wrap gap-2">
-          <button className="btn-secondary" onClick={() => inputRef.current?.click()}>Upload Part MP4s ({parts.length}/{need})</button>
-          {parts.length > 0 && <button className="btn-secondary" onClick={() => { setParts([]); setOutUrl(''); setMsg(''); }}>Clear</button>}
+          <button className="btn-secondary" onClick={() => inputRef.current?.click()}>Upload Part files ({parts.length}/{need}){partKind === 'audio' ? ' · MP3' : ''}</button>
+          {parts.length > 0 && <button className="btn-secondary" onClick={() => { setParts([]); setPartKind('video'); setOutUrl(''); setMsg(''); }}>Clear</button>}
         </div>
         {parts.length > 0 && <ol className="list-decimal ml-5 text-sm text-neutral-700">{parts.map((f, i) => <li key={i}>{f.name} · {(f.size / 1048576).toFixed(1)} MB</li>)}</ol>}
-        <button className="btn-primary" disabled={busy || !parts.length} onClick={stitch}>{busy ? `Stitching… ${Math.max(0, Math.min(100, pct))}%${step ? ` — ${step}` : ''}` : failed ? '🔁 Retry stitch' : `Stitch ${parts.length || need} part(s) → final MP4`}</button>
+        <button className="btn-primary" disabled={busy || !parts.length} onClick={stitch}>{busy ? `Stitching… ${Math.max(0, Math.min(100, pct))}%${step ? ` — ${step}` : ''}` : failed ? '🔁 Retry stitch' : partKind === 'audio' ? `Stitch ${parts.length || need} part(s) → final MP3` : `Stitch ${parts.length || need} part(s) → final MP4`}</button>
         {busy && <div className="h-2 bg-neutral-200 rounded-full overflow-hidden"><div className="h-full bg-black transition-all" style={{ width: `${Math.max(0, Math.min(100, pct))}%` }} /></div>}
         {busy && step && <p className="text-xs text-neutral-500">{step}</p>}
-        {outUrl && <div className="space-y-2"><video src={outUrl} controls playsInline className="w-full max-w-sm mx-auto rounded-xl border" style={{ aspectRatio: pf.aspect.replace(':', '/') }} /><p className="text-xs text-neutral-500 text-center">{finalName} · {outMB}</p><div className="flex justify-center"><a className="btn-primary" href={outUrl} download={finalName}>Download final MP4</a></div></div>}
+        {outUrl && (partKind === 'audio'
+          ? (<div className="space-y-2"><audio src={outUrl} controls className="w-full" /><p className="text-xs text-neutral-500 text-center">{finalNameAudio} · {outMB}</p><div className="flex justify-center"><a className="btn-primary" href={outUrl} download={finalNameAudio}>Download final MP3</a></div></div>)
+          : (<div className="space-y-2"><video src={outUrl} controls playsInline className="w-full max-w-sm mx-auto rounded-xl border" style={{ aspectRatio: pf.aspect.replace(':', '/') }} /><p className="text-xs text-neutral-500 text-center">{finalName} · {outMB}</p><div className="flex justify-center"><a className="btn-primary" href={outUrl} download={finalName}>Download final MP4</a></div></div>))}
         <details className="text-xs text-neutral-600"><summary className="cursor-pointer underline">Manual fallback (ffmpeg CLI)</summary><pre className="whitespace-pre-wrap bg-neutral-100 rounded-xl p-3 mt-2">{`# parts must be listed in order in list.txt as:\n# file 'part1.mp4'\n# file 'part2.mp4'\nffmpeg -fflags +genpts -f concat -safe 0 -i list.txt -vf "scale=${pf.width}:${pf.height}:force_original_aspect_ratio=increase,crop=${pf.width}:${pf.height},setsar=1,fps=30" -c:v libx264 -preset veryfast -crf 20 -pix_fmt yuv420p -r 30 -c:a aac -b:a 128k -ar 44100 -ac 2 -movflags +faststart -avoid_negative_ts make_zero ${finalName}`}</pre></details>
         {msg && <p className="text-sm bg-neutral-100 border rounded-xl p-3 whitespace-pre-wrap">{msg}</p>}
         {msg && msg.includes('Technical detail') && (

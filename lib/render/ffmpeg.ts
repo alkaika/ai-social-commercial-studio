@@ -290,6 +290,65 @@ export async function stitchParts(
   return { blob, url: URL.createObjectURL(blob), sizeBytes: blob.size, usedRecode, log: tailLog(30) };
 }
 
+/** Concat N audio parts (MP3/M4A/WAV) in order → one MP3. Same joiner,
+ * audio-only path: resample every input to 44.1k stereo first via the
+ * concat FILTER (the demuxer can fail/go silent on MP3s with mismatched
+ * params or ID3 tags), then encode libmp3lame. Used by the Export stitch
+ * card when Meta.ai hands back separate Part MP3s. */
+export async function stitchAudioParts(
+  files: File[],
+  opts: { onProgress?: (p: number) => void; onStep?: (s: string) => void; onLog?: (m: string) => void } = {}
+): Promise<StitchResult> {
+  if (files.length === 0) throw new Error('Add at least one MP3 part.');
+  const empty = files.find((f) => !f.size);
+  if (empty) throw new Error(`"${empty.name}" is 0 bytes — re-download it from meta.ai and try again.`);
+  if (files.length === 1) {
+    const buf = await files[0].arrayBuffer();
+    const blob = new Blob([buf], { type: 'audio/mpeg' });
+    return { blob, url: URL.createObjectURL(blob), sizeBytes: blob.size, usedRecode: false, log: '' };
+  }
+  opts.onStep?.('Loading joiner…');
+  const ffmpeg = await loadFFmpeg(opts.onLog);
+  wireProgress(ffmpeg, opts.onProgress);
+  setPhase(0, 100, opts.onStep, `Writing ${files.length} audio parts…`);
+  const names: string[] = [];
+  for (let i = 0; i < files.length; i++) {
+    const m = (files[i].name || '').toLowerCase().match(/\.([a-z0-9]+)$/);
+    const n = `apick${i}${m ? `.${m[1]}` : '.mp3'}`;
+    try {
+      await ffmpeg.writeFile(n, await fetchFile(files[i]));
+    } catch (e) {
+      throw new Error(`Could not load "${files[i].name}" into the joiner (${errText(e)}). Try re-picking the files or reloading the page.`);
+    }
+    names.push(n);
+  }
+  const out = 'final.mp3';
+  try { await ffmpeg.deleteFile(out); } catch { /* fresh run */ }
+  setPhase(5, 95, opts.onStep, 'Joining audio parts…');
+  const inputs: string[] = [];
+  const filters: string[] = [];
+  names.forEach((n, i) => { inputs.push('-i', n); filters.push(`[${i}:a]aresample=44100,aformat=sample_fmts=fltp:channel_layouts=stereo[a${i}]`); });
+  const fc = `${filters.join(';')};${names.map((_, i) => `[a${i}]`).join('')}concat=n=${names.length}:v=0:a=1[aout]`;
+  let code: number;
+  try {
+    code = await ffmpeg.exec([...inputs, '-filter_complex', fc, '-map', '[aout]', '-c:a', 'libmp3lame', '-b:a', '128k', out]);
+  } catch (e) {
+    throw new Error(`Audio join could not start (${errText(e)}). Reload the page and press Retry.\n\nTechnical detail:\n${tailLog()}`);
+  }
+  if (code !== 0) throw new Error(`Audio join failed (exit ${code}). Re-download the part MP3s from meta.ai and retry.\n\nTechnical detail:\n${tailLog()}`);
+  let data: Uint8Array;
+  try {
+    data = (await ffmpeg.readFile(out)) as unknown as Uint8Array;
+  } catch {
+    throw new Error(`Join finished but produced no file. Re-download the parts and retry.\n\nTechnical detail:\n${tailLog()}`);
+  }
+  const bytes = new Uint8Array(data);
+  if (!bytes.length) throw new Error(`Join produced an empty file. Re-download the parts and retry.\n\nTechnical detail:\n${tailLog()}`);
+  const blob = new Blob([bytes.buffer as ArrayBuffer], { type: 'audio/mpeg' });
+  emitProgress(100);
+  return { blob, url: URL.createObjectURL(blob), sizeBytes: blob.size, usedRecode: true, log: tailLog(30) };
+}
+
 /** Ken Burns commercial: slow zoom over each still + per-part Meta.ai voice.
  * Meta.ai caps voice at ~10s per file too, so each ~10s part has its own
  * MP3; they are concatenated in order and each motion segment is timed to

@@ -1,4 +1,4 @@
-# Project Brief — AI Social Commercial Studio (BYOK)
+﻿# Project Brief — AI Social Commercial Studio (BYOK)
 
 ## Location
 `C:\Users\alana\meta-app` — Next.js 14 App Router, single codebase.
@@ -39,7 +39,7 @@ Legacy per-scene detail (kept for reference, no longer on Story page):
 - Story page mirrors the same screenshot gallery above the per-part prompts (Save-all + per-shot Save) so each Meta.ai paste can carry the real site.
 - Simple Mode default (storyboard cards), Advanced timeline hidden behind button.
 - Revision loop: manual edit + quick buttons + Director's Notes chat, preview-and-approve, locked scenes skipped, pinned preserved.
-- Exports: TikTok/Reels/Shorts 9:16, IG 4:5, Square 1:1, Landscape 16:9 + SRT + script.txt.
+- Exports: multi-aspect MP4 (TikTok/Reels/Shorts 9:16, IG 4:5, Square 1:1, Landscape 16:9); separate SRT/script/backup downloads REMOVED 2026-11-02 (user request -- Download page = stitch ONLY).
 - Fresh start EVERY load (2026-10-30, user request): studio boots blank on Key step (Writer step when `NEXT_PUBLIC_JUDGING_MODE=1`), no auto-load, no silent autosave. Past work returns ONLY via explicit Save/Open in `ProjectBar` header (New / Save / Open(n) / Delete). Unsaved work shows amber warning; refresh wipes by design.
 - Named project library: text/config in localStorage `meta-studio-projects-v1` ({id,name,updatedAt} + PersistedProject, blob URLs stripped); footage in Dexie `meta-studio-clips` v3 namespaced `{projectId}:scene:{s}:voice|video`, `{projectId}:asset:{id}`. One-time migration: legacy `meta-studio-project-v1` autosave -> "Recovered project" + legacy blobs copied into its namespace.
 

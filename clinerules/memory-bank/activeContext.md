@@ -1,4 +1,4 @@
-# Active Context (2026-11-02)
+﻿# Active Context (2026-11-02, post-push: stitch-only page + MP3 stitcher + popup copy + landing tiles)
 
 > Living note — status as of last push. Durable architecture lives in `systemPatterns.md`; durable scope in `projectbrief.md`.
 

@@ -171,7 +171,7 @@ export default function Storyboard({ onDone, onBack }: { onDone: () => void; onB
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4" style={{ zIndex: 50 }} onClick={() => setAttachPopup(null)}>
             <div className="bg-white rounded-2xl shadow-card border border-neutral-200 p-5 max-w-sm w-full space-y-3" onClick={(e) => e.stopPropagation()}>
               <p className="font-semibold text-base">📎 Attach your images with Part {attachPopup + 1}</p>
-              <p className="text-sm text-neutral-700">Part {attachPopup + 1} copied! In meta.ai, paste the prompt <b>AND attach</b> your {source.toLowerCase()} screenshots{shots.length > 0 ? ` (${shots.length} saved above)` : ''} — plus any Business photos — before you hit generate. Meta.ai can't see your site without them.</p>
+              <p className="text-sm text-neutral-700">Part {attachPopup + 1} copied! In meta.ai, paste the prompt <b>AND attach</b> your {source.toLowerCase()} screenshots ({shots.length > 0 ? `${shots.length} saved above or other screenshots of your choosing` : 'other screenshots of your choosing'}) — plus any Business photos — before you hit generate. Meta.ai can't see your site without them.</p>
               <div className="flex flex-wrap gap-2">
                 <a className="btn-primary" href={META_AI_URL} target="_blank" rel="noreferrer" onClick={() => setAttachPopup(null)}>Open meta.ai →</a>
                 <button className="btn-secondary" onClick={() => setAttachPopup(null)}>Got it</button>

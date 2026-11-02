@@ -1,4 +1,4 @@
-# Product Context
+﻿# Product Context
 
 ## Why
 Small businesses need high-quality social ads without expensive subscriptions or agencies. This studio is free; users pay Meta directly for only what they generate.
@@ -11,7 +11,7 @@ Small businesses need high-quality social ads without expensive subscriptions or
 - Platform fragmentation → one project, multi-aspect export with safe zones.
 
 ## How It Works
-Key → Writer (factual table) → Setup (duration/platform/vibe) → Business (scrape/uploads/Final script + photo gallery + page screenshots with save-for-Meta.ai) → Story (pick path: People + app / Voices-only / Voice MP3s per 10s part + Ken Burns + same screenshot gallery) → Export (stitch parts OR join voice MP3s under Ken Burns MP4 + SRT+txt+backup).
+Key → Writer (factual table) → Setup (duration/platform/vibe) → Business (scrape/uploads/Final script + photo gallery + page screenshots with save-for-Meta.ai) → Story (pick path: People + app / Voices-only / Voice MP3s per 10s part + Ken Burns + same screenshot gallery) → Download page = stitch ONLY (2026-11-02: separate SRT/txt/backup downloads removed) -- stitch Part MP4s to final MP4 or Part MP3s to final MP3 in-browser, or join voice MP3s under Ken Burns MP4.
 
 ## UX Goals
 - One main button per screen. Smart defaults (brand colors, captions ON, music ducked, 9:16).
