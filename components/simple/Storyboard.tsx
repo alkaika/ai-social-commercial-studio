@@ -133,6 +133,7 @@ export default function Storyboard({ onDone, onBack }: { onDone: () => void; onB
       <div className="card space-y-4">
         <h3 className="font-semibold">{mode === 'voice-kenburns' ? '3 · Your images for the Ken Burns motion' : '3 · Follow the instructions below for copying each 10-second prompt part into meta.ai'}</h3>
         {mode === 'voice-kenburns' ? (<p className="text-sm text-neutral-700">Save the website pages below to your drive (same gallery as Business), then upload them — plus any Business photos — as <b>images in the builder right above (Card 2)</b>. Our app slowly zooms each image while your per-part Meta.ai MP3s play in order underneath. Nothing renders at meta.ai for visuals in this path. You can build the final MP4 right here on Story — Export is optional.</p>) : (<><p className="text-sm font-bold tracking-widest text-neutral-500 text-center">INSTRUCTIONS</p><div className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-base space-y-1"><ol className="list-decimal ml-5 text-neutral-900 space-y-1"><li><span className="font-semibold">🧠 Pick the right mode in Meta.ai</span><br />No Meta One Core subscription → use <b>Instant</b> mode. Have a Meta One Core sub → use <b>Thinking</b> mode.</li><li>Copy Part 1, open meta.ai, pick Instant/Thinking, paste copied prompt, attach {source} screenshots, click submit to generate file.</li><li>Use the same chat, Copy Part 2, paste copied prompt, attach {source} screenshots, click submit to generate file.</li><li>Meta.ai should automatically stitch your parts together into one 20 second video — download your completed commercial. If Meta.ai only gives separate parts, stitch them in order using our Stitch feature on the next page.</li></ol></div></>)}
+        {msg && <p className="text-sm bg-neutral-100 border rounded-xl p-3 whitespace-pre-wrap">{msg}</p>}
         {shots.length > 0 && (
           <div className="space-y-2 border rounded-xl p-3 bg-neutral-50">
             <p className="font-medium text-sm">🌐 Your website pages ({shots.length}) — {mode === 'voice-kenburns' ? 'save these, then upload them as images in the builder above' : 'save + attach these in meta.ai'}</p>
@@ -166,7 +167,6 @@ export default function Storyboard({ onDone, onBack }: { onDone: () => void; onB
             <div className="flex flex-wrap gap-2"><button className="btn-primary" onClick={() => doCopy(i)}>{copiedIdx === i ? '✅ Copied!' : `📋 Copy part ${i + 1}`}</button><a className="btn-secondary" href={META_AI_URL} target="_blank" rel="noreferrer">Open meta.ai →</a></div>
           </div>
         ))}
-        {msg && <p className="text-sm bg-neutral-100 border rounded-xl p-3 whitespace-pre-wrap">{msg}</p>}
         {attachPopup !== null && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4" style={{ zIndex: 50 }} onClick={() => setAttachPopup(null)}>
             <div className="bg-white rounded-2xl shadow-card border border-neutral-200 p-5 max-w-sm w-full space-y-3" onClick={(e) => e.stopPropagation()}>
