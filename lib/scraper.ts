@@ -1,4 +1,5 @@
 import * as cheerio from 'cheerio';
+import { promises as dns } from 'node:dns'; // SSRF guard — this module is server-only (imported by /api/scrape)
 
 export interface ScrapeResult {
   brandName: string; tagline: string; description: string;
@@ -31,15 +32,128 @@ const MAIN_PAGE_KEYWORDS = [
   'reviews', 'team', 'faq', 'blog', 'features', 'book', 'reserve', 'order',
 ];
 
+// ---------------------------------------------------------------------------
+// SSRF guard (server-only). The scraper fetches user-supplied URLs, so EVERY
+// outbound request goes through safeFetch(): http(s) + port 80/443 whitelist,
+// DNS answers checked against blocked ranges (loopback / private / link-local
+// cloud metadata / IPv6 ULA / multicast), and redirects followed MANUALLY so
+// each hop is re-validated — a public URL that 302s to 169.254.169.254 is
+// rejected.
+// ---------------------------------------------------------------------------
+const MAX_REDIRECTS = 3;
+const HOST_OK_TTL_MS = 30_000; // re-resolve DNS after this window (rebinding margin)
+const hostOkCache = new Map<string, number>();
+
+function isBlockedIpv4(ip: string): boolean {
+  const o = ip.split('.').map(Number);
+  if (o.length !== 4 || o.some((n) => !Number.isInteger(n) || n < 0 || n > 255)) return true;
+  const [a, b] = o;
+  return (
+    a === 0 || a === 10 || a === 127 ||                  // this-network, private, loopback
+    (a === 169 && b === 254) ||                          // link-local (cloud metadata)
+    (a === 172 && b >= 16 && b <= 31) ||                 // private
+    (a === 192 && b === 168) ||                          // private
+    (a === 100 && b >= 64 && b <= 127) ||                // CGNAT 100.64/10
+    a >= 224                                             // multicast + reserved
+  );
+}
+
+function isBlockedIpv6(ip: string): boolean {
+  const raw = ip.replace(/^\[|\]$/g, '').split('%')[0].toLowerCase();
+  if (!raw.includes(':')) return isBlockedIpv4(raw);
+  if (raw === '::' || raw === '::1') return true;        // unspecified + loopback
+  const v4mapped = raw.match(/^::ffff:(\d+\.\d+\.\d+\.\d+)$/);
+  if (v4mapped) return isBlockedIpv4(v4mapped[1]);       // IPv4-mapped
+  return (
+    raw.startsWith('fe80') ||                            // link-local
+    raw.startsWith('fc') || raw.startsWith('fd') ||      // unique local
+    raw.startsWith('ff')                                 // multicast
+  );
+}
+
+function validateUrl(u: URL): void {
+  if (!['http:', 'https:'].includes(u.protocol)) throw new Error('Only http(s) websites can be read.');
+  if (u.port && u.port !== '80' && u.port !== '443') {
+    throw new Error('Only standard web ports (80/443) can be read.');
+  }
+}
+
+async function assertPublicHost(u: URL): Promise<void> {
+  const host = u.hostname.replace(/^\[|\]$/g, '');
+  if ((hostOkCache.get(host) ?? 0) > Date.now() - HOST_OK_TTL_MS) return;
+  const addrs: string[] = [];
+  if (/^\d+\.\d+\.\d+\.\d+$/.test(host) || host.includes(':')) {
+    addrs.push(host); // IP literal — validated directly
+  } else {
+    try {
+      addrs.push(...(await dns.lookup(host, { all: true })).map((r) => r.address));
+    } catch {
+      throw new Error('Could not resolve that website address.');
+    }
+  }
+  if (!addrs.length) throw new Error('Could not resolve that website address.');
+  for (const a of addrs) {
+    const blocked = a.includes(':') ? isBlockedIpv6(a) : isBlockedIpv4(a);
+    if (blocked) throw new Error('That website address points to a private or internal network and cannot be read.');
+  }
+  hostOkCache.set(host, Date.now());
+}
+
+async function safeFetch(u: URL, timeoutMs: number): Promise<Response> {
+  validateUrl(u);
+  await assertPublicHost(u);
+  const init = {
+    redirect: 'manual' as const,
+    signal: AbortSignal.timeout(timeoutMs),
+    headers: { 'User-Agent': 'Mozilla/5.0 (AI Commercial Studio)' },
+  };
+  let res = await fetch(u.toString(), init);
+  for (let hop = 0; hop < MAX_REDIRECTS && [301, 302, 303, 307, 308].includes(res.status); hop++) {
+    const loc = res.headers.get('location');
+    if (!loc) break;
+    let next: URL;
+    try { next = new URL(loc, u); } catch { break; }
+    validateUrl(next);
+    await assertPublicHost(next); // every hop re-validated
+    u = next;
+    res = await fetch(u.toString(), init);
+  }
+  return res;
+}
+
+/** Read at most `maxBytes` of the body so byte caps stop the download early
+ *  instead of buffering the whole response first. */
+async function readCapped(res: Response, maxBytes: number): Promise<string> {
+  if (!res.body) return (await res.text()).slice(0, maxBytes);
+  const reader = res.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  try {
+    while (total < maxBytes) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      chunks.push(value);
+      total += value.length;
+    }
+  } finally {
+    try { await reader.cancel(); } catch { /* already closed */ }
+  }
+  const out = new Uint8Array(Math.min(total, maxBytes));
+  let off = 0;
+  for (const c of chunks) {
+    const take = Math.min(c.length, out.length - off);
+    out.set(c.subarray(0, take), off);
+    off += take;
+    if (off >= out.length) break;
+  }
+  return new TextDecoder('utf-8', { fatal: false }).decode(out);
+}
+
 async function fetchSitemapPages(base: URL): Promise<string[]> {
   try {
-    const res = await fetch(new URL('/sitemap.xml', base).toString(), {
-      headers: { 'User-Agent': 'Mozilla/5.0 (AI Commercial Studio)' },
-      signal: AbortSignal.timeout(6000),
-    });
+    const res = await safeFetch(new URL('/sitemap.xml', base), 6000);
     if (!res.ok) return [];
-    const xml = await res.text();
-    if (xml.length > 500000) return [];
+    const xml = await readCapped(res, 500000);
     const $x = cheerio.load(xml, { xmlMode: true });
     const locs = $x('loc').map((_, e) => $x(e).text().trim()).get().filter(Boolean).slice(0, 40);
     const out: string[] = [];
@@ -194,13 +308,9 @@ function extractAbout($: cheerio.CheerioAPI, base: URL, embedded: string[] = [])
 }
 
 async function fetchHtml(u: URL): Promise<string> {
-  const ctrl = new AbortController();
-  const t = setTimeout(() => ctrl.abort(), TIMEOUT);
-  try {
-    const res = await fetch(u.toString(), { signal: ctrl.signal, headers: { 'User-Agent': 'Mozilla/5.0 (AI Commercial Studio)' } });
-    if (!res.ok) throw new Error(`status ${res.status}`);
-    return (await res.text()).slice(0, MAX_BYTES);
-  } finally { clearTimeout(t); }
+  const res = await safeFetch(u, TIMEOUT);
+  if (!res.ok) throw new Error(`status ${res.status}`);
+  return readCapped(res, MAX_BYTES);
 }
 
 /** Try homepage + about variants; return merged brand with about story. */
@@ -208,7 +318,7 @@ export async function scrapeSite(rawUrl: string): Promise<ScrapeResult> {
   let u: URL;
   try { u = new URL(rawUrl.startsWith('http') ? rawUrl : `https://${rawUrl}`); }
   catch { throw new Error('That link does not look like a website address. Check it and try again.'); }
-  if (!['http:', 'https:'].includes(u.protocol)) throw new Error('Only http(s) websites can be read.');
+  validateUrl(u); // protocol + port whitelist (SSRF guard)
   try {
     const html = await fetchHtml(u);
     const $ = cheerio.load(html);
@@ -292,10 +402,9 @@ export async function scrapeSite(rawUrl: string): Promise<ScrapeResult> {
           try {
             const burl = new URL(bs, au);
             if (burl.origin !== u.origin) continue;
-            const res = await fetch(burl.toString(), { headers: { 'User-Agent': 'Mozilla/5.0 (AI Commercial Studio)' }, signal: AbortSignal.timeout(8000) });
+            const res = await safeFetch(burl, 8000);
             if (!res.ok) continue;
-            const js = await res.text();
-            if (js.length > 300000) continue;
+            const js = await readCapped(res, 300000);
             const strs = extractReadableStringsFromJs(js);
             if (!strs.length) continue;
             const { summary: bs2, points: bp2 } = extractAbout($a, au, strs);
@@ -321,7 +430,7 @@ export async function scrapeSite(rawUrl: string): Promise<ScrapeResult> {
 
     return { brandName: title.split('|')[0].split('—')[0].trim() || u.hostname, tagline, description: desc, colors, logoUrl: abs(logo || undefined), heroImages, cta, testimonials, sitePages, aboutSummary, aboutPoints, aboutSource, needsJs };
   } catch (e: any) {
-    if (e?.name === 'AbortError') throw new Error('That website took too long to respond. Try pasting your text instead.');
+    if (e?.name === 'AbortError' || e?.name === 'TimeoutError') throw new Error('That website took too long to respond. Try pasting your text instead.');
     throw e instanceof Error ? e : new Error('Could not read that website. Paste your text instead.');
   }
 }
