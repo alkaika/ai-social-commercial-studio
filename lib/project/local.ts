@@ -29,6 +29,7 @@ export interface PersistedProject {
   storyMode?: StoryMode;
   voicePartNames?: string[];
   stitchedVoiceName?: string;
+  storyPartEdits?: Record<number, string>;
   savedAt: number;
 }
 

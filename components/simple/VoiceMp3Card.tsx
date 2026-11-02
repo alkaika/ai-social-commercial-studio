@@ -10,7 +10,7 @@ import { useProject } from '@/stores/projectStore';
 
 const voiceKey = (pid: string, i: number) => `${pid}:voice-part-${i + 1}`;
 
-export default function VoiceMp3Card({ batches }: { batches: StoryBatch[] }) {
+export default function VoiceMp3Card({ batches, partEdits, onPartEdit, onResetPart }: { batches: StoryBatch[]; partEdits?: Record<number, string>; onPartEdit?: (idx: number, text: string) => void; onResetPart?: (idx: number) => void }) {
   const { projectId, set, voicePartUrls, voicePartNames, durationSec } = useProject();
   const [voice, setVoice] = useState<string>(STORY_VOICES[0] as string);
   const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
@@ -18,6 +18,8 @@ export default function VoiceMp3Card({ batches }: { batches: StoryBatch[] }) {
   const [busyIdx, setBusyIdx] = useState<number | null>(null);
 
   const parts = useMemo(() => (batches?.length ? batches : []), [batches]);
+  const readOnly = !onPartEdit;
+  const getText = (i: number, fallback: string) => ((partEdits?.[i] ?? fallback ?? '') as string);
   const total = parts.length || 1;
   const fullLen = parts.reduce((a, b) => a + (b.batchSec || 0), 0) || total * 10;
   const prompts = useMemo(
@@ -108,7 +110,14 @@ export default function VoiceMp3Card({ batches }: { batches: StoryBatch[] }) {
       </label>
       {parts.map((b, i) => (
         <div key={b.index} className="space-y-2 border rounded-xl p-3 bg-white">
-          <p className="font-medium text-sm">Part {b.index} of {total} · ~{b.batchSec}s · {b.wordCount} words</p>
+          <p className="font-medium text-sm">Part {b.index} of {total} · ~{b.batchSec}s · {b.wordCount} words {(partEdits?.[i] ?? '') !== '' ? '· edited ✏️' : ''}</p>
+          {!readOnly && (
+            <label className="block text-sm space-y-1">
+              <span className="font-medium">Script for this part — tweak words only</span>
+              <textarea className="input" rows={3} value={getText(i, b.text)} onChange={(e) => onPartEdit?.(i, e.target.value)} placeholder="Edit just this part's spoken lines…" />
+              <span className="text-xs text-neutral-500">{getText(i, b.text).trim().split(/\s+/).filter(Boolean).length} words · ~{b.batchSec}s slot {(partEdits?.[i] ?? '') !== '' && <button className="underline ml-1" onClick={() => onResetPart?.(i)}>Reset to auto-split</button>}</span>
+            </label>
+          )}
           <pre className="whitespace-pre-wrap text-sm bg-neutral-900 text-white rounded-xl p-4">{prompts[i]}</pre>
           <div className="flex flex-wrap gap-2">
             <button className="btn-primary" onClick={() => doCopy(i)}>{copiedIdx === i ? 'Copied!' : `Copy part ${i + 1}`}</button>

@@ -37,6 +37,7 @@ export default function ProjectBar() {
     scriptGuidance: proj.scriptGuidance, step: proj.step,
     storyMode: proj.storyMode, voicePartNames: proj.voicePartNames,
     stitchedVoiceName: proj.stitchedVoiceName,
+    storyPartEdits: (proj as any).storyPartEdits || {},
   });
 
   const doSave = async () => {

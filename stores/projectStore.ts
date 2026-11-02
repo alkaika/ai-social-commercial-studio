@@ -51,6 +51,10 @@ interface ProjectState {
   // The timed Storyboard script is ORGANIZED from this — never reinvented.
   masterScript: string;
   masterApproved: boolean;
+  // Per-part script tweaks on Story: minor word-only edits to each ~10s
+  // prompt part without redrafting. Keyed by part index; merged into
+  // masterScript/script on Continue and persisted with the project.
+  storyPartEdits: Record<number, string>;
   // Guidance chat: what the user wants the script to focus on / exclude.
   // Sent to Spark with every master draft; editable before each re-draft.
   scriptGuidance: string;
@@ -65,6 +69,7 @@ interface ProjectState {
     script: AdScript | null; masterScript: string; masterApproved: boolean;
     scriptGuidance: string; step?: Step; storyMode?: StoryMode;
     voicePartNames?: string[]; stitchedVoiceName?: string;
+    storyPartEdits?: Record<number, string>;
   }) => void;
 }
 
@@ -96,6 +101,7 @@ export const useProject = create<ProjectState>((set) => ({
   stitchedVoiceName: '',
   masterScript: '',
   masterApproved: false,
+  storyPartEdits: {},
   scriptGuidance: '',
   set: (p) => set(
     (p as any).durationSec !== undefined
@@ -123,6 +129,7 @@ export const useProject = create<ProjectState>((set) => ({
     stitchedVoiceName: '',
     masterScript: '',
     masterApproved: false,
+    storyPartEdits: {},
     scriptGuidance: '',
   }),
   openProject: (p) => set({
@@ -145,6 +152,7 @@ export const useProject = create<ProjectState>((set) => ({
     stitchedVoiceName: (p as any).stitchedVoiceName || '',
     masterScript: p.masterScript || '',
     masterApproved: !!p.masterApproved,
+    storyPartEdits: (p as any).storyPartEdits || {},
     scriptGuidance: p.scriptGuidance || '',
   }),
 }));
