@@ -1,5 +1,4 @@
 'use client';
-import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
 import { useProject, type Step } from '@/stores/projectStore';
@@ -13,17 +12,6 @@ import ExportStep from '@/components/simple/ExportStep';
 import PersistGate from '@/components/project/PersistGate';
 import ProjectBar from '@/components/project/ProjectBar';
 import { JUDGING_BUILD, SERVER_KEY_PLACEHOLDER, getStoredBuildView, setStoredBuildView, type BuildView } from '@/lib/judging';
-
-const ALL_STEPS: { id: Step; label: string }[] = [
-  { id: 'key', label: 'Key' },
-  { id: 'writer', label: 'Writer' },
-  { id: 'configure', label: 'Setup' },
-  { id: 'sources', label: 'Business' },
-  { id: 'brand', label: 'Style' },
-  { id: 'script', label: 'Story' },
-  { id: 'review', label: 'Review' },
-  { id: 'export', label: 'Export' },
-];
 
 function StudioInner() {
   const { step, set } = useProject();
@@ -56,7 +44,6 @@ function StudioInner() {
   // AI. Skip the Key step entirely — judges never paste anything.
   // After judging: delete META_API_KEY + NEXT_PUBLIC_JUDGING_MODE and
   // redeploy to return to pure BYOK.
-  const STEPS = JUDGING ? ALL_STEPS.filter((s) => s.id !== 'key') : ALL_STEPS;
 
   useEffect(() => {
     if (view === null) return; // wait until the runtime view resolves
@@ -77,7 +64,6 @@ function StudioInner() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [view]);
 
-  const idx = Math.max(0, STEPS.findIndex((s) => s.id === step));
   const go = (s: Step) => {
     // Guard: never land on the hidden Key step while judging.
     if (JUDGING && s === 'key') { set({ step: 'writer' }); return; }
@@ -112,28 +98,6 @@ function StudioInner() {
 
   return (
     <div className="meta-shell">
-      <header className="meta-topbar">
-        <div className="meta-column px-5 py-3 flex items-center justify-between gap-3">
-          <Link href="/" className="btn-secondary !py-2">← Home</Link>
-          <span className="font-semibold tracking-tight text-[15px]">Studio</span>
-          <span className="badge">{JUDGING ? 'Judging · host key' : 'BYOK'}</span>
-        </div>
-        <div className="meta-column px-5 pb-3">
-          <div className="meta-step-pills flex items-center gap-2 text-sm overflow-x-auto pb-1" role="navigation" aria-label="Studio steps">
-            {STEPS.map((s, i) => (
-              <span key={s.id} className="flex items-center gap-2 shrink-0">
-                {i <= idx ? (
-                  <button onClick={() => go(s.id)} className={`badge hover:opacity-70 ${i === idx ? '!bg-ink !text-white' : ''}`} title={`Go back to ${s.label}`}>
-                    {i + 1}. {s.label}{i < idx ? ' ✓' : ''}
-                  </button>
-                ) : (
-                  <span className="badge opacity-50">{i + 1}. {s.label}</span>
-                )}
-              </span>
-            ))}
-          </div>
-        </div>
-      </header>
       <main className="meta-column px-5 pt-8 pb-16 space-y-6">
       {JUDGING && (
         <p className="text-[13px] text-center bg-white border border-line text-muted rounded-full px-4 py-2">
@@ -141,8 +105,8 @@ function StudioInner() {
         </p>
       )}
       <ProjectBar />
-      {!JUDGING && step === 'key' && <KeySetup onDone={() => go('writer')} />}
-      {step === 'writer' && <ModelPicker onDone={() => go('configure')} onBack={JUDGING ? undefined : goBack} />}
+      {!JUDGING && step === 'key' && <KeySetup onDone={() => go('writer')} onBack={() => { try { window.location.href = '/'; } catch { /* stay */ } }} />}
+      {step === 'writer' && <ModelPicker onDone={() => go('configure')} onBack={() => { try { window.location.href = '/'; } catch { set({ step: 'key' }); } }} />}
       {step === 'configure' && <ConfigureStep onDone={() => go('sources')} onBack={goBack} />}
       {step === 'sources' && <SourceHub onDone={() => go('script')} onBack={goBack} />}
       {step === 'brand' && <SourceHub onDone={() => go('script')} onBack={goBack} />}

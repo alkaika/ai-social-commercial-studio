@@ -76,20 +76,6 @@ body {
   max-width: 768px;
   margin-inline: auto;
 }
-.meta-topbar {
-  position: sticky;
-  top: 0;
-  z-index: 30;
-  backdrop-filter: blur(14px);
-  background: rgba(244, 242, 238, 0.82);
-  border-bottom: 1px solid var(--meta-border-soft);
-}
-.meta-step-pills {
-  scrollbar-width: thin;
-}
-.meta-step-pills::-webkit-scrollbar {
-  height: 6px;
-}
 
 /* Cards */
 .card {

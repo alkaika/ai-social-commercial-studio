@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { useKeyStore, maskedKey } from '@/stores/keyStore';
 import { vaultEnroll, vaultUnlock, vaultHas, vaultForget, prfSupported, vaultEnrollPasskey, vaultUnlockPasskey, vaultHasPasskey, vaultExport, vaultImport } from '@/lib/vault/webauthn-prf';
 
-export default function KeySetup({ onDone }: { onDone: () => void }) {
+export default function KeySetup({ onDone, onBack }: { onDone: () => void; onBack?: () => void }) {
   const { key, baseUrl, setKey, setStatus, forget, modelStatus } = useKeyStore() as any;
   const [k, setK] = useState(key);
   const [url, setUrl] = useState(baseUrl || process.env.NEXT_PUBLIC_META_GATEWAY || 'https://api.meta.ai/v1');
@@ -17,6 +17,7 @@ export default function KeySetup({ onDone }: { onDone: () => void }) {
   // Client-only UI (vault + biometrics) must not render during SSR,
   // or React hydration fails: server HTML won't match the browser.
   const [mounted, setMounted] = useState(false);
+  const [showDemoInfo, setShowDemoInfo] = useState(false);
 
   useEffect(() => { setMounted(true); vaultHas().then(setHasVault).catch(() => {}); vaultHasPasskey().then(setHasPasskey).catch(() => {}); }, []);
 
@@ -77,6 +78,9 @@ export default function KeySetup({ onDone }: { onDone: () => void }) {
       <p className="meta-eyebrow">Key</p>
       <h2 className="font-semibold tracking-tight text-[22px] leading-tight">Connect your key</h2>
       <p className="text-muted text-[15px] leading-relaxed">Your key is like a password that lets this app use AI. It stays in this tab&apos;s memory and is sent only with your own requests. It is never stored on our server.</p>
+      <div>
+        <button className="btn-secondary" onClick={() => setShowDemoInfo(true)}>Try demo without a key</button>
+      </div>
       {mounted && hasVault && <button className="btn-secondary" onClick={unlock} disabled={busy}>🔓 Unlock with Face ID / fingerprint</button>}
       {mounted && hasPasskey && <button className="btn-secondary" onClick={unlockPasskey} disabled={busy}>🔑 Unlock with passkey</button>}
       <label className="block text-sm font-medium">Meta API key</label>
@@ -119,10 +123,22 @@ export default function KeySetup({ onDone }: { onDone: () => void }) {
           )}
         </div>
       )}
-      <div className="flex justify-between items-center">
-        <button className="btn-secondary" onClick={() => { setKey('DEMO', ''); onDone(); }}>Try demo without a key</button>
+      <div className={`flex items-center ${onBack ? 'justify-between' : 'justify-end'}`}>
+        {onBack && <button className="btn-secondary" onClick={onBack}>← Back</button>}
         <button className="btn-primary" disabled={!key && !k} onClick={() => { if (k && !key) setKey(k, url); onDone(); }}>Continue →</button>
       </div>
+      {showDemoInfo && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4" style={{ zIndex: 50 }} onClick={() => setShowDemoInfo(false)}>
+          <div className="bg-white rounded-2xl border border-line shadow-card p-5 max-w-sm w-full space-y-3" onClick={(e) => e.stopPropagation()}>
+            <p className="font-semibold text-base">Demo mode — mock data only</p>
+            <p className="text-sm text-muted">The demo runs on built-in mock data. No live AI calls are made and nothing you enter leaves this demo — explore freely, then add your key for real results.</p>
+            <div className="flex flex-wrap gap-2 justify-end">
+              <button className="btn-secondary" onClick={() => setShowDemoInfo(false)}>Got it</button>
+              <button className="btn-primary" onClick={() => { setKey('DEMO', ''); setShowDemoInfo(false); onDone(); }}>Continue to demo</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
