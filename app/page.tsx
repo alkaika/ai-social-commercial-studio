@@ -61,7 +61,7 @@ function HomeInner() {
               JUDGING_BUILD && <button className="btn-secondary flex-1 sm:flex-none" onClick={() => switchView('judging')}>Switch to Judging build</button>
             )}
           </div>
-          <p className="text-center text-[13px] text-muted mt-3">Free studio · your key stays in this tab · export for every platform</p>
+          <p className="text-center text-[13px] text-muted mt-3">{JUDGING ? 'Judging mode is powered by the host key. No API key needed.' : JUDGING_BUILD ? 'Add your API key on the next page' : 'Free studio · your key stays in this tab · export for every platform'}</p>
         </div>
       </div>
       <div className="grid sm:grid-cols-2 gap-3">
