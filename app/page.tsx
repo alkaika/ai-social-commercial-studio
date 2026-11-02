@@ -7,6 +7,7 @@ import { JUDGING_BUILD, getStoredBuildView, setStoredBuildView, type BuildView }
 function HomeInner() {
   const params = useSearchParams();
   const [view, setView] = useState<BuildView>(JUDGING_BUILD ? 'judging' : 'byok');
+  const [infoTab, setInfoTab] = useState<'how' | 'workflow'>('workflow');
 
   // Landing runtime toggle (judging builds only):
   // - default = judging view ("Start judging run →" + "Switch to BYOK build")
@@ -64,6 +65,11 @@ function HomeInner() {
           <p className="text-center text-[13px] text-muted mt-3">{JUDGING ? 'Judging mode is powered by the host key. No API key needed.' : JUDGING_BUILD ? 'Add your API key on the next page' : 'Free studio · your key stays in this tab · export for every platform'}</p>
         </div>
       </div>
+      <div className="flex gap-2 justify-center">
+        <button className={`border-2 rounded-full px-4 py-2 ${infoTab === 'how' ? 'border-black bg-neutral-100 font-semibold' : 'border-neutral-200'}`} onClick={() => setInfoTab('how')}>How the app works</button>
+        <button className={`border-2 rounded-full px-4 py-2 ${infoTab === 'workflow' ? 'border-black bg-neutral-100 font-semibold' : 'border-neutral-200'}`} onClick={() => setInfoTab('workflow')}>Workflow steps</button>
+      </div>
+      {infoTab === 'workflow' ? (
       <div className="grid sm:grid-cols-2 gap-3">
         <div className="meta-tile">
           <p className="text-[13px] font-semibold uppercase tracking-[0.08em] text-muted mb-1">01 · Key</p>
@@ -96,6 +102,20 @@ function HomeInner() {
           <p className="text-[14.5px] text-muted mt-1 leading-relaxed">Our Stitch feature is available if Meta.ai has issues stitching your files.</p>
         </div>
       </div>
+      ) : (
+      <div className="grid sm:grid-cols-2 gap-3">
+        <div className="meta-tile">
+          <p className="text-[13px] font-semibold uppercase tracking-[0.08em] text-muted mb-1">Paste → Prompt</p>
+          <p className="font-semibold text-[17px] leading-snug">How the app works (coming soon)</p>
+          <p className="text-[14.5px] text-muted mt-1 leading-relaxed">Mock content — real explainer text goes here.</p>
+        </div>
+        <div className="meta-tile">
+          <p className="text-[13px] font-semibold uppercase tracking-[0.08em] text-muted mb-1">Generate → Share</p>
+          <p className="font-semibold text-[17px] leading-snug">How the app works (coming soon)</p>
+          <p className="text-[14.5px] text-muted mt-1 leading-relaxed">Mock content — real explainer text goes here.</p>
+        </div>
+      </div>
+      )}
       {!JUDGING && (
         <div className="card">
           <h2 className="font-semibold text-[18px] tracking-tight">Why bring your own key?</h2>
