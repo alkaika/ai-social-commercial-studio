@@ -111,30 +111,36 @@ function StudioInner() {
   };
 
   return (
-    <main className="max-w-3xl mx-auto px-4 py-8 space-y-6">
-      <div>
-        <Link href="/" className="btn-secondary">← Back to home</Link>
-      </div>
+    <div className="meta-shell">
+      <header className="meta-topbar">
+        <div className="meta-column px-5 py-3 flex items-center justify-between gap-3">
+          <Link href="/" className="btn-secondary !py-2">← Home</Link>
+          <span className="font-semibold tracking-tight text-[15px]">Studio</span>
+          <span className="badge">{JUDGING ? 'Judging · host key' : 'BYOK'}</span>
+        </div>
+        <div className="meta-column px-5 pb-3">
+          <div className="meta-step-pills flex items-center gap-2 text-sm overflow-x-auto pb-1" role="navigation" aria-label="Studio steps">
+            {STEPS.map((s, i) => (
+              <span key={s.id} className="flex items-center gap-2 shrink-0">
+                {i <= idx ? (
+                  <button onClick={() => go(s.id)} className={`badge hover:opacity-70 ${i === idx ? '!bg-ink !text-white' : ''}`} title={`Go back to ${s.label}`}>
+                    {i + 1}. {s.label}{i < idx ? ' ✓' : ''}
+                  </button>
+                ) : (
+                  <span className="badge opacity-50">{i + 1}. {s.label}</span>
+                )}
+              </span>
+            ))}
+          </div>
+        </div>
+      </header>
+      <main className="meta-column px-5 pt-8 pb-16 space-y-6">
       {JUDGING && (
-        <p className="text-xs text-center bg-green-50 border border-green-200 text-green-800 rounded-xl p-2">
+        <p className="text-[13px] text-center bg-white border border-line text-muted rounded-full px-4 py-2">
           Judging mode — powered by the host key. No key needed.
         </p>
       )}
       <ProjectBar />
-      <div className="flex items-center gap-2 text-sm flex-wrap" role="navigation" aria-label="Studio steps">
-        {STEPS.map((s, i) => (
-          <span key={s.id} className="flex items-center gap-2">
-            {i <= idx ? (
-              <button onClick={() => go(s.id)} className={`badge hover:opacity-70 ${i === idx ? '!bg-black !text-white' : 'underline'}`} title={`Go back to ${s.label}`}>
-                {i + 1}. {s.label}{i < idx ? ' ✓' : ''}
-              </button>
-            ) : (
-              <span className="badge opacity-50">{i + 1}. {s.label}</span>
-            )}
-            {i < STEPS.length - 1 && <span className="text-neutral-300">→</span>}
-          </span>
-        ))}
-      </div>
       {!JUDGING && step === 'key' && <KeySetup onDone={() => go('writer')} />}
       {step === 'writer' && <ModelPicker onDone={() => go('configure')} onBack={JUDGING ? undefined : goBack} />}
       {step === 'configure' && <ConfigureStep onDone={() => go('sources')} onBack={goBack} />}
@@ -143,8 +149,9 @@ function StudioInner() {
       {step === 'script' && <Storyboard onDone={() => go('export')} onBack={goBack} />}
       {step === 'review' && <Storyboard onDone={() => go('export')} onBack={goBack} />}
       {step === 'export' && <ExportStep onBack={goBack} />}
-      <p className="text-center text-xs text-neutral-500">{JUDGING ? 'Judging build — host key covers all AI usage' : 'Your key stays in this tab · Free platform — you pay Meta directly'}</p>
-    </main>
+      <p className="text-center text-[13px] text-muted">{JUDGING ? 'Judging build — host key covers all AI usage' : 'Your key stays in this tab · Free studio — you pay the provider directly'}</p>
+      </main>
+    </div>
   );
 }
 

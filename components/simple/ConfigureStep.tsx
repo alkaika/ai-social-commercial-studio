@@ -13,7 +13,8 @@ export default function ConfigureStep({ onDone, onBack }: { onDone: () => void; 
   }, []);
   return (
     <div className="card space-y-5">
-      <h2 className="text-xl font-bold">🎬 Pick your style</h2>
+      <p className="meta-eyebrow">Setup</p>
+      <h2 className="font-semibold tracking-tight text-[22px] leading-tight">Pick your style</h2>
       <p className="text-sm text-neutral-600">Your script will be written with these settings in mind — length, platform, and vibe shape the draft from the start.</p>
       <div>
         <p className="font-medium mb-2">How long?</p>

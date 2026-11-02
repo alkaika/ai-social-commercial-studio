@@ -3,13 +3,14 @@ import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
   title: 'AI Social Commercial Studio (BYOK)',
-  description: 'Make high-quality social commercials in minutes. Bring your own Meta key — no subscription.',
+  description: 'Make high-quality social commercials in minutes. Bring your own key — no subscription.',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className="min-h-screen">{children}</body>
+      <body className="min-h-screen antialiased">{children}</body>
     </html>
   );
 }
+

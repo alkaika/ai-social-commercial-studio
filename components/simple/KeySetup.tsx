@@ -74,8 +74,9 @@ export default function KeySetup({ onDone }: { onDone: () => void }) {
 
   return (
     <div className="card space-y-4">
-      <h2 className="text-xl font-bold">🔑 Connect your Meta key</h2>
-      <p className="text-neutral-600 text-sm">Your key is like a password that lets this app use Meta&apos;s AI. It stays in this tab&apos;s memory and is sent only with your own requests. It is never stored on our server.</p>
+      <p className="meta-eyebrow">Key</p>
+      <h2 className="font-semibold tracking-tight text-[22px] leading-tight">Connect your key</h2>
+      <p className="text-muted text-[15px] leading-relaxed">Your key is like a password that lets this app use AI. It stays in this tab&apos;s memory and is sent only with your own requests. It is never stored on our server.</p>
       {mounted && hasVault && <button className="btn-secondary" onClick={unlock} disabled={busy}>🔓 Unlock with Face ID / fingerprint</button>}
       {mounted && hasPasskey && <button className="btn-secondary" onClick={unlockPasskey} disabled={busy}>🔑 Unlock with passkey</button>}
       <label className="block text-sm font-medium">Meta API key</label>
