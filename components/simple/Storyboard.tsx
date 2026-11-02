@@ -6,6 +6,7 @@ import { META_AI_URL, STORY_DEVICES, STORY_DEVICE_ICONS, STORY_MUSIC, STORY_TEST
 import { masterFit } from '@/lib/script-utils';
 import ShotImg from '@/components/simple/ShotImg';
 import VoiceMp3Card from '@/components/simple/VoiceMp3Card';
+import KenBurnsExportCard from '@/components/simple/KenBurnsExportCard';
 import { downloadWebsiteShot, screenshotCandidates } from '@/lib/screenshots';
 
 export default function Storyboard({ onDone, onBack }: { onDone: () => void; onBack?: () => void }) {
@@ -86,7 +87,7 @@ export default function Storyboard({ onDone, onBack }: { onDone: () => void; onB
       <div className="card space-y-3">
         <h3 className="font-semibold">{mode === 'voice-kenburns' ? '2 · Voice — Meta.ai MP3s, one per 10s part' : showPerson ? '2 · Cast, screen + music' : '2 · Voices, screen + music'}</h3>
         <div className="flex flex-wrap gap-2"><button onClick={() => setMode('people')} className={`border-2 rounded-full px-4 py-2 ${mode === 'people' ? 'border-black bg-neutral-100' : 'border-neutral-200'}`}>🧍 People + app (Meta.ai)</button><button onClick={() => setMode('voices-meta')} className={`border-2 rounded-full px-4 py-2 ${mode === 'voices-meta' ? 'border-black bg-neutral-100' : 'border-neutral-200'}`}>🎙 Voices + screenshots only (Meta.ai)</button><button onClick={() => setMode('voice-kenburns')} className={`border-2 rounded-full px-4 py-2 ${mode === 'voice-kenburns' ? 'border-black bg-neutral-100' : 'border-neutral-200'}`}>🎧 Voice MP3 (Meta.ai) + Ken Burns in app</button></div>
-        {mode === 'voice-kenburns' ? (<VoiceMp3Card batches={batches} />) : (<>
+        {mode === 'voice-kenburns' ? (<><VoiceMp3Card batches={batches} /><div className="border-t pt-3"><KenBurnsExportCard hideVoiceParts bare /></div></>) : (<>
         <p className="text-xs text-neutral-600">{showPerson ? 'People mode renders a person on camera.' : 'Voices mode renders voiceover parts — voice only, no person on camera.'}</p>
         <div className="text-sm space-y-1"><p className="font-medium">{showPerson ? 'Speakers — one per part (tap to recast)' : 'Voices — one per part (tap to recast)'}</p><div className="grid sm:grid-cols-2 gap-2">{speakers.map((s, i) => <div key={i} className="border-2 rounded-xl p-2 border-neutral-200">{showPerson ? (<><p className="font-semibold text-sm">Part {i + 1}: {s.short}</p><p className="text-xs text-neutral-600">{s.voice}</p></>) : (<p className="font-semibold text-sm">Part {i + 1}: {s.voice}</p>)}<select className="input mt-1 text-sm" value={speakerIdx[i] ?? i} onChange={(e) => { const next = [...speakerIdx]; next[i] = Number(e.target.value); setSpeakerIdx(next); }}>{showPerson ? STORY_TESTIMONIAL_PERSONAS.map((p, pi) => <option key={pi} value={pi}>{p.short} — {p.voice}</option>) : STORY_VOICES.map((v, vi) => <option key={vi} value={vi}>{v}</option>)}</select></div>)}</div></div>
         <div className="flex flex-wrap gap-2">{STORY_DEVICES.map((d) => <button key={d} onClick={() => setDevice(d)} className={`border-2 rounded-full px-4 py-2 ${device === d ? 'border-black bg-neutral-100' : 'border-neutral-200'}`}>{STORY_DEVICE_ICONS[d] || '📺'} {d}</button>)}</div>
@@ -96,11 +97,11 @@ export default function Storyboard({ onDone, onBack }: { onDone: () => void; onB
       </div>
       <div className="card space-y-4">
         <h3 className="font-semibold">{mode === 'voice-kenburns' ? '3 · Your images for the Ken Burns motion' : '3 · Copy each 10s part into meta.ai'}</h3>
-        {mode === 'voice-kenburns' ? (<p className="text-sm text-neutral-700">Save the website pages below to your drive (same gallery as Business), then add them — plus any Business photos — as <b>images in the Export step</b>. Our app slowly zooms each image while your per-part Meta.ai MP3s play in order underneath. Nothing renders at meta.ai for visuals in this path.</p>) : (<div className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm space-y-1"><p className="font-semibold">🧠 Pick the right mode in Meta.ai</p><p className="text-neutral-700">No Meta One Core subscription → use <b>Instant</b> mode. Have a Meta One Core sub → use <b>Thinking</b> mode.</p></div>)}
+        {mode === 'voice-kenburns' ? (<p className="text-sm text-neutral-700">Save the website pages below to your drive (same gallery as Business), then upload them — plus any Business photos — as <b>images in the builder right above (Card 2)</b>. Our app slowly zooms each image while your per-part Meta.ai MP3s play in order underneath. Nothing renders at meta.ai for visuals in this path. You can build the final MP4 right here on Story — Export is optional.</p>) : (<div className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm space-y-1"><p className="font-semibold">🧠 Pick the right mode in Meta.ai</p><p className="text-neutral-700">No Meta One Core subscription → use <b>Instant</b> mode. Have a Meta One Core sub → use <b>Thinking</b> mode.</p></div>)}
         {shots.length > 0 && (
           <div className="space-y-2 border rounded-xl p-3 bg-neutral-50">
-            <p className="font-medium text-sm">🌐 Your website pages ({shots.length}) — {mode === 'voice-kenburns' ? 'save these, then upload them as images in Export' : 'save + attach these in meta.ai'}</p>
-            <p className="text-xs text-neutral-600">{mode === 'voice-kenburns' ? 'Same gallery as Business. Save the pages to your drive, then upload them as motion images in the Export step.' : 'Same gallery as Business. Save the pages to your drive, then attach them alongside each prompt paste.'}</p>
+            <p className="font-medium text-sm">🌐 Your website pages ({shots.length}) — {mode === 'voice-kenburns' ? 'save these, then upload them as images in the builder above' : 'save + attach these in meta.ai'}</p>
+            <p className="text-xs text-neutral-600">{mode === 'voice-kenburns' ? 'Same gallery as Business. Save the pages to your drive, then upload them as motion images in the builder in Card 2 above.' : 'Same gallery as Business. Save the pages to your drive, then attach them alongside each prompt paste.'}</p>
             <div className="flex flex-wrap gap-2">
               <button className="btn-secondary !py-1" onClick={async () => { setShotMsg('Saving all…'); let n = 0; for (let i = 0; i < shots.length; i++) { try { if ((await downloadWebsiteShot(shots[i], i)) === 'saved') n++; } catch {} await new Promise((r) => setTimeout(r, 400)); } setShotMsg(n ? `Saved ${n} of ${shots.length} — attach them in meta.ai.` : 'Opened in tabs — right-click → Save image.'); }}>💾 Save all {shots.length} for meta.ai</button>
             </div>
@@ -140,7 +141,7 @@ export default function Storyboard({ onDone, onBack }: { onDone: () => void; onB
           </div>
         )}
       </div>
-      <div className="flex justify-between items-center"><button className="btn-secondary" onClick={onBack}>← Back</button><button className="btn-primary" onClick={goNext}>Looks good — continue to export →</button></div>
+      <div className="flex justify-between items-center"><button className="btn-secondary" onClick={onBack}>← Back</button><button className="btn-primary" onClick={goNext}>{mode === 'voice-kenburns' ? 'Stitch Voice Files or Download Files →' : 'Stitch Video Files or Download Files →'}</button></div>
     </div>
   );
 }

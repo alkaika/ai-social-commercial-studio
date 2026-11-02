@@ -33,7 +33,7 @@ function probeSpans(parts: File[]): Promise<(number | undefined)[]> {
 const voiceKey = (pid: string, i: number) => `${pid}:voice-part-${i + 1}`;
 const stitchedKey = (pid: string) => `${pid}:voice-stitched`;
 
-export default function KenBurnsExportCard() {
+export default function KenBurnsExportCard({ hideVoiceParts, bare }: { hideVoiceParts?: boolean; bare?: boolean } = {}) {
   const { platform, durationSec, projectId, set, voicePartUrls, voicePartNames, stitchedVoiceUrl, stitchedVoiceName } = useProject();
   const pf = PLATFORMS[platform as keyof typeof PLATFORMS];
   const [images, setImages] = useState<File[]>([]);
@@ -47,6 +47,27 @@ export default function KenBurnsExportCard() {
   const stitchedIsVideo = /video/i.test(stitchedFile?.type || '') || /\.mp4|m4v|mov|webm/i.test(stitchedFile?.name || stitchedVoiceName || '');
   const need = Math.max(1, Math.ceil(durationSec / 10));
   const voiceDone = voices.filter(Boolean).length;
+  // Parts attached in the Story Voice card live in the store before this
+  // card's own Dexie restore runs — count them so Build isn't blocked.
+  const storeVoiceDone = (voicePartUrls || []).slice(0, need).filter(Boolean).length;
+  const effectiveVoiceDone = Math.max(voiceDone, storeVoiceDone);
+  // Keep the finished file in sync with the Story Voice card above: if it
+  // is removed there, drop our copy; if it is attached there, load its blob
+  // from Dexie so Build on Story is never blocked by "still restoring".
+  useEffect(() => {
+    if (!stitchedVoiceUrl) { setStitchedFile(null); return; }
+    if (stitchedFile) return;
+    let live = true;
+    (async () => {
+      try {
+        const { getStitchedVoice } = await import('@/lib/clips/db');
+        const st = await getStitchedVoice(projectId || 'unassigned');
+        if (st && live) setStitchedFile(new File([st.blob], st.name, { type: st.mime || 'audio/mpeg' }));
+      } catch {}
+    })();
+    return () => { live = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stitchedVoiceUrl, projectId]);
   const [busy, setBusy] = useState(false);
   const [buildSecs, setBuildSecs] = useState(0);
   const buildTimer = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -194,21 +215,41 @@ export default function KenBurnsExportCard() {
     setMsg(`${imgs.length} image(s) added for the motion.`);
   };
 
+  // Parts attached in the Story Voice card may not be in this card's local
+  // `voices` yet — fall back to the shared Dexie blobs (same project keys).
+  const resolveBuildParts = async (): Promise<File[] | null> => {
+    const local = voices.slice(0, need);
+    if (local.every(Boolean)) return local as File[];
+    try {
+      const { listVoiceParts } = await import('@/lib/clips/db');
+      const found = await listVoiceParts(projectId || 'unassigned', need);
+      const arr: (File | null)[] = local.map((v) => v ?? null);
+      for (const f of found) if (!arr[f.index]) arr[f.index] = new File([f.blob], f.name, { type: f.mime || 'audio/mpeg' });
+      if (arr.slice(0, need).every(Boolean)) return arr.slice(0, need) as File[];
+    } catch {}
+    return null;
+  };
+
   const build = async () => {
     if (hasStitched && !stitchedFile) { setMsg('Your finished voice is still restoring — give it a second, or re-attach the file.'); return; }
-    if (!hasStitched && voiceDone < need) { setMsg(`Attach all ${need} voice MP3s first (${voiceDone}/${need}) — or upload the finished file Meta.ai stitched above.`); return; }
-    if (!hasStitched && voices.slice(0, need).some((v) => !v)) { setMsg(`One of the first ${need} voice part(s) is missing — attach each part under its own number.`); return; }
+    if (!hasStitched && effectiveVoiceDone < need) { setMsg(`Attach all ${need} voice MP3s first (${effectiveVoiceDone}/${need}) — or upload the finished file Meta.ai stitched above.`); return; }
     if (!images.length) { setMsg('Add one image to start.'); return; }
     if (failed) { resetFFmpeg(); setFailed(false); }
     setBusy(true); setPct(0); setStep('Starting');
     setMsg('Loading studio renderer.');
     try {
       // Stitched priority: Meta.ai already joined the voice, so the app only
-      // adds Ken Burns motion. Otherwise join the per-part MP3s in order.
+      // adds Ken Burns motion. Otherwise join the per-part MP3s in order —
+      // resolved from this card or, on Story, the Voice card above (Dexie).
+      let buildParts: File[] | null = null;
+      if (!hasStitched) {
+        buildParts = await resolveBuildParts();
+        if (!buildParts) { setMsg(`One of the first ${need} voice part(s) is missing — attach each part under its own number.`); return; }
+      }
       const r = hasStitched && stitchedFile
         ? await buildKenBurnsCommercial({ images, audioParts: [stitchedFile], audioSecs: [await probeMedia(stitchedFile)], stitched: true, fallbackTotalSec: durationSec, width: pf.width, height: pf.height, onProgress: setPct, onStep: setStep })
         : await (async () => {
-            const parts = voices.slice(0, need) as File[];
+            const parts = buildParts as File[];
             const spans = await probeSpans(parts);
             return buildKenBurnsCommercial({ images, audioParts: parts, audioSecs: spans, width: pf.width, height: pf.height, onProgress: setPct, onStep: setStep });
           })();
@@ -223,7 +264,7 @@ export default function KenBurnsExportCard() {
 
   const finalName = `kb-${platform}-${durationSec}s-final.mp4`;
   return (
-    <div className="card space-y-3">
+    <div className={bare ? 'space-y-3' : 'card space-y-3'}>
       <h3 className="font-semibold">Voice MP3s + Ken Burns — one final MP4</h3>
       <p className="text-sm text-neutral-600">{hasStitched ? 'Meta.ai stitched the voice for you — the app only adds the Ken Burns motion over your images. Nothing uploads.' : `Your ${need} voice part(s) join in order; each image gets equal time (slow zoom). Nothing uploads.`}</p>
       <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm space-y-2">
@@ -239,8 +280,9 @@ export default function KenBurnsExportCard() {
           </div>
         )}
       </div>
+      {hideVoiceParts ? null : (
       <div className={`rounded-xl border bg-neutral-50 p-3 text-sm space-y-2 ${hasStitched ? 'opacity-50' : ''}`}>
-        <p className="font-medium">Voice parts: {voiceDone}/{need} attached{hasStitched ? ' (not needed — finished file attached)' : ''}</p>
+        <p className="font-medium">Voice MP3s — one per part ({voiceDone}/{need}){hasStitched ? ' (not needed — finished file attached)' : ''}</p>
         <p className="text-xs text-neutral-500">{hasStitched ? 'Skipped — your finished file above replaces the per-part join.' : 'Attach here or in Story card 2 (voice mode) — both stay in sync.'}</p>
         {Array.from({ length: need }, (_, i) => (
           <div key={i} className="border rounded-xl p-2 bg-white space-y-1">
@@ -256,6 +298,7 @@ export default function KenBurnsExportCard() {
           </div>
         ))}
       </div>
+      )}
       <div className="space-y-2">
         <p className="font-medium text-sm">Images ({images.length}/12) — 1 is enough to build</p>
         <input ref={imgRef} type="file" accept="image/*,.png,.jpg,.jpeg,.webp,.gif" multiple className="hidden" onChange={(e) => { onImages(e.target.files); e.target.value = ''; }} />
@@ -267,7 +310,7 @@ export default function KenBurnsExportCard() {
         <p className="text-xs text-neutral-500">{hasStitched ? 'Save website screenshots on Story, then upload those files here. 1 image builds fine; up to 12 just adds variety (images share your finished voice evenly).' : 'Save website screenshots on Story, then upload those files here. 1 image builds fine; up to 12 just adds variety (each part cycles images).'}</p>
       </div>
       <div className="flex flex-wrap items-center gap-2">
-        <button className="btn-primary" disabled={busy || (!hasStitched && voiceDone < need) || !images.length} onClick={build}>{busy ? `Building ${Math.max(0, Math.min(100, pct))}%` : failed ? 'Retry build' : hasStitched ? '🎞 Build Ken Burns MP4 (voice already stitched)' : `Build ${durationSec}s commercial`}</button>
+        <button className="btn-primary" disabled={busy || (!hasStitched && effectiveVoiceDone < need) || !images.length} onClick={build}>{busy ? `Building ${Math.max(0, Math.min(100, pct))}%` : failed ? 'Retry build' : hasStitched ? '🎞 Build Ken Burns MP4 (voice already stitched)' : `Build ${durationSec}s commercial`}</button>
         {busy && (
           <span className="text-sm text-neutral-500 tabular-nums" aria-live="polite">
             Please wait… {buildSecs}s
