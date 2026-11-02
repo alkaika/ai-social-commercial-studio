@@ -171,7 +171,7 @@ export default function ProjectBar() {
         </div>
         <div className="flex flex-wrap gap-2 items-center">
           <button className="btn-secondary" disabled={busy} onClick={doNew}>＋ New</button>
-          <button className="btn-secondary" disabled={busy} onClick={() => { setOpen((v) => !v); refresh(); }}>Open ({projects.length})</button>
+          <button className="btn-secondary" disabled={busy} onClick={() => { setOpen((v) => !v); refresh(); }}>Saved Projects ({projects.length})</button>
           <button className="btn-secondary" disabled={busy} onClick={() => doDelete(proj.projectId)}>Delete</button>
         </div>
       </div>

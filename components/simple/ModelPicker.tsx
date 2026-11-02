@@ -40,7 +40,7 @@ export default function ModelPicker({ onDone, onBack }: { onDone: () => void; on
   return (
     <div className="card space-y-4">
       <p className="meta-eyebrow">Writer</p>
-      <h2 className="font-semibold tracking-tight text-[22px] leading-tight">Who should write your commercial?</h2>
+      <h2 className="font-semibold tracking-tight text-[22px] leading-tight">Choose Muse Spark 1.3 Standard or Contributor</h2>
       <p className="text-[15px] text-muted">Your last choice is pre-selected{lastWriter ? ` (${SPARK_MODELS[lastWriter].label})` : ''}. You can change this for every new commercial.</p>
       <div className="overflow-x-auto">
         <table className="w-full text-sm border border-line rounded-2xl overflow-hidden bg-white">

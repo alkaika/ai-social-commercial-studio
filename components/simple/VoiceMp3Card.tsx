@@ -101,7 +101,7 @@ export default function VoiceMp3Card({ batches, partEdits, onPartEdit, onResetPa
 
   return (
     <div className="space-y-3 border rounded-xl p-3">
-      <p className="text-xs text-neutral-600">Meta.ai caps voice at ~10s too. Same narrator voice for all parts. The LAST part asks Meta.ai to stitch all MP3s into one file — download that first; our Export join is the fallback.</p>
+      <p className="text-sm font-semibold text-neutral-800">Meta.ai caps voice at ~10s too. Same narrator voice for all parts. The LAST part asks Meta.ai to stitch all MP3s into one file — download that first; our Stitch feature is the fallback.</p>
       <label className="block text-sm space-y-1">
         <span className="font-medium">Narrator voice (all parts)</span>
         <select className="input" value={voice} onChange={(e) => setVoice(e.target.value)}>
@@ -130,7 +130,7 @@ export default function VoiceMp3Card({ batches, partEdits, onPartEdit, onResetPa
         </div>
       ))}
       <ol className="list-decimal ml-5 text-sm text-neutral-700 space-y-1">
-        <li>Copy Part 1, open meta.ai, generate + download the MP3. Repeat per part (same voice).</li>
+        <li>Copy Part 1, open meta.ai, click submit to generate the MP3. Repeat per part (same voice).</li>
         <li>The LAST part asks Meta.ai to stitch all MP3s — download that finished file first, then upload it in the Voice MP3s + Ken Burns builder below.</li>
         <li>Add images + Build in the builder below — the parts join in order, or your one finished file goes straight under the Ken Burns motion.</li>
       </ol>

@@ -81,7 +81,7 @@ function HomeInner() {
           <p className="text-[14.5px] text-muted mt-1 leading-relaxed">Website, photos, or pasted text. Preview, edit, or describe changes.</p>
         </div>
         <div className="meta-tile">
-          <p className="text-[13px] font-semibold uppercase tracking-[0.08em] text-muted mb-1">04 · Export</p>
+          <p className="text-[13px] font-semibold uppercase tracking-[0.08em] text-muted mb-1">04 · Download commercial</p>
           <p className="font-semibold text-[17px] leading-snug">Share anywhere</p>
           <p className="text-[14.5px] text-muted mt-1 leading-relaxed">TikTok, Reels, Shorts, Instagram, YouTube, Facebook, X and LinkedIn.</p>
         </div>
