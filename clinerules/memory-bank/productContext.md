@@ -14,7 +14,7 @@ Small businesses need high-quality social ads without expensive subscriptions or
 Key → Writer (factual table) → Setup (duration/platform/vibe) → Business (scrape/uploads/Final script + photo gallery + page screenshots with save-for-Meta.ai) → Story (pick path: People + app / Voices-only / Voice MP3s per 10s part + Ken Burns + same screenshot gallery) → Download page = stitch ONLY (2026-11-02: separate SRT/txt/backup downloads removed) -- stitch Part MP4s to final MP4 or Part MP3s to final MP3 in-browser, or join voice MP3s under Ken Burns MP4.
 
 ## UX Goals
-- One main button per screen. Smart defaults (brand colors, captions ON, music ducked, 9:16).
+- One main button per screen. Smart defaults (brand colors, captions ON, voice-only, 9:16).
 - Type minimum: tap cards. Words like picture/words spoken/seconds.
 - Manual edits free & instant; AI regen per-scene only; Approve cost BEFORE spend; Approve result AFTER preview.
 - Fresh start every load; explicit Save/Open named library replaces autosave (unsaved = amber warning, refresh wipes).

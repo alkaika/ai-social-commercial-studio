@@ -89,20 +89,6 @@ export const STORY_DEVICE_ICONS: Record<string, string> = {
   'PC monitor': '🖥',
 };
 
-export const STORY_MUSIC = [
-  { id: 'none', label: 'No music — voice only', emoji: '🔇', desc: 'Clean VO, silence between lines', prompt: '' },
-  { id: 'soft-piano', label: 'Soft piano', emoji: '🎹', desc: 'Calm, minimal chords', prompt: 'soft royalty-free piano, slow minimal chords, calm and clean' },
-  { id: 'acoustic', label: 'Light acoustic', emoji: '🎸', desc: 'Warm fingerpicked guitar', prompt: 'light royalty-free acoustic guitar, warm fingerpicked, friendly and airy' },
-  { id: 'ambient', label: 'Ambient pads', emoji: '🌫️', desc: 'Modern, spacious tech feel', prompt: 'airy royalty-free ambient pads, modern tech feel, spacious and calm' },
-  { id: 'corporate', label: 'Light corporate', emoji: '💼', desc: 'Subtle pulse, motivational', prompt: 'light royalty-free corporate bed, subtle pulse, motivational but restrained' },
-  { id: 'lofi', label: 'Chill lo-fi', emoji: '🎧', desc: 'Mellow, soft beat', prompt: 'mellow royalty-free lo-fi, soft brushed beat, relaxed and unobtrusive' },
-] as const;
-export type StoryMusicId = (typeof STORY_MUSIC)[number]['id'];
-
-export function storyMusicById(id: string) {
-  return STORY_MUSIC.find((m) => m.id === id) || STORY_MUSIC[0];
-}
-
 // Screenshot source follows the selected device: phone shows the mobile app,
 // larger screens show the website. Keeps the prompt footer specific.
 export function deviceSourceLabel(device: StoryDevice | string): 'Website' | 'Mobile app' {
@@ -393,14 +379,12 @@ export interface BatchTestimonialPromptInput {
   vibeLabel: string;
   brandName?: string;
   device: StoryDevice | string;
-  musicId?: string;
   showPerson?: boolean;
   totalDurationSec?: number;
 }
 
 export interface CombinedStoryPromptInput {
   batches: StoryBatch[];
-  musicId?: string;
   showPerson?: boolean; // false = voiceover + screenshots only, no person on camera
   durationSec: number;
   aspect: string;
@@ -422,10 +406,7 @@ export function buildCombinedStoryPrompt(input: CombinedStoryPromptInput): strin
         : aspect === '4:5' ? 'vertical portrait' : 'vertical full-screen';
   const brandBit = brandName ? ` for ${brandName}` : '';
   const multi = batches.length > 1;
-  const music = storyMusicById(input.musicId || 'none');
-  const audioLine = music.prompt
-    ? `- Audio: ${voice} voice front and center, clear studio quality. Underneath: ${music.prompt} at low background level (~-20dB under the voice, ducked whenever speaking) so the voice stays fully clear and intelligible. No lyrics in the music.`
-    : `- Audio: ${voice} voice, clear studio quality. Voice only — no background music, no sound effects.`;
+  const audioLine = `- Audio: ${voice} voice, clear studio quality. Voice only — no background music, no sound effects.`;
   const person = voicePerson(voice);
   const showPerson = input.showPerson !== false;
   const samePerson = person === 'woman' ? 'SAME woman' : person === 'man' ? 'SAME man' : 'SAME person';
@@ -501,7 +482,6 @@ export function buildCombinedStoryPrompt(input: CombinedStoryPromptInput): strin
 /** One self-contained 10s Meta.ai prompt: its own voice + face + lines. */
 export function buildBatchTestimonialPrompt(input: BatchTestimonialPromptInput): string {
   const { batch, speaker } = input;
-  const music = storyMusicById(input.musicId || 'none');
   const showPerson = input.showPerson !== false;
   const person = voicePerson(speaker.voice);
   const poss = person === 'woman' ? 'her' : person === 'man' ? 'his' : 'their';
@@ -510,9 +490,7 @@ export function buildBatchTestimonialPrompt(input: BatchTestimonialPromptInput):
   const screenNoun = input.device === 'Mobile phone' ? 'a phone screen' : `a ${String(input.device).toLowerCase()} screen`;
   const orientation = input.aspect === '16:9' ? 'landscape widescreen' : input.aspect === '1:1' ? 'square' : input.aspect === '4:5' ? 'vertical portrait' : 'vertical full-screen';
   const brandBit = input.brandName ? ` for ${input.brandName}` : '';
-  const audioLine = music.prompt
-    ? `- Audio: ${speaker.voice} voice front and center, clear studio quality. Underneath: ${music.prompt} at low background level (~-20dB, ducked while speaking) so the voice stays fully clear. No lyrics.`
-    : `- Audio: ${speaker.voice} voice, clear studio quality. Voice only — no background music, no sound effects.`;
+  const audioLine = `- Audio: ${speaker.voice} voice, clear studio quality. Voice only — no background music, no sound effects.`;
   const visualLine = showPerson
     ? `- Visual: ${speaker.appearance} speaking to camera as a happy-customer testimonial, using the app on ${poss} ${input.device}; cut between ${him} and close-ups of the attached ${source.toLowerCase()} screenshots on the ${input.device} screen. UI straight from attachments (never redesigned) but alive — taps, scrolling, popups. Bright, cinematic, real-app look.`
     : `- Visual: full-screen app footage only — attached ${source.toLowerCase()} screenshots fill ${screenNoun}, straight from attachments (never redesigned) but alive: taps, scrolls, popups. No person, actor, avatar, or face at any point. Bright, cinematic, real-app look.`;

@@ -2,6 +2,7 @@
 
 > Living note — status as of last push. `clinerules/` is intentionally committed (no secrets inside) so clones carry the why, not just the what.
 
+- Music options REMOVED entirely (2026-11-03, user request — voice-only, no music prompts): deleted `STORY_MUSIC` (No music/Soft piano/Light acoustic/Ambient pads/Light corporate/Chill lo-fi) + `StoryMusicId` + `storyMusicById()` from `lib/meta-sdk/prompts.ts`; dropped `musicId` from `BatchTestimonialPromptInput`/`CombinedStoryPromptInput`; both prompt builders now always emit `Voice only — no background music, no sound effects`; removed `musicId` state + 🎵 picker UI from `Storyboard.tsx` (Story step 2 = Format/Speakers/Screen only). `tsc --noEmit` ✅.
 - Spark reasoning to xhigh for both writers (2026-11-03, user request — `xhigh` is the documented maximum both support): single `SPARK_REASONING_EFFORT='xhigh'` + `reasoningEffortForSpark()` in `lib/muse/models.config.ts`, wired into all Spark chat calls (`generateMasterScript` draft + retry, `generateScript` organize, `/api/muse/revise` planning). `tsc --noEmit` ✅, build 13 routes ✅.
 - Security hardening pass (2026-11-02): full audit + fixes. next 14.2.5 → 14.2.35 (clears 13 advisories incl. cache-poisoning/auth-bypass/dev-server group; residual 2026 criticals — Windows-RCE GHSA-p293 (n/a: Vercel hosts on Linux), AVIF/SVG image-optimizer RCE GHSA-2xp9/GHSA-2464 (moot: `images.remotePatterns` wildcard REMOVED + app uses plain `<img>`, `/_next/image` no longer fetches anything) — only fully fixed in Next 15.5.28+/16.x, tracked as future work), unused `zod` dep removed (HIGH GHSA-mrhx-c7xc-m3w5), baseline security headers in `next.config.js` (X-Content-Type-Options, X-Frame-Options DENY, Referrer-Policy, Permissions-Policy camera/mic/geo off, HSTS; CSP deferred until ffmpeg-wasm nonce pass), SSRF guard in `lib/scraper.ts`: `safeFetch()` = http(s)+port 80/443 whitelist, DNS answers checked every hop against loopback/private/link-local/CGNAT/ULA ranges (30s host cache, manual redirects ≤3 re-validated — a 302 to 169.254.169.254 is rejected), `readCapped()` makes byte caps stop downloads early. Live-tested on dev server: metadata IP/10.0.0.1/127.0.0.1:3000/example.com:8080 all rejected + headers verified. `tsc` + build ✅ 13 routes.
 
@@ -41,7 +42,7 @@
 
 ## What's Left
 - End-to-end project run with the live key (script gen on real Spark). Verify: fresh boot blank → Save → refresh blank → Open restores text + footage; Story batches → meta.ai parts → Export stitch → final MP4/MP3.
-- VO/motion-plan assembly (motionPlan VO layering) still stub; Advanced timeline UI, music/voice pickers, caption editor, BrandKit conflict UI, cost estimator totals, tests, Next upgrade.
+- VO/motion-plan assembly (motionPlan VO layering) still stub; Advanced timeline UI, voice pickers, caption editor, BrandKit conflict UI, cost estimator totals, tests, Next upgrade.
 
 ## Known Issues
 - Next 14.2.5 security notice (build warns, runs fine).

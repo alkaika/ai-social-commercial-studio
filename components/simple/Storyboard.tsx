@@ -1,8 +1,8 @@
-﻿'use client';
+'use client';
 import { useEffect, useMemo, useState } from 'react';
 import { useProject } from '@/stores/projectStore';
 import { PLATFORMS, TONES } from '@/config/platforms';
-import { META_AI_URL, STORY_DEVICES, STORY_DEVICE_ICONS, STORY_MUSIC, STORY_TESTIMONIAL_PERSONAS, STORY_VOICES, voicePerson, deviceSourceLabel, splitScriptIntoBalancedBatches, checkBatchBalance, assignBatchSpeakers, assignBatchVoices, buildBatchTestimonialPrompt, copyText, type BatchSpeaker } from '@/lib/meta-sdk/prompts';
+import { META_AI_URL, STORY_DEVICES, STORY_DEVICE_ICONS, STORY_TESTIMONIAL_PERSONAS, STORY_VOICES, voicePerson, deviceSourceLabel, splitScriptIntoBalancedBatches, checkBatchBalance, assignBatchSpeakers, assignBatchVoices, buildBatchTestimonialPrompt, copyText, type BatchSpeaker } from '@/lib/meta-sdk/prompts';
 import { masterFit } from '@/lib/script-utils';
 import ShotImg from '@/components/simple/ShotImg';
 import VoiceMp3Card from '@/components/simple/VoiceMp3Card';
@@ -18,7 +18,6 @@ export default function Storyboard({ onDone, onBack }: { onDone: () => void; onB
   }, [masterScript, script]);
   const [scriptText, setScriptText] = useState(seed);
   const [device, setDevice] = useState<string>(STORY_DEVICES[0]);
-  const [musicId, setMusicId] = useState<string>('none');
   const mode = storyMode || 'people';
   const showPerson = mode === 'people';
   const setMode = (m: 'people' | 'voices-meta' | 'voice-kenburns') => set({ storyMode: m });
@@ -85,9 +84,9 @@ export default function Storyboard({ onDone, onBack }: { onDone: () => void; onB
   const prompts = useMemo(() => effectiveBatches.map((b, i) => buildBatchTestimonialPrompt({
     batch: b, speaker: speakers[i] || autoSpeakers[i] || autoSpeakers[0],
     aspect: pf.aspect, width: pf.width, height: pf.height, platformLabel: pf.label, vibeLabel: vibe,
-    brandName: brand.brandName || undefined, device, musicId, showPerson,
+    brandName: brand.brandName || undefined, device, showPerson,
     totalDurationSec: durationSec,
-  })), [effectiveBatches, speakers, autoSpeakers, pf.aspect, pf.width, pf.height, pf.label, vibe, brand.brandName, device, musicId, showPerson, durationSec]);
+  })), [effectiveBatches, speakers, autoSpeakers, pf.aspect, pf.width, pf.height, pf.label, vibe, brand.brandName, device, showPerson, durationSec]);
   const doCopy = async (i: number) => {
     try { await copyText(prompts[i]); setCopiedIdx(i); setAttachPopup(i); setMsg(`Part ${i + 1} copied — paste into meta.ai (attach ${source} screenshots). ${showPerson ? `Speaker: ${speakers[i]?.short} (${speakers[i]?.voice}).` : `Voice: ${speakers[i]?.voice} (voiceover only, no person on camera).`}`); setTimeout(() => setCopiedIdx(null), 2500); }
     catch { setMsg('Copy blocked — select the prompt manually.'); }
@@ -126,7 +125,6 @@ export default function Storyboard({ onDone, onBack }: { onDone: () => void; onB
         <p className="text-sm font-semibold text-neutral-800">{showPerson ? 'People mode renders a person on camera.' : 'Voices mode renders voiceover parts — voice only, no person on camera.'}</p>
         <div className="text-sm space-y-1"><p className="font-medium">{showPerson ? 'Speakers — one per part (tap to recast)' : 'Voices — one per part (tap to recast)'}</p><div className="grid sm:grid-cols-2 gap-2">{speakers.map((s, i) => <div key={i} className="border-2 rounded-xl p-2 border-neutral-200">{showPerson ? (<><p className="font-semibold text-sm">Part {i + 1}: {s.short}</p><p className="text-base text-neutral-800">{s.voice}</p></>) : (<p className="font-semibold text-sm">Part {i + 1}: {s.voice}</p>)}<select className="input mt-1 text-sm" value={speakerIdx[i] ?? i} onChange={(e) => { const next = [...speakerIdx]; next[i] = Number(e.target.value); setSpeakerIdx(next); }}>{showPerson ? STORY_TESTIMONIAL_PERSONAS.map((p, pi) => <option key={pi} value={pi}>{p.short} — {p.voice}</option>) : STORY_VOICES.map((v, vi) => <option key={vi} value={vi}>{v}</option>)}</select></div>)}</div></div></div>
         <div className="rounded-xl border border-neutral-200 bg-neutral-50/50 p-3 space-y-2"><p className="text-base font-bold uppercase tracking-widest text-neutral-800">Screen — pick one</p><div className="flex flex-wrap gap-2">{STORY_DEVICES.map((d) => <button key={d} onClick={() => setDevice(d)} className={`border-2 rounded-full px-4 py-2 ${device === d ? 'border-black bg-neutral-100' : 'border-neutral-200'}`}>{STORY_DEVICE_ICONS[d] || '📺'} {d}</button>)}</div></div>
-        <div className="rounded-xl border border-neutral-200 bg-neutral-50/50 p-3 space-y-2"><div className="text-sm space-y-1"><p className="font-medium">🎵 Music (subtle — stays under each voice)</p><div className="grid sm:grid-cols-2 gap-2">{STORY_MUSIC.map((m) => <button key={m.id} onClick={() => setMusicId(m.id)} className={`border-2 rounded-xl p-3 text-left ${musicId === m.id ? 'border-black bg-neutral-50' : 'border-neutral-200'}`}><div className="font-semibold">{m.emoji} {m.label}</div><div className="text-base text-neutral-800">{m.desc}</div></button>)}</div></div></div>
         </>
         )}
       </div>
