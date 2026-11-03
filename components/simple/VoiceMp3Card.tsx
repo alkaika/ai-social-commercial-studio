@@ -130,8 +130,26 @@ export default function VoiceMp3Card({ batches, partEdits, onPartEdit, onResetPa
         </div>
       ))}
       <ol className="list-decimal ml-5 text-sm text-neutral-700 space-y-1">
-        <li>Copy Part 1, open meta.ai, click submit to generate the MP3. Wait for the voice file to complete before proceeding to the next step. Repeat per part (same voice).</li>
-        <li>The LAST part asks Meta.ai to stitch all MP3s — download that finished file first, then upload it in the Voice MP3s + Ken Burns builder below.</li>
+        {total === 1 ? (
+          <li>Copy Part 1, open meta.ai, click submit to generate the MP3. Wait for the voice file to complete, then download the file.</li>
+        ) : (
+          <>
+            <li>Copy Part 1, open meta.ai, click submit to generate the MP3. Wait for the voice file to complete before proceeding to the next step. Repeat per part (same voice).</li>
+            {parts.slice(1).map((_, idx) => {
+              const partNum = idx + 2;
+              const isLast = partNum === total;
+              const chatRef = partNum === 2 ? 'Part 1' : `Part 1-${partNum - 1}`;
+              return (
+                <li key={partNum}>
+                  Use the same chat as {chatRef}, Copy Part {partNum}, click submit to generate the MP3. Wait for the voice file to complete {isLast ? 'before downloading.' : 'before proceeding to the next step.'}
+                </li>
+              );
+            })}
+          </>
+        )}
+        {total > 1 && (
+          <li>The LAST part asks Meta.ai to stitch all MP3s — download that finished file first, then upload it in the Voice MP3s + Ken Burns builder below.</li>
+        )}
         <li>Add images + Build in the builder below — the parts join in order, or your one finished file goes straight under the Ken Burns motion.</li>
       </ol>
       {msg && <p className="text-sm bg-neutral-100 border rounded-xl p-3">{msg}</p>}
