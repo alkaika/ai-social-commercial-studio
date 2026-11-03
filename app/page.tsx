@@ -94,7 +94,7 @@ function HomeInner() {
         <div className="meta-tile">
           <p className="text-base font-semibold uppercase tracking-[0.08em] text-neutral-800 mb-1">05 · Choose your preferences</p>
           <p className="font-semibold text-[17px] leading-snug">🧍 People + app (Meta.ai), 🎙 Voices + screenshots only (Meta.ai), 🎧 Voice MP3 (Meta.ai) + Ken Burns in app</p>
-          <p className="text-base text-neutral-800 mt-1 leading-relaxed">AI model drafts your 10-second part prompts to use on Meta.ai. Meta.ai generates your commercial. Download completed file.</p>
+          <p className="text-base text-neutral-800 mt-1 leading-relaxed">AI model drafts your 10-second part prompts to use on Meta.ai. Meta.ai generates your 10-second video or voice files and stitches them together. Download completed commercial file.</p>
         </div>
         <div className="meta-tile">
           <p className="text-base font-semibold uppercase tracking-[0.08em] text-neutral-800 mb-1">06 · Stitch files if needed</p>
