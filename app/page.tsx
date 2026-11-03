@@ -104,15 +104,9 @@ function HomeInner() {
       </div>
       ) : (
       <div className="grid sm:grid-cols-2 gap-3">
-        <div className="meta-tile">
-          <p className="text-[13px] font-semibold uppercase tracking-[0.08em] text-muted mb-1">Paste → Prompt</p>
-          <p className="font-semibold text-[17px] leading-snug">How the app works (coming soon)</p>
-          <p className="text-[14.5px] text-muted mt-1 leading-relaxed">Mock content — real explainer text goes here.</p>
-        </div>
-        <div className="meta-tile">
-          <p className="text-[13px] font-semibold uppercase tracking-[0.08em] text-muted mb-1">Generate → Share</p>
-          <p className="font-semibold text-[17px] leading-snug">How the app works (coming soon)</p>
-          <p className="text-[14.5px] text-muted mt-1 leading-relaxed">Mock content — real explainer text goes here.</p>
+        <div className="meta-tile sm:col-span-2">
+          <p className="text-[13px] font-semibold uppercase tracking-[0.08em] text-muted mb-1">Why this app works with Meta.ai</p>
+          <p className="text-[14.5px] text-muted mt-1 leading-relaxed">Meta doesn't have a text-to-video or text-to-speech generation AI model to use directly with your Meta API key. However, Meta.ai can generate high-quality voice and video files, so I wanted to bridge that gap by creating an app to work in tandem with Meta.ai. The app generates the script, screenshots (if you choose to use them), and the prompts to paste into Meta.ai. The minor inconvenience is that you have to copy and paste your app-generated prompts and images directly into Meta.ai. In addition, while Meta.ai can only generate 10-second video or voice files at a time, the good news is they can stitch your 10-second files together to give you a complete, platform-ready commercial. Even with these minor inconveniences, creating a high-quality commercial with our app and Meta.ai takes about the same amount of time as generating a video with a subscription-based text-to-video generation platform. The biggest benefit is that it costs you very little to use the app and Meta.ai to generate high-quality social media commercials.</p>
         </div>
       </div>
       )}
