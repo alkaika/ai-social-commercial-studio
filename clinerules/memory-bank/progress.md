@@ -2,6 +2,7 @@
 
 > Living note — status as of last push. `clinerules/` is intentionally committed (no secrets inside) so clones carry the why, not just the what.
 
+- HOW IT WORKS heading (2026-11-03, user request): landing tile heading → `Why this app works in tandem with Meta.ai`. Build ✅.
 - Meta ToS manual-paste notice (2026-11-03, user request): "Why manual paste instead of an integration?" light-orange box in `README.md` + landing HOW IT WORKS tile — cites Meta ToS §3 automated-means ban + Platform Terms §2.a licensed-uses-only (sources linked), notes no public Meta.ai voice/video API. Build ✅ 13 routes.
 - README user tweaks (2026-11-03, user-edited): dev URL → `http://localhost:3000`, BYOK line drops cost-estimate clause, judging line notes temporary-during-judging-period + removal at end (back to pure BYOK).
 - README rewritten from landing copy (2026-11-03, user request): `README.md` rebuilt from live HOW THE APP WORKS + WORKFLOW STEPS — all 6 step titles/descriptions, why-Meta.ai explainer, 10/20/30/60s part mapping, 3 paths, dynamic instructions + stitch fallback; added Run locally, BYOK + judging builds, Notes. Removed stale 5/15s, `?demo=1`, snippet-pins, FFmpeg-stub lines.

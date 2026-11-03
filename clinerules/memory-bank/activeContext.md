@@ -1,8 +1,9 @@
-﻿# Active Context (2026-11-03, post-push: Meta ToS manual-paste notice)
+﻿# Active Context (2026-11-03, post-push: HOW IT WORKS heading)
 
 > Living note — status as of last push. Durable architecture lives in `systemPatterns.md`; durable scope in `projectbrief.md`.
 
 ## Current Focus
+HOW IT WORKS heading (2026-11-03, user request): `app/page.tsx` tile heading → `Why this app works in tandem with Meta.ai`. Build ✅. Uncommitted at note write — next: commit + push.
 Meta ToS manual-paste notice (2026-11-03, user request): added "Why manual paste instead of an integration?" box citing Meta ToS §3 (no automated-means access without prior permission) + Platform Terms §2.a (only expressly licensed API/SDK uses, no unlicensed integration/reverse engineering) + no public Meta.ai voice/video API — in `README.md` (light-orange div under "Why this app works with Meta.ai") and `app/page.tsx` HOW IT WORKS tile (light-orange `bg-[#FFF3E0]` box with linked sources). Build ✅ 13 routes. Uncommitted at note write — next: commit + push.
 README user tweaks (2026-11-03, user-edited): dev URL → `http://localhost:3000`, BYOK line drops cost-estimate clause, judging line notes temporary-during-judging-period + removal at end (back to pure BYOK). Committed + pushed. Uncommitted at note write — next: commit + push.
 README rewritten from landing copy (2026-11-03, user request): `README.md` rebuilt from live HOW THE APP WORKS + WORKFLOW STEPS (`app/page.tsx`) — 6 steps verbatim titles, 10/20/30/60s → 1/2/3/6 parts mapping, 3 Meta.ai paths, dynamic per-part instructions note, stitch-only Download, plus Run/BYOK+judging/Notes. Removed stale 5/15s durations, demo-mode `?demo=1`, snippet-pins, and FFmpeg stub lines. Uncommitted at note write — next: commit + push.
