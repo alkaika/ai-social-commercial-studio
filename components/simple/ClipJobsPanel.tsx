@@ -1,4 +1,4 @@
-// Clip jobs panel: background ingest + auto-upload to Storyboard.
+﻿// Clip jobs panel: background ingest + auto-upload to Storyboard.
 // No Meta TTS/video endpoint exists, so this automates around meta.ai.
 // Watcher (2026-10-29): user-granted read-only watch of the Downloads folder
 // auto-attaches meta.ai clip downloads the moment they land — automation
@@ -98,7 +98,7 @@ export default function ClipJobsPanel() {
           {jobs.length > 0 && <button className="btn-secondary" onClick={clear}>Clear</button>}
         </div>
       </div>
-      <p className="text-xs text-neutral-600">Meta has no voice/video API (and bots break its ToS) - clips are made at meta.ai. One click copies the prompt + opens it; the folder watcher auto-attaches downloads. Name files like s1-voice.mp4 to auto-route.</p>
+      <p className="text-base text-neutral-800">Meta has no voice/video API (and bots break its ToS) - clips are made at meta.ai. One click copies the prompt + opens it; the folder watcher auto-attaches downloads. Name files like s1-voice.mp4 to auto-route.</p>
       <div className="flex flex-wrap items-center gap-2 text-xs">
         {watch.on ? (
           <>

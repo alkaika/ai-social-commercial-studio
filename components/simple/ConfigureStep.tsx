@@ -23,7 +23,7 @@ export default function ConfigureStep({ onDone, onBack }: { onDone: () => void; 
           {DURATIONS.map((d) => (
             <button key={d.sec} onClick={() => set({ durationSec: d.sec })}
               className={`border-2 rounded-2xl p-3 text-left ${durationSec === d.sec ? 'border-black bg-neutral-50' : 'border-neutral-200'}`}>
-              <div className="font-bold">{d.label}</div><div className="text-xs text-neutral-600">{d.desc}</div>
+              <div className="font-bold">{d.label}</div><div className="text-base text-neutral-800">{d.desc}</div>
             </button>
           ))}
         </div>
@@ -35,7 +35,7 @@ export default function ConfigureStep({ onDone, onBack }: { onDone: () => void; 
             <button key={id} onClick={() => set({ platform: id })}
               className={`border-2 rounded-2xl p-3 text-left ${platform === id ? 'border-black bg-neutral-50' : 'border-neutral-200'}`}>
               <div className="font-semibold text-sm">{PLATFORMS[id].label}</div>
-              <div className="text-xs text-neutral-600">{PLATFORMS[id].aspect} · {PLATFORMS[id].note}</div>
+              <div className="text-base text-neutral-800">{PLATFORMS[id].aspect} · {PLATFORMS[id].note}</div>
             </button>
           ))}
         </div>

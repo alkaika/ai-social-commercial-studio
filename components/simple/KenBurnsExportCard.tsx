@@ -269,7 +269,7 @@ export default function KenBurnsExportCard({ hideVoiceParts, bare }: { hideVoice
       <p className="text-base text-neutral-800">{hasStitched ? 'Meta.ai stitched the voice for you — the app only adds the Ken Burns motion over your images. Nothing uploads.' : `Your ${need} voice part(s) join in order; each image gets equal time (slow zoom). Nothing uploads.`}</p>
       <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm space-y-2">
         <p className="font-medium">✂ Meta.ai stitched your voice already? Upload the finished file — Ken Burns only</p>
-        <p className="text-xs text-neutral-600">On the LAST part, Meta.ai can join your parts into one finished file. Upload that single ~{durationSec}s voice file here (MP3 or MP4) and the app skips the join — it only builds the slow-zoom motion over your images below.</p>
+        <p className="text-base text-neutral-800">On the LAST part, Meta.ai can join your parts into one finished file. Upload that single ~{durationSec}s voice file here (MP3 or MP4) and the app skips the join — it only builds the slow-zoom motion over your images below.</p>
         <input type="file" accept="audio/*,video/mp4,video/*,.mp3,.wav,.m4a,.aac,.ogg,.mp4,.m4v,.mov,.webm" className="text-xs" onChange={(e) => { onStitchedFile(e.target.files); e.target.value = ''; }} />
         {stitchedBusy && <p className="text-base text-neutral-800">Attaching…</p>}
         {hasStitched && (
