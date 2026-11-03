@@ -38,7 +38,7 @@ Our Stitch feature is available if Meta.ai has issues stitching your files. The 
 
 ```
 npm install
-npm run dev    # http://localhost:3000/studio
+npm run dev    # http://localhost:3000
 npm run build  # production build, 13 routes
 ```
 
@@ -46,8 +46,8 @@ Default gateway is the Meta Model API (`https://api.meta.ai/v1`). No ffmpeg inst
 
 ## BYOK + judging builds
 
-- BYOK (default): one Meta key powers Spark Standard/Contributor (script), voice-captions, image, and SAM. Key is sent per-request in `x-meta-key`, never logged or stored server-side. Cost estimate shown before every AI action.
-- Judging (temporary, env-only): host sets server-only `META_API_KEY` + `NEXT_PUBLIC_JUDGING_MODE=1` — landing reads "Judging build — every AI step is live, no key needed", studio boots at Writer, all calls use the host key. Delete both vars to return to pure BYOK. See `JUDGING.md`.
+- BYOK (default): one Meta key powers Spark Standard/Contributor (script), voice-captions, image, and SAM. Key is sent per-request in `x-meta-key`, never logged or stored server-side.
+- Judging (temporary during judging period, env-only): host sets server-only `META_API_KEY` + `NEXT_PUBLIC_JUDGING_MODE=1` — landing reads "Judging build — every AI step is live, no key needed", studio boots at Writer, all calls use the host key. Judging mode along with both env vars will be removed at the end of the Judging period. The app will go back to pure BYOK. See `JUDGING.md`.
 
 ## Notes
 

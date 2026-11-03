@@ -2,6 +2,7 @@
 
 > Living note — status as of last push. `clinerules/` is intentionally committed (no secrets inside) so clones carry the why, not just the what.
 
+- README user tweaks (2026-11-03, user-edited): dev URL → `http://localhost:3000`, BYOK line drops cost-estimate clause, judging line notes temporary-during-judging-period + removal at end (back to pure BYOK).
 - README rewritten from landing copy (2026-11-03, user request): `README.md` rebuilt from live HOW THE APP WORKS + WORKFLOW STEPS — all 6 step titles/descriptions, why-Meta.ai explainer, 10/20/30/60s part mapping, 3 paths, dynamic instructions + stitch fallback; added Run locally, BYOK + judging builds, Notes. Removed stale 5/15s, `?demo=1`, snippet-pins, FFmpeg-stub lines.
 - Judging landing copy trim (2026-11-03, user request): `app/page.tsx` judging subtitle shortened to `Judging build — every AI step is live, no key needed.` Build ✅ 13 routes.
 - Dynamic Story instructions by part count (2026-11-03, user request): `Storyboard.tsx` Card 3 INSTRUCTIONS + `VoiceMp3Card.tsx` steps now render from part count — 1 part (10s) shows a single `Copy Part 1... then download the file` step (video INSTRUCTIONS #4/#5 omitted; voice stitch line hidden); 2–6 parts auto-generate one `Use the same chat as Part 1 / Part 1-2 / ...` step per part (last = `before downloading`) + stitch-first final line with `{durationSec}` instead of hardcoded `20 second`; screenshot `attach {source}` label stays dynamic (Website vs Mobile app). `tsc` + build ✅ 13 routes.
