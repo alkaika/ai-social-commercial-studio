@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import { useEffect } from 'react';
 import { DURATIONS, PLATFORMS, TONES, normalizeDurationSec, type PlatformId } from '@/config/platforms';
 import { useProject } from '@/stores/projectStore';
@@ -15,10 +15,10 @@ export default function ConfigureStep({ onDone, onBack }: { onDone: () => void; 
     <div className="card space-y-5">
       <p className="meta-eyebrow">Setup</p>
       <h2 className="font-semibold tracking-tight text-[22px] leading-tight">Choose your platform & settings</h2>
-      <p className="text-sm text-neutral-600">Your script will be written with these settings in mind — length, platform, and vibe shape the draft from the start.</p>
+      <p className="text-base text-neutral-800">Your script will be written with these settings in mind — length, platform, and vibe shape the draft from the start.</p>
       <div>
         <p className="font-medium mb-2">How long?</p>
-        <p className="text-sm text-neutral-600 mb-2">Built in 10-second batches — TikTok, Reels & Shorts use 10s or 20s.</p>
+        <p className="text-base text-neutral-800 mb-2">Built in 10-second batches — TikTok, Reels & Shorts use 10s or 20s.</p>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
           {DURATIONS.map((d) => (
             <button key={d.sec} onClick={() => set({ durationSec: d.sec })}

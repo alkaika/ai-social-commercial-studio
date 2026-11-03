@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import { useEffect, useState } from 'react';
 import { MODEL_ROWS, SPARK_MODELS, estimateScriptCost, fmtUSD, type SparkModelId } from '@/config/pricing';
 import { useProject } from '@/stores/projectStore';
@@ -41,7 +41,7 @@ export default function ModelPicker({ onDone, onBack }: { onDone: () => void; on
     <div className="card space-y-4">
       <p className="meta-eyebrow">Writer</p>
       <h2 className="font-semibold tracking-tight text-[22px] leading-tight">Choose Muse Spark 1.3 Standard or Contributor</h2>
-      <p className="text-[15px] text-muted">Your last choice is pre-selected{lastWriter ? ` (${SPARK_MODELS[lastWriter].label})` : ''}. You can change this for every new commercial.</p>
+      <p className="text-base text-neutral-800">Your last choice is pre-selected{lastWriter ? ` (${SPARK_MODELS[lastWriter].label})` : ''}. You can change this for every new commercial.</p>
       <div className="overflow-x-auto">
         <table className="w-full text-sm border border-line rounded-2xl overflow-hidden bg-white">
           <thead>
@@ -65,7 +65,7 @@ export default function ModelPicker({ onDone, onBack }: { onDone: () => void; on
       <p className="text-[15px] bg-[#f2f1ed] border border-line rounded-2xl p-4">
         Example: a typical {durationSec}-second script costs about {fmtUSD(estimateScriptCost('spark-standard', durationSec))} with Standard vs about {fmtUSD(estimateScriptCost('spark-contributor', durationSec))} with Contributor. Your key is charged by the provider directly.
       </p>
-      <p className="text-[14px] text-muted">Standard: your business content is not used for model training. Contributor: provider may use prompts &amp; completions.</p>
+      <p className="text-base text-neutral-800">Standard: your business content is not used for model training. Contributor: provider may use prompts &amp; completions.</p>
       {JUDGING && (
         <p className="text-sm bg-green-50 border border-green-200 text-green-800 rounded-xl p-3">
           Judging default: Muse Spark 1.3 Contributor — picked for you to keep judging evaluations cost effective.

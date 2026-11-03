@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import { useState, useEffect } from 'react';
 import { useKeyStore, maskedKey } from '@/stores/keyStore';
 import { vaultEnroll, vaultUnlock, vaultHas, vaultForget, prfSupported, vaultEnrollPasskey, vaultUnlockPasskey, vaultHasPasskey, vaultExport, vaultImport } from '@/lib/vault/webauthn-prf';
@@ -76,7 +76,7 @@ export default function KeySetup({ onDone, onBack }: { onDone: () => void; onBac
     <div className="card space-y-4">
       <p className="meta-eyebrow">Key</p>
       <h2 className="font-semibold tracking-tight text-[22px] leading-tight">Connect your key</h2>
-      <p className="text-muted text-[15px] leading-relaxed">Your key is like a password that lets this app use AI. It stays in this tab&apos;s memory and is sent only with your own requests. It is never stored on our server.</p>
+      <p className="text-neutral-800 text-base leading-relaxed">Your key is like a password that lets this app use AI. It stays in this tab&apos;s memory and is sent only with your own requests. It is never stored on our server.</p>
       {mounted && hasVault && <button className="btn-secondary" onClick={unlock} disabled={busy}>🔓 Unlock with Face ID / fingerprint</button>}
       {mounted && hasPasskey && <button className="btn-secondary" onClick={unlockPasskey} disabled={busy}>🔑 Unlock with passkey</button>}
       <label className="block text-sm font-medium">Meta API key</label>

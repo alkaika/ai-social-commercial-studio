@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useProject } from '@/stores/projectStore';
 import { useKeyStore } from '@/stores/keyStore';
@@ -151,7 +151,7 @@ export default function SourceHub({ onDone, onBack }: { onDone: () => void; onBa
     <div className="space-y-4">
       <div className="card space-y-3">
         <h2 className="text-xl font-bold">🏢 Tell us about your business</h2>
-        <p className="text-sm text-neutral-600">Add a website and your own photos — we draft your script from them.</p>
+        <p className="text-base text-neutral-800">Add a website and your own photos — we draft your script from them.</p>
         <label className="text-sm font-medium">Website address(es)</label>
         <div className="flex gap-2">
           <input className="input" placeholder="https://yourbusiness.com" value={urlInput} onChange={(e) => setUrlInput(e.target.value)} />
@@ -210,7 +210,7 @@ export default function SourceHub({ onDone, onBack }: { onDone: () => void; onBa
 
       <div className="card space-y-3">
         <h3 className="font-semibold">🌐 Website page screenshots ({shots.length || 'none yet'} — free)</h3>
-        <p className="text-sm text-neutral-600">Your main pages (up to 12 — home, about, services, pricing…) so meta.ai sees your real site. Tap to select, then save to your drive and attach them in meta.ai.</p>
+        <p className="text-base text-neutral-800">Your main pages (up to 12 — home, about, services, pricing…) so meta.ai sees your real site. Tap to select, then save to your drive and attach them in meta.ai.</p>
         {shots.length === 0 ? (
           <p className="text-sm text-neutral-500 border border-dashed rounded-xl p-3">No pages yet — add your website above and tap “Read my website(s)” to fill this gallery. Fewer than 10 just means a smaller site — we show whatever exists.</p>
         ) : (
@@ -248,7 +248,7 @@ export default function SourceHub({ onDone, onBack }: { onDone: () => void; onBa
 
       <div className="card space-y-3">
         <h3 className="font-semibold">💬 Guide the script — what should it focus on or leave out?</h3>
-        <p className="text-sm text-neutral-600">Tell the app in your own words. It is read before every draft — e.g. “Focus on family-owned mornings, skip pricing” or “Leave out the delivery angle, end on the BOGO offer”. Saved with your project; edit it any time and re-draft.</p>
+        <p className="text-base text-neutral-800">Tell the app in your own words. It is read before every draft — e.g. “Focus on family-owned mornings, skip pricing” or “Leave out the delivery angle, end on the BOGO offer”. Saved with your project; edit it any time and re-draft.</p>
         <textarea className="input" rows={2} value={scriptGuidance} onChange={(e) => set({ scriptGuidance: e.target.value })} placeholder='e.g. "Focus on the morning ritual and neighbors, leave out delivery…"' />
       </div>
 

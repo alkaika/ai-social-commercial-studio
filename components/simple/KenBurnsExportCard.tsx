@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import { useEffect, useRef, useState } from 'react';
 import { useProject } from '@/stores/projectStore';
 import { PLATFORMS } from '@/config/platforms';
@@ -266,7 +266,7 @@ export default function KenBurnsExportCard({ hideVoiceParts, bare }: { hideVoice
   return (
     <div className={bare ? 'space-y-3' : 'card space-y-3'}>
       <h3 className="font-semibold">Voice MP3s + Ken Burns — one final MP4</h3>
-      <p className="text-sm text-neutral-600">{hasStitched ? 'Meta.ai stitched the voice for you — the app only adds the Ken Burns motion over your images. Nothing uploads.' : `Your ${need} voice part(s) join in order; each image gets equal time (slow zoom). Nothing uploads.`}</p>
+      <p className="text-base text-neutral-800">{hasStitched ? 'Meta.ai stitched the voice for you — the app only adds the Ken Burns motion over your images. Nothing uploads.' : `Your ${need} voice part(s) join in order; each image gets equal time (slow zoom). Nothing uploads.`}</p>
       <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm space-y-2">
         <p className="font-medium">✂ Meta.ai stitched your voice already? Upload the finished file — Ken Burns only</p>
         <p className="text-xs text-neutral-600">On the LAST part, Meta.ai can join your parts into one finished file. Upload that single ~{durationSec}s voice file here (MP3 or MP4) and the app skips the join — it only builds the slow-zoom motion over your images below.</p>

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import { useMemo, useRef, useState } from 'react';
 import { useProject } from '@/stores/projectStore';
 import { PLATFORMS } from '@/config/platforms';
@@ -65,7 +65,7 @@ export default function ExportStep({ onBack }: { onBack?: () => void }) {
       {kbMode ? (<KenBurnsExportCard />) : (
       <div className="card space-y-3">
         <h3 className="font-semibold">Stitch my parts — one final file (free, in browser)</h3>
-        <p className="text-sm text-neutral-600">Meta.ai should stitch the parts for you on the last paste — download that finished file first. Only use this if Meta.ai gave you separate part files: upload the {need} Part MP4s or Part MP3s in order. Open-source FFmpeg joins them on your device — nothing uploads.</p>
+        <p className="text-base text-neutral-800">Meta.ai should stitch the parts for you on the last paste — download that finished file first. Only use this if Meta.ai gave you separate part files: upload the {need} Part MP4s or Part MP3s in order. Open-source FFmpeg joins them on your device — nothing uploads.</p>
         <input ref={inputRef} type="file" accept="video/mp4,video/*,audio/mpeg,audio/*,.mp4,.mp3,.m4a,.aac,.wav,.ogg" multiple className="hidden" onChange={(e) => { onPick(e.target.files); e.target.value = ''; }} />
         <div className="flex flex-wrap gap-2">
           <button className="btn-secondary" onClick={() => inputRef.current?.click()}>Upload Part files ({parts.length}/{need}){partKind === 'audio' ? ' · MP3' : ''}</button>

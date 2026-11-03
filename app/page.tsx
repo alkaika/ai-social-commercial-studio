@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
@@ -74,32 +74,32 @@ function HomeInner() {
         <div className="meta-tile">
           <p className="text-[13px] font-semibold uppercase tracking-[0.08em] text-muted mb-1">01 · Key</p>
           <p className="font-semibold text-[17px] leading-snug">Connect your key</p>
-          <p className="text-[14.5px] text-muted mt-1 leading-relaxed">Checked once, optionally saved with biometrics. Encrypted on your device.</p>
+          <p className="text-base text-neutral-800 mt-1 leading-relaxed">Checked once, optionally saved with biometrics. Encrypted on your device.</p>
         </div>
         <div className="meta-tile">
           <p className="text-[13px] font-semibold uppercase tracking-[0.08em] text-muted mb-1">02 · Script writer</p>
           <p className="font-semibold text-[17px] leading-snug">Choose Muse Spark 1.3 Standard or Contributor</p>
-          <p className="text-[14.5px] text-muted mt-1 leading-relaxed">Compare input/output costs and data training rights.</p>
+          <p className="text-base text-neutral-800 mt-1 leading-relaxed">Compare input/output costs and data training rights.</p>
         </div>
         <div className="meta-tile">
           <p className="text-[13px] font-semibold uppercase tracking-[0.08em] text-muted mb-1">03 · Choose Platform & Settings</p>
           <p className="font-semibold text-[17px] leading-snug">Instagram, Facebook, TikTok, X, YouTube Shorts, YouTube Video</p>
-          <p className="text-[14.5px] text-muted mt-1 leading-relaxed">Select 10s, 20s, 30s, or 60s timeframe and vibe.</p>
+          <p className="text-base text-neutral-800 mt-1 leading-relaxed">Select 10s, 20s, 30s, or 60s timeframe and vibe.</p>
         </div>
         <div className="meta-tile">
           <p className="text-[13px] font-semibold uppercase tracking-[0.08em] text-muted mb-1">04 · Add company details</p>
           <p className="font-semibold text-[17px] leading-snug">Add website</p>
-          <p className="text-[14.5px] text-muted mt-1 leading-relaxed">AI model analyzes the website, compiles screenshots, and drafts the script. User reviews, edits (if needed), and finalizes the script.</p>
+          <p className="text-base text-neutral-800 mt-1 leading-relaxed">AI model analyzes the website, compiles screenshots, and drafts the script. User reviews, edits (if needed), and finalizes the script.</p>
         </div>
         <div className="meta-tile">
           <p className="text-[13px] font-semibold uppercase tracking-[0.08em] text-muted mb-1">05 · Choose your preferences</p>
           <p className="font-semibold text-[17px] leading-snug">🧍 People + app (Meta.ai), 🎙 Voices + screenshots only (Meta.ai), 🎧 Voice MP3 (Meta.ai) + Ken Burns in app</p>
-          <p className="text-[14.5px] text-muted mt-1 leading-relaxed">AI model drafts your 10-second part prompts to use on Meta.ai. Meta.ai generates your commercial. Download completed file.</p>
+          <p className="text-base text-neutral-800 mt-1 leading-relaxed">AI model drafts your 10-second part prompts to use on Meta.ai. Meta.ai generates your commercial. Download completed file.</p>
         </div>
         <div className="meta-tile">
           <p className="text-[13px] font-semibold uppercase tracking-[0.08em] text-muted mb-1">06 · Stitch files if needed</p>
           <p className="font-semibold text-[17px] leading-snug">Use the Stitch feature as a fallback</p>
-          <p className="text-[14.5px] text-muted mt-1 leading-relaxed">Our Stitch feature is available if Meta.ai has issues stitching your files.</p>
+          <p className="text-base text-neutral-800 mt-1 leading-relaxed">Our Stitch feature is available if Meta.ai has issues stitching your files.</p>
         </div>
       </div>
       ) : (
@@ -113,7 +113,7 @@ function HomeInner() {
       {!JUDGING && (
         <div className="card">
           <h2 className="font-semibold text-[18px] tracking-tight">Why do you need an API key?</h2>
-          <p className="text-muted text-[15px] mt-2 leading-relaxed">Your key grants access to Meta's AI model to power the app's core features. It is encrypted on your device, sent only with your own requests over HTTPS, and never stored on our server.</p>
+          <p className="text-neutral-800 text-base mt-2 leading-relaxed">Your key grants access to Meta's AI model to power the app's core features. It is encrypted on your device, sent only with your own requests over HTTPS, and never stored on our server.</p>
         </div>
       )}
       </main>
