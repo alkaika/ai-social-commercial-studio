@@ -254,7 +254,7 @@ export default function SourceHub({ onDone, onBack }: { onDone: () => void; onBa
 
       <div className="card space-y-3">
         <h3 className="font-semibold">📜 Final script — written for your {durationSec}s {platform} cut</h3>
-        <p className="text-base text-neutral-800">Drafted from your website + about page with your Setup picks (length, platform, vibe) already in mind. Edit it freely — this exact wording is what the app will organize into scenes. Nothing downstream runs until you approve it.</p>
+        <p className="text-base text-neutral-800">Drafted from your website + about page with your Setup picks (length, platform, vibe) already in mind. <b>Edit it freely</b> — this exact wording is what the app will organize into scenes. Nothing downstream runs until you approve it.</p>
         <div className="flex flex-wrap gap-2 items-center">
           {drafting && (
             <span className="text-sm text-neutral-500 tabular-nums" aria-live="polite">
@@ -274,7 +274,7 @@ export default function SourceHub({ onDone, onBack }: { onDone: () => void; onBa
             <button className="underline" onClick={() => { set({ masterScript: '', masterApproved: false }); }}>Clear draft</button>
           </div>
         ) : (
-          <p className="text-sm text-neutral-500 border border-dashed rounded-xl p-3">No script yet — scan a website above, then tap “Draft my script from website”. You can also just type/paste your own script above.</p>
+          <p className="text-base text-neutral-800 border border-dashed rounded-xl p-3">Drafted from your website + about page with your Setup picks (length, platform, vibe) already in mind. <b>Edit it freely</b> — this exact wording is what the app will organize into scenes. Nothing downstream runs until you approve it.</p>
         )}
       </div>
 
