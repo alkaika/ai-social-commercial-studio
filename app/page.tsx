@@ -49,7 +49,7 @@ function HomeInner() {
         <p className="text-[16px] font-bold uppercase tracking-[0.08em] text-muted">SOCIAL MEDIA COMMERCIAL STUDIO</p>
         <h1 className="meta-greeting">Make a commercial <span>in under 5 minutes</span></h1>
         {JUDGING ? (
-          <p className="meta-sub max-w-xl mx-auto">Judging build — every AI step is live, no key needed. Pick a writer and go.</p>
+          <p className="meta-sub max-w-xl mx-auto">Judging build — every AI step is live, no key needed.</p>
         ) : (
           <p className="meta-sub max-w-xl mx-auto">No editing experience needed. No monthly subscription. Bring your own key — you pay the provider directly, only for what you generate.</p>
         )}
