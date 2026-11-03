@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { byokHeaders, callMuse } from '@/lib/muse/client';
-import { endpointModelForSpark } from '@/lib/muse/models.config';
+import { endpointModelForSpark, reasoningEffortForSpark } from '@/lib/muse/models.config';
 
 // Director's Notes -> structured EditPlan (locked/pinned/duration enforced later)
 export async function POST(req: NextRequest) {
@@ -12,6 +12,7 @@ export async function POST(req: NextRequest) {
       key, baseUrl, path: '/v1/chat/completions',
       body: {
         model: endpointModelForSpark(sparkModel || 'spark-contributor'),
+        reasoning_effort: reasoningEffortForSpark((sparkModel as 'spark-standard' | 'spark-contributor') || 'spark-contributor'),
         messages: [{ role: 'user', content: `Given scenes JSON ${JSON.stringify(script?.scenes?.map((s: any) => ({ id: s.id, heading: s.heading, voiceover: s.voiceover, locked: !!s.locked })))} and user note "${instruction}", return STRICT JSON {"summary":"...","steps":[{"action":"rewrite|new-voice|new-image|animate","sceneIds":["s1"],"detail":"..."}],"targets":["s1"]}. Never target locked scenes.` }],
       },
     });

@@ -1,5 +1,5 @@
 import { callMuse } from './client';
-import { endpointModelForSpark } from './models.config';
+import { endpointModelForSpark, reasoningEffortForSpark } from './models.config';
 import { normalizeDurationSec } from '@/config/platforms';
 import type { SparkModelId } from '@/config/pricing';
 import type { AdScript, BrandKit } from '@/lib/script-utils';
@@ -48,7 +48,7 @@ export async function generateMasterScript(opts: { key: string; baseUrl: string 
   if (!opts.key) throw new Error('Missing API key. Add your Meta key first — it is sent with this request only.');
   const data: any = await callMuse({
     key: opts.key, baseUrl: opts.baseUrl, path: '/v1/chat/completions',
-    body: { model: endpointModelForSpark(opts.sparkModel), messages: [{ role: 'user', content: buildMasterScriptPrompt(opts) }], temperature: 0.8 },
+    body: { model: endpointModelForSpark(opts.sparkModel), messages: [{ role: 'user', content: buildMasterScriptPrompt(opts) }], temperature: 0.8, reasoning_effort: reasoningEffortForSpark(opts.sparkModel) },
   });
   const text: string = data?.choices?.[0]?.message?.content ?? '';
   let draft = '';
@@ -64,7 +64,7 @@ export async function generateMasterScript(opts: { key: string; baseUrl: string 
     const retry: any = await callMuse({
       key: opts.key, baseUrl: opts.baseUrl, path: '/v1/chat/completions',
       body: {
-        model: endpointModelForSpark(opts.sparkModel), temperature: 0.6,
+        model: endpointModelForSpark(opts.sparkModel), temperature: 0.6, reasoning_effort: reasoningEffortForSpark(opts.sparkModel),
         messages: [{ role: 'user', content: `Rewrite this into a tight ~${target}-word commercial master for a ${dSec}-second slot. Keep hook, one proof beat, offer, CTA. Hit EXACTLY ${target} words. Return STRICT JSON {"masterScript":"..."}.\n\n${draft.slice(0, 1800)}` }],
       },
     });
@@ -114,7 +114,7 @@ export async function generateScript(opts: { key: string; baseUrl: string } & Sc
   if (!opts.key) throw new Error('Missing API key. Add your Meta key first — it is sent with this request only.');
   const data: any = await callMuse({
     key: opts.key, baseUrl: opts.baseUrl, path: '/v1/chat/completions',
-    body: { model: endpointModelForSpark(opts.sparkModel), messages: [{ role: 'user', content: buildScriptPrompt(opts) }], temperature: 0.8 },
+    body: { model: endpointModelForSpark(opts.sparkModel), messages: [{ role: 'user', content: buildScriptPrompt(opts) }], temperature: 0.8, reasoning_effort: reasoningEffortForSpark(opts.sparkModel) },
   });
   const text: string = data?.choices?.[0]?.message?.content ?? '';
   try {
