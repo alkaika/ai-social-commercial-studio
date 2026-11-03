@@ -274,7 +274,7 @@ export default function SourceHub({ onDone, onBack }: { onDone: () => void; onBa
             <button className="underline" onClick={() => { set({ masterScript: '', masterApproved: false }); }}>Clear draft</button>
           </div>
         ) : (
-          <p className="text-base text-neutral-800 border border-dashed rounded-xl p-3">Drafted from your website + about page with your Setup picks (length, platform, vibe) already in mind. <b>Edit it freely</b> — this exact wording is what the app will organize into scenes. Nothing downstream runs until you approve it.</p>
+          <p className="text-base text-neutral-800 border border-dashed rounded-xl p-3">No script yet — scan a website above, then tap “Draft my script from website”. You can also just type/paste your own script above.</p>
         )}
       </div>
 
