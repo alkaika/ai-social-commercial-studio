@@ -254,14 +254,14 @@ export default function SourceHub({ onDone, onBack }: { onDone: () => void; onBa
 
       <div className="card space-y-3">
         <h3 className="font-semibold">📜 Final script — written for your {durationSec}s {platform} cut</h3>
-        <p className="text-sm text-neutral-600">Drafted from your website + about page with your Setup picks (length, platform, vibe) already in mind. Edit it freely — this exact wording is what the app will organize into scenes. Nothing downstream runs until you approve it.</p>
+        <p className="text-base text-neutral-800">Drafted from your website + about page with your Setup picks (length, platform, vibe) already in mind. Edit it freely — this exact wording is what the app will organize into scenes. Nothing downstream runs until you approve it.</p>
         <div className="flex flex-wrap gap-2 items-center">
           {drafting && (
             <span className="text-sm text-neutral-500 tabular-nums" aria-live="polite">
               Please wait… {draftSecs}s
             </span>
           )}
-          <button className="btn-secondary" disabled={drafting} onClick={draftMaster}>{drafting ? 'Drafting…' : masterScript ? '🔄 Re-draft from sources' : '✨ Draft my script from website'}</button>
+          <button className="btn-secondary" disabled={drafting} onClick={draftMaster}>{drafting ? 'Drafting…' : masterScript ? `Don't like your script? 🔄 Re-draft` : '✨ Draft my script from website'}</button>
           {masterScript.trim() && !masterApproved && (
             <button className="btn-primary" onClick={() => set({ masterApproved: true })}>Approve this script →</button>
           )}
