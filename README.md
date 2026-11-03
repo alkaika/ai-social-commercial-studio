@@ -8,6 +8,12 @@ Free studio — you bring one Meta API key and pay the provider directly, only f
 
 Meta doesn't have a text-to-video or text-to-speech generation AI model to use directly with a Meta API key. However, Meta.ai can generate high-quality voice and video files, so we created an app to work in tandem with Meta.ai. The app generates the script, screenshots (you can use the app-generated images or your own images), and the prompts to paste into Meta.ai. A minor inconvenience is that you have to copy and paste your app-generated prompts and images directly into Meta.ai, and while Meta.ai can only generate 10-second video or voice files at a time, the good news is they can stitch them together afterwards to give you a complete, platform-ready commercial. Even with these minor inconveniences, creating a high-quality commercial with our app in tandem with Meta.ai takes about the same amount of time as generating a video with a subscription-based text-to-video generation platform. The biggest benefit is that it costs very little to use the app in tandem with Meta.ai to generate high-quality social media commercials.
 
+<div style="background-color:#FFF3E0; border:1px solid #F5C16C; border-radius:12px; padding:16px; margin-top:12px;">
+
+**Why manual paste instead of an integration?** Meta's Terms of Service (§3, Your commitments to Facebook and our community) prohibit accessing or collecting data from Meta Products using automated means without Meta's prior permission, or accessing data you do not have permission to access. Meta's Platform Terms (§2.a, Our License to You) allow only expressly licensed uses of its APIs, SDKs, tools, and services — no unlicensed use, integration, modification, derivative works, or reverse engineering. Meta offers no public API or SDK for Meta.ai voice/video generation, so there is no authorized way to automate it. That's why this studio generates copy-paste prompts and screenshots, and you complete each 10-second generation yourself by hand at meta.ai. ([Meta Terms §3](https://www.facebook.com/legal/terms) · [Meta Platform Terms §2.a](https://developers.facebook.com/terms/))
+
+</div>
+
 ## Workflow steps
 
 **01 · Key — Connect your key**
