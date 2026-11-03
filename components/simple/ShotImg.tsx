@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { WebsiteShot } from '@/lib/screenshots';
 import { microlinkUrl } from '@/lib/screenshots';
@@ -63,7 +63,7 @@ export default function ShotImg({ shot, alt }: { shot: WebsiteShot; alt: string 
       )}
       {failed && (
         <span className="absolute inset-0 flex flex-col items-center justify-center gap-1 bg-neutral-100 text-center p-2">
-          <span className="text-xs text-neutral-500">Preview did not load.</span>
+          <span className="text-base text-neutral-800">Preview did not load.</span>
           <button type="button" className="text-xs underline" onClick={(e) => { e.stopPropagation(); setFailed(false); setBusy(true); setStage(0); setAttempt((a) => a + 1); }}>Try again</button>
         </span>
       )}

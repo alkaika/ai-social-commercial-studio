@@ -241,7 +241,7 @@ export default function SourceHub({ onDone, onBack }: { onDone: () => void; onBa
                 );
               })}
             </div>
-            <p className="text-xs text-neutral-500">Same pages appear under each Story prompt — attach the saved files in meta.ai so every part shows your real site.</p>
+            <p className="text-base text-neutral-800">Same pages appear under each Story prompt — attach the saved files in meta.ai so every part shows your real site.</p>
           </>
         )}
       </div>
@@ -269,7 +269,7 @@ export default function SourceHub({ onDone, onBack }: { onDone: () => void; onBa
         </div>
         <textarea className="input" rows={8} value={masterScript} onChange={(e) => set({ masterScript: e.target.value, masterApproved: false })} placeholder="Or write/paste your final script here…" />
         {masterScript.trim() ? (
-          <div className="flex justify-between items-center text-xs text-neutral-500">
+          <div className="flex justify-between items-center text-base text-neutral-800">
             <span>{(() => { const f = masterFit(masterScript, durationSec); return `${f.wordCount} words · exactly ${f.targetWords} for ${durationSec}s · runs ~${f.secAtNatural}s at natural pace${f.isExact ? ' ✅ exact' : f.wordsDelta > 0 ? ` · +${f.wordsDelta} over — edit down or re-draft` : ` · ${f.wordsDelta} short — add lines or re-draft`}`; })()}</span>
             <button className="underline" onClick={() => { set({ masterScript: '', masterApproved: false }); }}>Clear draft</button>
           </div>

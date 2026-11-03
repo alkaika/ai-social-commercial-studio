@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import type { WebsiteShot } from '@/lib/screenshots';
 import ShotImg from '@/components/simple/ShotImg';
 
@@ -40,12 +40,12 @@ export default function WebsiteShots(props: {
       {open && (
         <div className="space-y-2">
           {shots.length === 0 ? (
-            <p className="text-xs text-neutral-500 border border-dashed rounded-xl p-3">
+            <p className="text-base text-neutral-800 border border-dashed rounded-xl p-3">
               No website scanned yet — go back to Business, add your site and tap Scan, then come back here to pick a shot.
             </p>
           ) : (
             <>
-              <p className="text-xs text-neutral-500">
+              <p className="text-base text-neutral-800">
                 Tap a shot to use it for this scene. Landscape, edge to edge — slow zoom, free, no key.
               </p>
               <div className="grid grid-cols-2 gap-2">

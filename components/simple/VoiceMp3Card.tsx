@@ -1,4 +1,4 @@
-// Voice-only MP3 card (Story mode 3): one Meta.ai prompt per ~10s part.
+﻿// Voice-only MP3 card (Story mode 3): one Meta.ai prompt per ~10s part.
 // Meta.ai caps voice at ~10s per file too, so each part gets its own paste
 // + MP3 (same narrator voice throughout). The N MP3s join in Export under
 // Ken Burns motion over the user's screenshots/images.
@@ -115,7 +115,7 @@ export default function VoiceMp3Card({ batches, partEdits, onPartEdit, onResetPa
             <label className="block text-sm space-y-1">
               <span className="font-medium">Script for this part — tweak words only</span>
               <textarea className="input" rows={3} value={getText(i, b.text)} onChange={(e) => onPartEdit?.(i, e.target.value)} placeholder="Edit just this part's spoken lines…" />
-              <span className="text-xs text-neutral-500">{getText(i, b.text).trim().split(/\s+/).filter(Boolean).length} words · ~{b.batchSec}s slot {(partEdits?.[i] ?? '') !== '' && <button className="underline ml-1" onClick={() => onResetPart?.(i)}>Reset to auto-split</button>}</span>
+              <span className="text-base text-neutral-800">{getText(i, b.text).trim().split(/\s+/).filter(Boolean).length} words · ~{b.batchSec}s slot {(partEdits?.[i] ?? '') !== '' && <button className="underline ml-1" onClick={() => onResetPart?.(i)}>Reset to auto-split</button>}</span>
             </label>
           )}
           <pre className="whitespace-pre-wrap text-sm bg-neutral-900 text-white rounded-xl p-4">{prompts[i]}</pre>
@@ -125,7 +125,7 @@ export default function VoiceMp3Card({ batches, partEdits, onPartEdit, onResetPa
           </div>
           <p className="text-xs font-medium">Part {b.index} MP3 {voicePartUrls?.[i] ? `— ${(voicePartNames || [])[i] || 'attached'}` : '— missing'}</p>
           <input type="file" accept="audio/*,.mp3,.wav,.m4a,.aac,.ogg,.mp4" className="text-sm" onChange={(e) => { onFile(i, e.target.files); e.target.value = ''; }} />
-          {busyIdx === i && <p className="text-xs text-neutral-500">Attaching…</p>}
+          {busyIdx === i && <p className="text-base text-neutral-800">Attaching…</p>}
           {voicePartUrls?.[i] && (<div className="space-y-1"><audio src={voicePartUrls[i]} controls className="w-full" /><button className="text-xs underline text-red-600" onClick={() => remove(i)}>Remove Part {b.index}</button></div>)}
         </div>
       ))}

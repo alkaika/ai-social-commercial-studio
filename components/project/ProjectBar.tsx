@@ -1,4 +1,4 @@
-// Project header: New / Save / Open / Delete for named library.
+﻿// Project header: New / Save / Open / Delete for named library.
 // Studio ALWAYS boots blank — this bar is the only way past work returns.
 'use client';
 import { useCallback, useEffect, useState } from 'react';
@@ -166,7 +166,7 @@ export default function ProjectBar() {
           <span className="text-lg">📁</span>
           <div className="min-w-0">
             <p className="font-semibold truncate">{proj.projectName || 'Untitled commercial (unsaved)'}</p>
-            <p className="text-xs text-neutral-500">Fresh start on every load · Save to keep · Open to resume</p>
+            <p className="text-base text-neutral-800">Fresh start on every load · Save to keep · Open to resume</p>
           </div>
         </div>
         <div className="flex flex-wrap gap-2 items-center">
@@ -195,7 +195,7 @@ export default function ProjectBar() {
             <div key={p.id} className="p-3 flex flex-wrap items-center gap-2 justify-between text-sm">
               <div className="min-w-0">
                 <p className="font-medium truncate">{p.name} {p.id === proj.projectId && <span className="badge ml-1">current</span>}</p>
-                <p className="text-xs text-neutral-500">{p.brand?.brandName || 'No brand yet'} · {new Date(p.updatedAt || p.savedAt).toLocaleString()} · {p.script ? p.script.scenes.length + ' scenes' : 'no script yet'}</p>
+                <p className="text-base text-neutral-800">{p.brand?.brandName || 'No brand yet'} · {new Date(p.updatedAt || p.savedAt).toLocaleString()} · {p.script ? p.script.scenes.length + ' scenes' : 'no script yet'}</p>
               </div>
               <div className="flex gap-2">
                 <button className="btn-secondary !py-1" disabled={busy} onClick={() => doOpen(p.id)}>Open</button>

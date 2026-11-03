@@ -271,7 +271,7 @@ export default function KenBurnsExportCard({ hideVoiceParts, bare }: { hideVoice
         <p className="font-medium">✂ Meta.ai stitched your voice already? Upload the finished file — Ken Burns only</p>
         <p className="text-xs text-neutral-600">On the LAST part, Meta.ai can join your parts into one finished file. Upload that single ~{durationSec}s voice file here (MP3 or MP4) and the app skips the join — it only builds the slow-zoom motion over your images below.</p>
         <input type="file" accept="audio/*,video/mp4,video/*,.mp3,.wav,.m4a,.aac,.ogg,.mp4,.m4v,.mov,.webm" className="text-xs" onChange={(e) => { onStitchedFile(e.target.files); e.target.value = ''; }} />
-        {stitchedBusy && <p className="text-xs text-neutral-500">Attaching…</p>}
+        {stitchedBusy && <p className="text-base text-neutral-800">Attaching…</p>}
         {hasStitched && (
           <div className="space-y-1">
             <p className="text-xs font-medium">✅ Finished voice — {stitchedFile?.name || stitchedVoiceName || 'attached'}</p>
@@ -283,12 +283,12 @@ export default function KenBurnsExportCard({ hideVoiceParts, bare }: { hideVoice
       {hideVoiceParts ? null : (
       <div className={`rounded-xl border bg-neutral-50 p-3 text-sm space-y-2 ${hasStitched ? 'opacity-50' : ''}`}>
         <p className="font-medium">Voice MP3s — one per part ({voiceDone}/{need}){hasStitched ? ' (not needed — finished file attached)' : ''}</p>
-        <p className="text-xs text-neutral-500">{hasStitched ? 'Skipped — your finished file above replaces the per-part join.' : 'Attach here or in Story card 2 (voice mode) — both stay in sync.'}</p>
+        <p className="text-base text-neutral-800">{hasStitched ? 'Skipped — your finished file above replaces the per-part join.' : 'Attach here or in Story card 2 (voice mode) — both stay in sync.'}</p>
         {Array.from({ length: need }, (_, i) => (
           <div key={i} className="border rounded-xl p-2 bg-white space-y-1">
             <p className="text-xs font-medium">Part {i + 1} MP3 {voices[i] ? `— ${voices[i]?.name}` : (voicePartNames?.[i] ? `— ${voicePartNames[i]}` : '— missing')}</p>
             <input type="file" accept="audio/*,.mp3,.wav,.m4a,.aac,.ogg,.mp4" className="text-xs" onChange={(e) => { onVoiceFile(i, e.target.files); e.target.value = ''; }} />
-            {voiceBusy === i && <p className="text-xs text-neutral-500">Attaching…</p>}
+            {voiceBusy === i && <p className="text-base text-neutral-800">Attaching…</p>}
             {(voices[i] || voicePartUrls?.[i]) && (
               <div className="space-y-1">
                 {voicePartUrls?.[i] && <audio src={voicePartUrls[i]} controls className="w-full" />}
@@ -307,7 +307,7 @@ export default function KenBurnsExportCard({ hideVoiceParts, bare }: { hideVoice
           {images.length > 0 && <button className="btn-secondary" onClick={() => { setImages([]); setOutUrl(''); setMsg('Images cleared.'); }}>Clear</button>}
         </div>
         {images.length > 0 && <ol className="list-decimal ml-5 text-xs text-neutral-700">{images.map((f, i) => <li key={i}>{f.name} <button className="underline text-red-600" onClick={() => setImages((prev) => prev.filter((_, j) => j !== i))}>remove</button></li>)}</ol>}
-        <p className="text-xs text-neutral-500">{hasStitched ? 'Save website screenshots on Story, then upload those files here. 1 image builds fine; up to 12 just adds variety (images share your finished voice evenly).' : 'Save website screenshots on Story, then upload those files here. 1 image builds fine; up to 12 just adds variety (each part cycles images).'}</p>
+        <p className="text-base text-neutral-800">{hasStitched ? 'Save website screenshots on Story, then upload those files here. 1 image builds fine; up to 12 just adds variety (images share your finished voice evenly).' : 'Save website screenshots on Story, then upload those files here. 1 image builds fine; up to 12 just adds variety (each part cycles images).'}</p>
       </div>
       <div className="flex flex-wrap items-center gap-2">
         <button className="btn-primary" disabled={busy || (!hasStitched && effectiveVoiceDone < need) || !images.length} onClick={build}>{busy ? `Building ${Math.max(0, Math.min(100, pct))}%` : failed ? 'Retry build' : hasStitched ? '🎞 Build Ken Burns MP4 (voice already stitched)' : `Build ${durationSec}s commercial`}</button>
@@ -318,8 +318,8 @@ export default function KenBurnsExportCard({ hideVoiceParts, bare }: { hideVoice
         )}
       </div>
       {busy && <div className="h-2 bg-neutral-200 rounded-full overflow-hidden"><div className="h-full bg-black transition-all" style={{ width: `${Math.max(0, Math.min(100, pct))}%` }} /></div>}
-      {busy && step && <p className="text-xs text-neutral-500">{step}</p>}
-      {outUrl && <div className="space-y-2"><video src={outUrl} controls playsInline className="w-full max-w-sm mx-auto rounded-xl border" /><p className="text-xs text-neutral-500 text-center">{finalName} {outMB}</p><div className="flex justify-center"><a className="btn-primary" href={outUrl} download={finalName}>Download final MP4</a></div></div>}
+      {busy && step && <p className="text-base text-neutral-800">{step}</p>}
+      {outUrl && <div className="space-y-2"><video src={outUrl} controls playsInline className="w-full max-w-sm mx-auto rounded-xl border" /><p className="text-base text-neutral-800 text-center">{finalName} {outMB}</p><div className="flex justify-center"><a className="btn-primary" href={outUrl} download={finalName}>Download final MP4</a></div></div>}
       {msg && <p className="text-sm bg-neutral-100 border rounded-xl p-3">{msg}</p>}
     </div>
   );
