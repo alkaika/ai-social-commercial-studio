@@ -25,23 +25,21 @@ export const GATEWAY_MODELS = {
 // - SAM 3.1: segmentation via Responses API POST /v1/responses, model sam-3-1.
 // - Text/reasoning (script, organize, revision planning): the user's CHOSEN
 //   Spark writer (standard or contributor). Wonder retired 2026-10-27.
-//   Reasoning depth: MAX where supported (user request 2026-11-03) via
+//   Reasoning depth: XHIGH for both writers (user request 2026-11-03) via
 //   top-level `reasoning_effort` on POST /v1/chat/completions.
-//   Per https://dev.meta.ai/docs/reasoning: `max` is supported by
-//   muse-spark-1.3 (Standard) but NOT by muse-spark-1.3-contributor
-//   (Contributor tops out at `xhigh`). So Standard sends `max`,
-//   Contributor sends `xhigh` (its highest) — see reasoningEffortForSpark().
+//   Per https://dev.meta.ai/docs/reasoning, `xhigh` is the documented
+//   maximum supported by BOTH muse-spark-1.3 and
+//   muse-spark-1.3-contributor — see reasoningEffortForSpark().
 //   Video motion in this app comes from user-uploaded meta.ai clips or
 //   Ken Burns.
 
 // Single source of truth for Spark reasoning depth.
 // Chat Completions = top-level `reasoning_effort`; Responses API would be `reasoning.effort`.
-export const SPARK_REASONING_EFFORT = 'max' as const;
-export const SPARK_CONTRIBUTOR_REASONING_EFFORT = 'xhigh' as const;
+export const SPARK_REASONING_EFFORT = 'xhigh' as const;
 
-/** Highest supported reasoning effort for a given Spark writer. */
-export function reasoningEffortForSpark(id: SparkModelId) {
-  return id === 'spark-contributor' ? SPARK_CONTRIBUTOR_REASONING_EFFORT : SPARK_REASONING_EFFORT;
+/** Documented-maximum reasoning effort for a given Spark writer (xhigh for both). */
+export function reasoningEffortForSpark(_id: SparkModelId) {
+  return SPARK_REASONING_EFFORT;
 }
 
 export function endpointModelForSpark(id: SparkModelId) {
