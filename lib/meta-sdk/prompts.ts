@@ -334,6 +334,7 @@ export function buildSingleStoryPrompt(input: SingleStoryPromptInput): string {
     ``,
     `Requirements:`,
     `- Total runtime: exactly ${input.durationSec} seconds in one continuous take — the voiceover must start immediately and finish inside ${input.durationSec} seconds.`,
+    `- Voice pacing: this app aims for ~35 words per 10 seconds (~3.5 words/sec natural pace). If this part has fewer than ~35 words per 10s, slow/stretch delivery slightly to fill the full ${input.durationSec}s; if more, quicken delivery slightly to fit — always landing the last word exactly at the end with no cut-off and no trailing silence.`,
     `- Screen ratio: ${input.aspect} (${input.width}x${input.height}) — fill the full frame, no black bars, no cropping of the ${input.device} screen.`,
     `- Platform: ${input.platformLabel}.`,
     `- Vibe: ${input.vibeLabel.toLowerCase()} delivery and visuals.`,
@@ -483,6 +484,7 @@ export function buildCombinedStoryPrompt(input: CombinedStoryPromptInput): strin
   lines.push(pacingLine);
   lines.push(likenessLine);
   lines.push(`- Total runtime: exactly ${durationSec} seconds in one continuous take — the voiceover starts immediately and finishes inside ${durationSec} seconds.`);
+  lines.push(`- Voice pacing: this app aims for ~35 words per 10 seconds (~3.5 words/sec natural pace). If any segment has fewer than ~35 words per 10s, slow/stretch delivery slightly to fill its full slot; if more, quicken delivery slightly to fit — always landing each segment's last word exactly at its boundary with no cut-off and no trailing silence.`);
   lines.push(`- Tight endings: end each segment (and the whole video) the instant the last word is spoken — cut immediately with no pause, no trailing silence, and no hold on the last frame, so the final stitched video flows naturally with no time gaps.`);
   if (multi) lines.push(`- Each segment is ~10 seconds max of voice + video (${batches.map((b) => `${b.batchSec}s`).join(' + ')} = ${durationSec}s); keep segment boundaries clean for seamless joining.`);
   lines.push(`- Screen ratio: ${aspect} (${width}x${height}) — fill the full frame, no black bars, no cropping of the ${device} screen.`);
@@ -538,6 +540,7 @@ export function buildBatchTestimonialPrompt(input: BatchTestimonialPromptInput):
     ...(isLast ? [stitchLine, ``] : []),
     `Requirements:`,
     `- Total runtime: exactly ${batch.batchSec} seconds — voiceover starts immediately and ends the instant the last word is spoken: cut immediately, no pause, no trailing silence, no hold on the last frame, so the stitched video flows with no gaps.`,
+    `- Voice pacing: this app aims for ~35 words per 10 seconds (~3.5 words/sec natural pace). If this part has fewer than ~35 words per 10s, slow/stretch delivery slightly to fill the full ${batch.batchSec}s; if more, quicken delivery slightly to fit — always landing the last word exactly at the end with no cut-off and no trailing silence.`,
     `- Screen ratio: ${input.aspect} (${input.width}x${input.height}) — fill the full frame, no black bars.`,
     `- Platform: ${input.platformLabel}. Vibe: ${input.vibeLabel.toLowerCase()} delivery and visuals.`,
     visualLine,
@@ -588,6 +591,7 @@ export function buildVoiceBatchPrompt(input: VoiceBatchPromptInput): string {
     ``,
     `Voice only — no video, no music, no sound effects, no background noise.`,
     `Clear studio quality, natural pacing, exact words only, in order. SAME voice as the other parts — one narrator for the whole commercial.`,
+    `Voice pacing: this app aims for ~35 words per 10 seconds (~3.5 words/sec natural pace). If this part has fewer than ~35 words per 10s, slow/stretch delivery slightly to fill the full ~${input.batchSec}s; if more, quicken delivery slightly to fit — always landing the last word exactly at the end with no cut-off and no trailing silence.`,
     `One take, no intro/outro. Exactly ~${input.batchSec} seconds — start immediately, end the instant the last word is spoken, no trailing silence so the parts join with no gaps.${stitchBit}`,
   ].join('\n');
 }
