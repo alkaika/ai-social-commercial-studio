@@ -62,7 +62,7 @@ function HomeInner() {
               JUDGING_BUILD && <button className="btn-secondary flex-1 sm:flex-none" onClick={() => switchView('judging')}>Switch to Judging build</button>
             )}
           </div>
-          <p className="text-center text-[13px] text-muted mt-3">{JUDGING ? 'Judging mode is powered by the host key. No API key needed.' : JUDGING_BUILD ? 'Add your API key on the next page' : 'Free studio · your key stays in this tab · export for every platform'}</p>
+          <p className="text-center text-base text-neutral-800 mt-3">{JUDGING ? 'Judging mode is powered by the host key. No API key needed.' : JUDGING_BUILD ? 'Add your API key on the next page' : 'Free studio · your key stays in this tab · export for every platform'}</p>
         </div>
       </div>
       <div className="flex gap-2 justify-center">
@@ -72,32 +72,32 @@ function HomeInner() {
       {infoTab === 'workflow' ? (
       <div className="grid sm:grid-cols-2 gap-3">
         <div className="meta-tile">
-          <p className="text-[13px] font-semibold uppercase tracking-[0.08em] text-muted mb-1">01 · Key</p>
+          <p className="text-base font-semibold uppercase tracking-[0.08em] text-neutral-800 mb-1">01 · Key</p>
           <p className="font-semibold text-[17px] leading-snug">Connect your key</p>
           <p className="text-base text-neutral-800 mt-1 leading-relaxed">Checked once, optionally saved with biometrics. Encrypted on your device.</p>
         </div>
         <div className="meta-tile">
-          <p className="text-[13px] font-semibold uppercase tracking-[0.08em] text-muted mb-1">02 · Script writer</p>
+          <p className="text-base font-semibold uppercase tracking-[0.08em] text-neutral-800 mb-1">02 · Script writer</p>
           <p className="font-semibold text-[17px] leading-snug">Choose Muse Spark 1.3 Standard or Contributor</p>
           <p className="text-base text-neutral-800 mt-1 leading-relaxed">Compare input/output costs and data training rights.</p>
         </div>
         <div className="meta-tile">
-          <p className="text-[13px] font-semibold uppercase tracking-[0.08em] text-muted mb-1">03 · Choose Platform & Settings</p>
+          <p className="text-base font-semibold uppercase tracking-[0.08em] text-neutral-800 mb-1">03 · Choose Platform & Settings</p>
           <p className="font-semibold text-[17px] leading-snug">Instagram, Facebook, TikTok, X, YouTube Shorts, YouTube Video</p>
           <p className="text-base text-neutral-800 mt-1 leading-relaxed">Select 10s, 20s, 30s, or 60s timeframe and vibe.</p>
         </div>
         <div className="meta-tile">
-          <p className="text-[13px] font-semibold uppercase tracking-[0.08em] text-muted mb-1">04 · Add company details</p>
+          <p className="text-base font-semibold uppercase tracking-[0.08em] text-neutral-800 mb-1">04 · Add company details</p>
           <p className="font-semibold text-[17px] leading-snug">Add website</p>
           <p className="text-base text-neutral-800 mt-1 leading-relaxed">AI model analyzes the website, compiles screenshots, and drafts the script. User reviews, edits (if needed), and finalizes the script.</p>
         </div>
         <div className="meta-tile">
-          <p className="text-[13px] font-semibold uppercase tracking-[0.08em] text-muted mb-1">05 · Choose your preferences</p>
+          <p className="text-base font-semibold uppercase tracking-[0.08em] text-neutral-800 mb-1">05 · Choose your preferences</p>
           <p className="font-semibold text-[17px] leading-snug">🧍 People + app (Meta.ai), 🎙 Voices + screenshots only (Meta.ai), 🎧 Voice MP3 (Meta.ai) + Ken Burns in app</p>
           <p className="text-base text-neutral-800 mt-1 leading-relaxed">AI model drafts your 10-second part prompts to use on Meta.ai. Meta.ai generates your commercial. Download completed file.</p>
         </div>
         <div className="meta-tile">
-          <p className="text-[13px] font-semibold uppercase tracking-[0.08em] text-muted mb-1">06 · Stitch files if needed</p>
+          <p className="text-base font-semibold uppercase tracking-[0.08em] text-neutral-800 mb-1">06 · Stitch files if needed</p>
           <p className="font-semibold text-[17px] leading-snug">Use the Stitch feature as a fallback</p>
           <p className="text-base text-neutral-800 mt-1 leading-relaxed">Our Stitch feature is available if Meta.ai has issues stitching your files.</p>
         </div>
@@ -106,7 +106,7 @@ function HomeInner() {
       <div className="grid sm:grid-cols-2 gap-3">
         <div className="meta-tile sm:col-span-2">
           <p className="text-center text-[15px] font-bold uppercase tracking-[0.08em] text-foreground mb-1">Why this app works with Meta.ai</p>
-          <p className="text-[16px] text-foreground mt-1 leading-relaxed text-justify">Meta doesn't have a text-to-video or text-to-speech generation AI model to use directly with your Meta API key. However, Meta.ai can generate high-quality voice and video files, so I wanted to bridge that gap by creating an app to work in tandem with Meta.ai. The app generates the script, screenshots (if you choose to use them), and the prompts to paste into Meta.ai. The minor inconvenience is that you have to copy and paste your app-generated prompts and images directly into Meta.ai. In addition, while Meta.ai can only generate 10-second video or voice files at a time, the good news is they can stitch your 10-second files together to give you a complete, platform-ready commercial. Even with these minor inconveniences, creating a high-quality commercial with our app and Meta.ai takes about the same amount of time as generating a video with a subscription-based text-to-video generation platform. The biggest benefit is that it costs you very little to use the app and Meta.ai to generate high-quality social media commercials.</p>
+          <p className="text-base text-neutral-800 mt-1 leading-relaxed text-justify">Meta doesn't have a text-to-video or text-to-speech generation AI model to use directly with your Meta API key. However, Meta.ai can generate high-quality voice and video files, so I wanted to bridge that gap by creating an app to work in tandem with Meta.ai. The app generates the script, screenshots (if you choose to use them), and the prompts to paste into Meta.ai. The minor inconvenience is that you have to copy and paste your app-generated prompts and images directly into Meta.ai. In addition, while Meta.ai can only generate 10-second video or voice files at a time, the good news is they can stitch your 10-second files together to give you a complete, platform-ready commercial. Even with these minor inconveniences, creating a high-quality commercial with our app and Meta.ai takes about the same amount of time as generating a video with a subscription-based text-to-video generation platform. The biggest benefit is that it costs you very little to use the app and Meta.ai to generate high-quality social media commercials.</p>
         </div>
       </div>
       )}

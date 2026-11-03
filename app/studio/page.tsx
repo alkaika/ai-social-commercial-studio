@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import { useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
 import { useProject, type Step } from '@/stores/projectStore';
@@ -97,7 +97,7 @@ function StudioInner() {
     <div className="meta-shell">
       <main className="meta-column px-5 pt-8 pb-16 space-y-6">
       {JUDGING && (
-        <p className="text-[13px] text-center bg-white border border-line text-muted rounded-full px-4 py-2">
+        <p className="text-base text-center bg-white border border-line text-neutral-800 rounded-full px-4 py-2">
           Judging mode — powered by the host key. No key needed.
         </p>
       )}
@@ -110,7 +110,7 @@ function StudioInner() {
       {step === 'script' && <Storyboard onDone={() => go('export')} onBack={goBack} />}
       {step === 'review' && <Storyboard onDone={() => go('export')} onBack={goBack} />}
       {step === 'export' && <ExportStep onBack={goBack} />}
-      <p className="text-center text-[13px] text-muted">{JUDGING ? 'Judging build — host key covers all AI usage' : 'Your key stays in this tab · Free studio — you pay the provider directly'}</p>
+      <p className="text-center text-base text-neutral-800">{JUDGING ? 'Judging build — host key covers all AI usage' : 'Your key stays in this tab · Free studio — you pay the provider directly'}</p>
       </main>
     </div>
   );
