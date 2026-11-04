@@ -11,25 +11,14 @@
 // placeholder via naturalWidth and auto-retries with a cache-buster until the
 // full-width render arrives, then falls back to thum.io / microlink.
 //
-// Every page is offered in TWO devices (2026-11-04, user request):
-// - desktop: landscape render, displayed aspect-video + object-cover
-// - mobile:  phone-browser portrait render, 390x844, displayed
-//   aspect-[390/844] — the renderers are width-driven, so responsive sites
-//   show their real mobile layout at 390px wide (no key, still free).
+// All shots are LANDSCAPE (desktop 1280x720-ish) and displayed with
+// aspect-video + object-cover so only the website fills the frame — no
+// black side bars.
 //
-// Usage: screenshotCandidates(urls, aboutSource, sitePages, device) ->
-// [{ pageUrl, imageUrl, fallbackUrl, label, device }] with 'desktop' or
-// 'mobile'; the Business + Story galleries toggle between the two (same 12
-// discovered pages each). The <ShotImg> component handles placeholder retry
-// and the portrait/landscape display aspect per shot.device.
-
-export type ShotDevice = 'desktop' | 'mobile';
-
-/** Render + display viewport per device. */
-export const SHOT_VIEWPORTS: Record<ShotDevice, { w: number; h: number }> = {
-  desktop: { w: 1080, h: 720 },
-  mobile: { w: 390, h: 844 }, // iPhone-ish portrait — natural fit for 9:16 cuts
-};
+// Usage: screenshotCandidates(urls, aboutSource) -> [{ pageUrl, imageUrl, label }]
+// The Story page lets the user tap one per scene; the chosen imageUrl becomes
+// the scene still and motionSource becomes 'screenshot' (Ken Burns zoom over
+// the shot at render time — same tier as 'kenburns').
 
 export interface WebsiteShot {
   id: string;
@@ -37,7 +26,6 @@ export interface WebsiteShot {
   imageUrl: string;
   fallbackUrl: string;
   label: string;
-  device: ShotDevice;
 }
 
 export function normalizePageUrl(raw: string): string {
@@ -52,10 +40,9 @@ export function normalizePageUrl(raw: string): string {
   }
 }
 
-/** mShots render at the requested width; optional height pins a portrait shot. */
-export function mshotsUrl(pageUrl: string, width = 1280, height?: number): string {
-  const h = height ? `&h=${height}` : '';
-  return `https://s0.wp.com/mshots/v1/${encodeURIComponent(pageUrl)}?w=${width}${h}`;
+/** Landscape desktop render (mShots returns ~4:3 at the requested width). */
+export function mshotsUrl(pageUrl: string, width = 1280): string {
+  return `https://s0.wp.com/mshots/v1/${encodeURIComponent(pageUrl)}?w=${width}`;
 }
 
 /** Landscape 16:9 crop — full-width site, no side bars. */
@@ -63,9 +50,8 @@ export function thumUrl(pageUrl: string, width = 1280, height = 720): string {
   return `https://image.thum.io/get/width/${width}/crop/${height}/noanimate/${pageUrl}`;
 }
 
-export function microlinkUrl(pageUrl: string, device: ShotDevice = 'desktop'): string {
-  const vp = SHOT_VIEWPORTS[device];
-  return `https://image.microlink.io/?url=${encodeURIComponent(pageUrl)}&viewport.width=${vp.w}&viewport.height=${vp.h}&screenshot=true&meta=false&embed=screenshot.url`;
+export function microlinkUrl(pageUrl: string): string {
+  return `https://image.microlink.io/?url=${encodeURIComponent(pageUrl)}&viewport.width=1280&viewport.height=720&screenshot=true&meta=false&embed=screenshot.url`;
 }
 
 function shortLabel(pageUrl: string): string {
@@ -85,23 +71,22 @@ function fileSafe(s: string): string {
 
 const ABOUT_PATHS = ['/about', '/about-us', '/our-story', '/story', '/pricing', '/services'];
 
-/** Download-friendly filename: brand-host + path (+ `-mobile` for phone renders). */
+/** Download-friendly filename: brand-host + path, e.g. example-com-pricing.jpg */
 export function shotFileName(shot: WebsiteShot, index: number): string {
-  const suffix = shot.device === 'mobile' ? '-mobile' : '';
   try {
     const u = new URL(shot.pageUrl);
     const host = fileSafe(u.hostname.replace(/^www\./, ''));
     const path = u.pathname.replace(/\/$/, '') || 'homepage';
-    return `${String(index + 1).padStart(2, '0')}-${host}${path === 'homepage' ? '-homepage' : `-${fileSafe(path)}`}${suffix}.jpg`;
+    return `${String(index + 1).padStart(2, '0')}-${host}${path === 'homepage' ? '-homepage' : `-${fileSafe(path)}`}.jpg`;
   } catch {
-    return `website-shot-${index + 1}${suffix}.jpg`;
+    return `website-shot-${index + 1}.jpg`;
   }
 }
 
 /** Best-effort download of a rendered screenshot (mShots -> thum.io -> open tab). */
 export async function downloadWebsiteShot(shot: WebsiteShot, index: number): Promise<'saved' | 'opened'> {
   const name = shotFileName(shot, index);
-  const tries = [shot.imageUrl, shot.fallbackUrl, microlinkUrl(shot.pageUrl, shot.device)];
+  const tries = [shot.imageUrl, shot.fallbackUrl, microlinkUrl(shot.pageUrl)];
   for (const url of tries) {
     try {
       const res = await fetch(url, { mode: 'cors' });
@@ -124,8 +109,8 @@ export async function downloadWebsiteShot(shot: WebsiteShot, index: number): Pro
   return 'opened';
 }
 
-/** Build screenshot candidates for ONE device: discovered site pages (up to 12) + homepage + about variants. */
-export function screenshotCandidates(urls: string[], aboutSource = '', sitePages: string[] = [], device: ShotDevice = 'desktop'): WebsiteShot[] {
+/** Build screenshot candidates: discovered site pages (up to 12) + homepage + about variants. */
+export function screenshotCandidates(urls: string[], aboutSource = '', sitePages: string[] = []): WebsiteShot[] {
   const pages: string[] = [];
   const push = (p: string) => {
     const n = normalizePageUrl(p);
@@ -159,15 +144,11 @@ export function screenshotCandidates(urls: string[], aboutSource = '', sitePages
       }
     } catch { /* ignore */ }
   }
-  const vp = SHOT_VIEWPORTS[device];
   return pages.slice(0, 12).map((pageUrl, i) => ({
-    id: `shot-${device}-${i}-${pageUrl}`,
+    id: `shot-${i}-${pageUrl}`,
     pageUrl,
-    device,
-    // Desktop keeps the historical width-only mShots URL (warm cache);
-    // mobile pins w+h so the render is a full phone-portrait shot.
-    imageUrl: device === 'mobile' ? mshotsUrl(pageUrl, vp.w, vp.h) : mshotsUrl(pageUrl, vp.w),
-    fallbackUrl: thumUrl(pageUrl, vp.w, vp.h),
+    imageUrl: mshotsUrl(pageUrl, 1080),
+    fallbackUrl: thumUrl(pageUrl, 1080),
     label: shortLabel(pageUrl),
   }));
 }

@@ -7,7 +7,7 @@ import { masterFit, endsWithSentence } from '@/lib/script-utils';
 import ShotImg from '@/components/simple/ShotImg';
 import VoiceMp3Card from '@/components/simple/VoiceMp3Card';
 import KenBurnsExportCard from '@/components/simple/KenBurnsExportCard';
-import { downloadWebsiteShot, screenshotCandidates, type ShotDevice } from '@/lib/screenshots';
+import { downloadWebsiteShot, screenshotCandidates } from '@/lib/screenshots';
 
 export default function Storyboard({ onDone, onBack }: { onDone: () => void; onBack?: () => void }) {
   const { set, durationSec, brand, urls, tone, platform, sparkModel, script, masterScript, storyMode, storyPartEdits, projectId } = useProject();
@@ -53,11 +53,9 @@ export default function Storyboard({ onDone, onBack }: { onDone: () => void; onB
   const [attachPopup, setAttachPopup] = useState<number | null>(null);
   const [msg, setMsg] = useState('');
   const [shotMsg, setShotMsg] = useState('');
-  // Desktop vs mobile phone-browser renders — same free 12 pages as Business.
-  const [shotDevice, setShotDevice] = useState<ShotDevice>('desktop');
   const shots = useMemo(
-    () => screenshotCandidates(urls, (brand as any)?.aboutSource || '', (brand as any)?.sitePages || [], shotDevice),
-    [urls, (brand as any)?.aboutSource, (brand as any)?.sitePages, shotDevice]
+    () => screenshotCandidates(urls, (brand as any)?.aboutSource || '', (brand as any)?.sitePages || []),
+    [urls, (brand as any)?.aboutSource, (brand as any)?.sitePages]
   );
   const pf = PLATFORMS[platform];
   const vibe = TONES.find((t) => t.id === tone)?.label || 'Friendly';
@@ -136,17 +134,13 @@ export default function Storyboard({ onDone, onBack }: { onDone: () => void; onB
         {msg && <p className="text-sm bg-neutral-100 border rounded-xl p-3 whitespace-pre-wrap">{msg}</p>}
         {shots.length > 0 && (
           <div className="space-y-2 border rounded-xl p-3 bg-neutral-50">
-            <div className="flex flex-wrap gap-2">
-              <button onClick={() => setShotDevice('desktop')} className={`border-2 rounded-full px-3 py-1 text-sm font-medium ${shotDevice === 'desktop' ? 'border-black bg-neutral-100' : 'border-neutral-200'}`}>🌐 Website page screenshots ({shots.length} — free)</button>
-              <button onClick={() => setShotDevice('mobile')} className={`border-2 rounded-full px-3 py-1 text-sm font-medium ${shotDevice === 'mobile' ? 'border-black bg-neutral-100' : 'border-neutral-200'}`}>📱 Mobile page screenshots ({shots.length} — free)</button>
-            </div>
-            <p className="font-medium text-sm">{shotDevice === 'mobile' ? `📱 Phone-browser renders (portrait 390×844) of your ${shots.length} pages` : `🌐 Your website pages (${shots.length})`} — {mode === 'voice-kenburns' ? 'save these, then upload them as images in the builder above' : 'save + attach these in meta.ai'}</p>
+            <p className="font-medium text-sm">🌐 Your website pages ({shots.length}) — {mode === 'voice-kenburns' ? 'save these, then upload them as images in the builder above' : 'save + attach these in meta.ai'}</p>
             <p className="text-base text-neutral-800">{mode === 'voice-kenburns' ? 'Same gallery as Business. Save the pages to your drive, then upload them as motion images in the builder in Card 2 above.' : 'Same gallery as Business. Save the pages to your drive, then attach them alongside each prompt paste.'}</p>
             <div className="flex flex-wrap gap-2">
               <button className="btn-secondary !py-1" onClick={async () => { setShotMsg('Saving all…'); let n = 0; for (let i = 0; i < shots.length; i++) { try { if ((await downloadWebsiteShot(shots[i], i)) === 'saved') n++; } catch {} await new Promise((r) => setTimeout(r, 400)); } setShotMsg(n ? `Saved ${n} of ${shots.length} — attach them in meta.ai.` : 'Opened in tabs — right-click → Save image.'); }}>💾 Save all {shots.length} for meta.ai</button>
             </div>
             {shotMsg && <p className="text-xs bg-white border rounded-xl p-2">{shotMsg}</p>}
-            <div className={`grid gap-2 ${shotDevice === 'mobile' ? 'grid-cols-3 sm:grid-cols-4' : 'grid-cols-2 sm:grid-cols-3'}`}>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
               {shots.map((sh, i) => (
                 <div key={sh.id} className="relative rounded-xl overflow-hidden border bg-white">
                   <ShotImg shot={sh} alt={sh.label} />

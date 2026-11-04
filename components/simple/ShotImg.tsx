@@ -8,7 +8,6 @@ import { microlinkUrl } from '@/lib/screenshots';
 // small placeholder by naturalWidth and auto-retry with a cache-buster,
 // then fall through to thum.io -> microlink.
 const PH_MAX_W = 700;
-const PH_MAX_H = 500; // mobile renders are only ~390 wide — width alone can't flag them
 const MAX_RETRY = 5;
 const DELAYS = [3000, 4000, 6000, 8000, 10000];
 
@@ -19,7 +18,7 @@ export default function ShotImg({ shot, alt }: { shot: WebsiteShot; alt: string 
   const [failed, setFailed] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const base = stage === 0 ? shot.imageUrl : stage === 1 ? shot.fallbackUrl : microlinkUrl(shot.pageUrl, shot.device);
+  const base = stage === 0 ? shot.imageUrl : stage === 1 ? shot.fallbackUrl : microlinkUrl(shot.pageUrl);
   const src = stage === 0 && attempt > 0 ? `${base}${base.includes('?') ? '&' : '?'}r=${attempt}&t=${Date.now()}` : base;
 
   const clear = () => { if (timer.current) { clearTimeout(timer.current); timer.current = null; } };
@@ -35,10 +34,7 @@ export default function ShotImg({ shot, alt }: { shot: WebsiteShot; alt: string 
 
   const onLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
     const w = e.currentTarget.naturalWidth || 0;
-    const h = e.currentTarget.naturalHeight || 0;
-    // The mShots placeholder is small in BOTH dims; a phone render is 390
-    // wide but 844 tall — only small width AND small height = still rendering.
-    if (stage === 0 && w > 0 && w < PH_MAX_W && h < PH_MAX_H) { setBusy(true); retry(); return; }
+    if (stage === 0 && w > 0 && w < PH_MAX_W) { setBusy(true); retry(); return; }
     setBusy(false);
   };
 
@@ -53,7 +49,7 @@ export default function ShotImg({ shot, alt }: { shot: WebsiteShot; alt: string 
 
   return (
     <span className="relative block w-full overflow-hidden rounded-xl bg-neutral-100">
-      <span className={`block w-full overflow-hidden ${shot.device === 'mobile' ? 'aspect-[390/844]' : 'aspect-video'}`}>
+      <span className="block w-full aspect-video overflow-hidden">
         {!failed && (
           // eslint-disable-next-line @next/next/no-img-element
           <img key={`${stage}-${attempt}`} src={src} alt={alt} loading="lazy" onLoad={onLoad} onError={onErr} className="h-full w-full object-cover object-top" />
