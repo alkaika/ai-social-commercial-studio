@@ -6,10 +6,12 @@ Free studio — you bring one Meta API key and pay the provider directly, only f
 
 ## 🎬 Demo Video
 
-[![Watch the demo — Social Media Commercial Studio | Meta Global AI Developer Hackathon](https://cdn.loom.com/sessions/thumbnails/89ed03118cd340deb9ebb60b2c9e5957-27b07a583b6bec3f.gif)](https://www.loom.com/share/89ed03118cd340deb9ebb60b2c9e5957)
+<a href="https://www.loom.com/share/89ed03118cd340deb9ebb60b2c9e5957" target="_blank" rel="noopener noreferrer">
+  <img src="https://cdn.loom.com/sessions/thumbnails/89ed03118cd340deb9ebb60b2c9e5957-27b07a583b6bec3f.gif" alt="Watch the demo — Social Media Commercial Studio | Meta Global AI Developer Hackathon" />
+</a>
 
 > ⏱️ 3-min walkthrough: judging mode vs. BYOK key, Standard vs. Contributor, platform + vibe, website → script → Meta.ai prompts → stitch.
-> 🎥 [Watch on Loom](https://www.loom.com/share/89ed03118cd340deb9ebb60b2c9e5957)
+> 🎥 <a href="https://www.loom.com/share/89ed03118cd340deb9ebb60b2c9e5957" target="_blank" rel="noopener noreferrer">Watch on Loom</a> — opens in a new tab (or Ctrl/Cmd + click the preview above).
 
 ## Why this app works in tandem with Meta.ai
 
