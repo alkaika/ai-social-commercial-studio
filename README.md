@@ -6,12 +6,12 @@ Free studio — you bring one Meta API key and pay the provider directly, only f
 
 ## 🎬 Demo Video
 
-<a href="https://www.loom.com/share/89ed03118cd340deb9ebb60b2c9e5957" target="_blank" rel="noopener noreferrer">
-  <img src="https://cdn.loom.com/sessions/thumbnails/89ed03118cd340deb9ebb60b2c9e5957-27b07a583b6bec3f.gif" alt="Watch the demo — Social Media Commercial Studio | Meta Global AI Developer Hackathon" />
+<a href="https://www.youtube.com/watch?v=o-5O0iiDdrs" target="_blank" rel="noopener noreferrer">
+  <img src="https://i.ytimg.com/vi/o-5O0iiDdrs/maxresdefault.jpg" alt="Watch the demo — Generate Social Media Videos in 10 Minutes | Demo Video for the Meta Global AI Developer Hackathon" />
 </a>
 
-> ⏱️ 3-min walkthrough: judging mode vs. BYOK key, Standard vs. Contributor, platform + vibe, website → script → Meta.ai prompts → stitch.
-> 🎥 <a href="https://www.loom.com/share/89ed03118cd340deb9ebb60b2c9e5957" target="_blank" rel="noopener noreferrer">Watch on Loom</a> — opens in a new tab (or Ctrl/Cmd + click the preview above).
+> ⏱️ Walkthrough: judging mode vs. BYOK key, Standard vs. Contributor, platform + vibe, website → script → Meta.ai prompts → stitch.
+> 🎥 <a href="https://www.youtube.com/watch?v=o-5O0iiDdrs" target="_blank" rel="noopener noreferrer">Watch on YouTube</a> — opens in a new tab (or Ctrl/Cmd + click the preview above).
 
 ## Why this app works in tandem with Meta.ai
 
