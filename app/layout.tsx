@@ -9,7 +9,10 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className="min-h-screen antialiased">{children}</body>
+      {/* suppressHydrationWarning: browser extensions (Grammarly, LastPass,
+          password managers) inject data-* attributes onto <body> before React
+          hydrates — a benign, well-known false positive, not an app bug. */}
+      <body className="min-h-screen antialiased" suppressHydrationWarning>{children}</body>
     </html>
   );
 }
