@@ -1,15 +1,13 @@
-﻿# Active Context (2026-11-04, post-push: README built-with credit)
+﻿# Active Context (2026-11-04, post-push: hero 10-min)
 
 > Living note — status as of last push. Durable architecture lives in `systemPatterns.md`; durable scope in `projectbrief.md`.
 
 ## Current Focus
+Hero 10-min (2026-11-04, user request): landing hero → `Make a commercial in under 10 minutes`. Build ✅.
 README built-with credit (2026-11-04, user-edited): Notes adds `This app was built with Muse Spark 1.3 Contributor (95%) and Muse Wonder 1.0 (5%)`, reorder + `None exists due to Meta TOS` wording. Committed + pushed.
-Landing step-03 batches copy (2026-11-03, user request): `app/page.tsx` WORKFLOW STEPS 03 tile → `Select 10s, 20s, 30s, or 60s timeframe and vibe. We build in 10-second batches to prevent syncing issues when Meta.ai stitches them together — TikTok, Reels & Shorts use 10s or 20s.` (mirrors Setup + README step 03). Build ✅. Uncommitted at note write — next: commit + push.
+Landing step-03 batches copy (2026-11-03, user request): `app/page.tsx` WORKFLOW STEPS 03 tile → `Select 10s, 20s, 30s, or 60s timeframe and vibe. We build in 10-second batches to prevent syncing issues when Meta.ai stitches them together — TikTok, Reels & Shorts use 10s or 20s.` (mirrors Setup + README step 03). Build ✅.
 
-> Living note — status as of last push. Durable architecture lives in `systemPatterns.md`; durable scope in `projectbrief.md`.
-
-## Current Focus
-Landing step-03 batches copy (2026-11-03, user request): `app/page.tsx` WORKFLOW STEPS 03 tile → `Select 10s, 20s, 30s, or 60s timeframe and vibe. We build in 10-second batches to prevent syncing issues when Meta.ai stitches them together — TikTok, Reels & Shorts use 10s or 20s.` (mirrors Setup + README step 03). Build ✅. Uncommitted at note write — next: commit + push.
+## Previous Entries (kept for continuity)
 README 10s-batches note (2026-11-03, user-edited): user added `We build in 10-second batches...` line under README step 03 (mirrors Setup orange box). Committed + pushed.
 Setup orange box + README tandem heading (2026-11-03): `ConfigureStep.tsx` batches line wrapped in light-orange box (`bg-[#FFF3E0] border-[#F5C16C]`); user retitled `README.md` section → `Why this app works in tandem with Meta.ai` (matches landing). Build ✅. Uncommitted at note write — next: commit + push.
 Setup batches copy (2026-11-03, user request): `ConfigureStep.tsx` duration helper → `We build in 10-second batches to prevent syncing issues when Meta.ai stitches them together — TikTok, Reels & Shorts use 10s or 20s.` (kept `Meta.ai` spelling; user wrote `Met.ai` typo). Build ✅.

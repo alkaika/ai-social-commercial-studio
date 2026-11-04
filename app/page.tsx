@@ -47,7 +47,7 @@ function HomeInner() {
       <main className="meta-column px-5 pt-14 pb-16 space-y-10">
       <div className="text-center space-y-4">
         <p className="text-[16px] font-bold uppercase tracking-[0.08em] text-muted">SOCIAL MEDIA COMMERCIAL STUDIO</p>
-        <h1 className="meta-greeting">Make a commercial <span>in under 5 minutes</span></h1>
+        <h1 className="meta-greeting">Make a commercial <span>in under 10 minutes</span></h1>
         {JUDGING ? (
           <p className="meta-sub max-w-xl mx-auto">Judging build — every AI step is live, no key needed.</p>
         ) : (
