@@ -59,7 +59,7 @@ Default gateway is the Meta Model API (`https://api.meta.ai/v1`). No ffmpeg inst
 
 ## Notes
 
-- Voice-only prompts: no background music, no sound effects — Meta.ai text-to-voice only.
+- This app was built with Muse Spark 1.3 Contributor (95%) and Muse Wonder 1.0 (5%)
 - Stack: Next.js 14, React 18, TypeScript, Tailwind, Zustand, Dexie, FFmpeg.wasm, WebAuthn PRF vault.
-- No meta.ai automation (none exists / ToS) — copy/paste prompts + screenshots by hand.
-
+- Voice-only prompts: no background music, no sound effects — Meta.ai text-to-voice only.
+- No meta.ai automation (None exists due to Meta TOS) — copy/paste prompts + screenshots by hand.

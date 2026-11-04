@@ -1,4 +1,10 @@
-﻿# Active Context (2026-11-03, post-push: landing step-03 batches copy)
+﻿# Active Context (2026-11-04, post-push: README built-with credit)
+
+> Living note — status as of last push. Durable architecture lives in `systemPatterns.md`; durable scope in `projectbrief.md`.
+
+## Current Focus
+README built-with credit (2026-11-04, user-edited): Notes adds `This app was built with Muse Spark 1.3 Contributor (95%) and Muse Wonder 1.0 (5%)`, reorder + `None exists due to Meta TOS` wording. Committed + pushed.
+Landing step-03 batches copy (2026-11-03, user request): `app/page.tsx` WORKFLOW STEPS 03 tile → `Select 10s, 20s, 30s, or 60s timeframe and vibe. We build in 10-second batches to prevent syncing issues when Meta.ai stitches them together — TikTok, Reels & Shorts use 10s or 20s.` (mirrors Setup + README step 03). Build ✅. Uncommitted at note write — next: commit + push.
 
 > Living note — status as of last push. Durable architecture lives in `systemPatterns.md`; durable scope in `projectbrief.md`.
 
