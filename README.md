@@ -23,6 +23,15 @@ Meta doesn't have a text-to-video or text-to-speech generation AI model to use d
 
 </div>
 
+### ✨ Example output — Meta.ai generated video
+
+<a href="https://www.youtube.com/watch?v=U1ptXKxSCEw" target="_blank" rel="noopener noreferrer">
+  <img src="https://i.ytimg.com/vi/U1ptXKxSCEw/maxresdefault.jpg" alt="Watch — VibePilot Full 30s Commercial YouTube Demo (Meta.ai generated)" />
+</a>
+
+> Made with this studio + Meta.ai: 30-second commercial stitched from 10-second Meta.ai parts.
+> 🎥 <a href="https://www.youtube.com/watch?v=U1ptXKxSCEw" target="_blank" rel="noopener noreferrer">Watch on YouTube</a> — opens in a new tab (or Ctrl/Cmd + click the preview above).
+
 ## Workflow steps
 
 **01 · Key — Connect your key**
