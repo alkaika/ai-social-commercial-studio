@@ -75,7 +75,7 @@ interface ProjectState {
 
 const defaultBrand: BrandKit = {
   brandName: '', tagline: '', description: '', colors: ['#111111', '#ffffff'],
-  cta: 'Shop now', offer: '', testimonials: [], pinned: [], avoidWords: [],
+  cta: 'Get started', offer: '', testimonials: [], pinned: [], avoidWords: [],
 };
 
 export const useProject = create<ProjectState>((set) => ({

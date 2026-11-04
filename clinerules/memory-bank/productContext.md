@@ -7,7 +7,7 @@ Small businesses need high-quality social ads without expensive subscriptions or
 - Agency cost → one-click generation from existing website.
 - Subscription fatigue → BYOK, pay-per-use, cost shown upfront.
 - Editing skill gap → Guided Simple Mode: anyone done in <5 min, zero jargon.
-- Trust → stateless proxy, passkey vault, plain-English errors with fallback paths.
+- Trust → stateless proxy, passkey vault, plain-words errors with fallback paths.
 - Platform fragmentation → one project, multi-aspect export with safe zones.
 
 ## How It Works

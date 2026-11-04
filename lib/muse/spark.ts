@@ -49,6 +49,7 @@ PART RULES (non-negotiable — count each part before returning):
 2. EVERY part ends on a COMPLETE SENTENCE. A sentence may NEVER spill into the next part — each part is a finished spoken thought that still flows into the next.
 3. One paragraph per part, separated by one blank line. No part labels, no headers, no numbers, no timestamps, no slogans list.
 4. Ground every claim in the story above — never invent dates, awards, or stats.
+LANGUAGE: never use the phrase "plain English" — write "plain words" instead (clear for every reader, whatever language they speak).
 Return STRICT JSON: {"masterScript": "part 1 text\\n\\npart 2 text\\n\\n…"} with exactly ${parts} paragraphs, blank-line separated.`;
 }
 
@@ -127,7 +128,7 @@ export async function generateMasterScript(opts: { key: string; baseUrl: string 
   // One diagnostic retry — xhigh reasons over its own miss list.
   try {
     const retry = extract(await call(
-      `Rewrite this ${dSec}-second commercial master script as EXACTLY ${parts} paragraphs (one blank line between paragraphs), for a ${opts.platform || 'video'} ad with a ${opts.tone} vibe.\nHARD RULES: every paragraph is ${MIN_WORDS_PER_PART}–${MAX_WORDS_PER_PART} words (aim for ${WORDS_PER_PART}) and ends on a complete sentence — a sentence may never spill into the next paragraph. Count every paragraph's words before answering.\nYour previous attempt failed validation:\n${diagnose(blocks)}\nFix ALL issues, keep the same brand facts and story arc, keep the hook first and the CTA last. Return STRICT JSON {"masterScript": "..."} with exactly ${parts} paragraphs, blank-line separated.\n\n${first.slice(0, 1800)}`,
+      `Rewrite this ${dSec}-second commercial master script as EXACTLY ${parts} paragraphs (one blank line between paragraphs), for a ${opts.platform || 'video'} ad with a ${opts.tone} vibe.\nHARD RULES: every paragraph is ${MIN_WORDS_PER_PART}–${MAX_WORDS_PER_PART} words (aim for ${WORDS_PER_PART}) and ends on a complete sentence — a sentence may never spill into the next paragraph. Count every paragraph's words before answering. Never use the phrase "plain English" — write "plain words" instead.\nYour previous attempt failed validation:\n${diagnose(blocks)}\nFix ALL issues, keep the same brand facts and story arc, keep the hook first and the CTA last. Return STRICT JSON {"masterScript": "..."} with exactly ${parts} paragraphs, blank-line separated.\n\n${first.slice(0, 1800)}`,
       0.6,
     ));
     if (retry) {

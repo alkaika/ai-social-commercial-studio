@@ -84,7 +84,7 @@ export default function SourceHub({ onDone, onBack }: { onDone: () => void; onBa
         const aboutSource = good.map((r: any) => r.data?.aboutSource).filter(Boolean).join(', ') || '';
         const sitePages = Array.from(new Set<string>(good.flatMap((r: any) => r.data?.sitePages || []))).slice(0, 12);
         const needsJs = good.some((r: any) => r.data?.needsJs);
-        set({ brand: { brandName: first.brandName || '', tagline: first.tagline || '', description: first.description || '', colors: first.colors || ['#111111'], logoUrl: first.logoUrl, cta: first.cta || 'Shop now', offer: '', testimonials: good.flatMap((r: any) => r.data?.testimonials || []).slice(0, 5), pinned: [], avoidWords: [], aboutStory, aboutPoints: points, aboutSource, sitePages } });
+        set({ brand: { brandName: first.brandName || '', tagline: first.tagline || '', description: first.description || '', colors: first.colors || ['#111111'], logoUrl: first.logoUrl, cta: first.cta || 'Get started', offer: '', testimonials: good.flatMap((r: any) => r.data?.testimonials || []).slice(0, 5), pinned: [], avoidWords: [], aboutStory, aboutPoints: points, aboutSource, sitePages } });
         const imgs = good.flatMap((r: any) => r.data?.heroImages || []).map((u: string, i: number) => ({ id: `web-${i}`, name: 'Website image', url: u, tag: 'Website' }));
         set({ assets: [...assets, ...imgs] });
         if (aboutStory) {

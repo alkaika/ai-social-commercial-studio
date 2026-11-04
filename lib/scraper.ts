@@ -333,7 +333,8 @@ export async function scrapeSite(rawUrl: string): Promise<ScrapeResult> {
     const abs = (s?: string, base: URL = u) => { try { return s ? new URL(s, base).toString() : undefined; } catch { return undefined; } };
     const heroImages = $('meta[property="og:image"]').map((_, e) => abs($(e).attr('content'))).get().filter(Boolean).slice(0, 6) as string[];
     $('img').each((_, e) => { if (heroImages.length < 8) { const s = abs($(e).attr('src')); if (s && !heroImages.includes(s)) heroImages.push(s); } });
-    const cta = $('a:contains("Shop"),a:contains("Buy"),a:contains("Sign up"),a:contains("Get started")').first().text().trim().slice(0, 40) || 'Shop now';
+    // Generic CTAs first (not every site is ecommerce), commerce verbs last.
+    const cta = $('a:contains("Get started"),a:contains("Sign up"),a:contains("Learn more"),a:contains("Contact"),a:contains("Book"),a:contains("Shop"),a:contains("Buy")').first().text().trim().slice(0, 40) || 'Get started';
     const testimonials: string[] = [];
     $('blockquote, [class*="testimonial"], [class*="review"]').each((_, e) => { const tx = $(e).text().trim().slice(0, 200); if (tx.length > 20 && testimonials.length < 5) testimonials.push(tx); });
     const theme = $('meta[name="theme-color"]').attr('content');
