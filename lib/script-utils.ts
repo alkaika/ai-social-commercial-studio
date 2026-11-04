@@ -58,10 +58,17 @@ export interface ScriptScene {
 export function masterFit(masterScript: string, durationSec: number) {
   const wc = countWords(masterScript || '');
   const { target, hardMax } = targetWordRange(durationSec);
+  const parts = partCountFor(durationSec);
+  const bandMin = parts * MIN_WORDS_PER_PART;
+  const bandMax = parts * MAX_WORDS_PER_PART;
   const atMax = Math.round((wc / WORDS_PER_SEC / MAX_CADENCE) * 10) / 10;
   return {
     wordCount: wc,
     targetWords: target,
+    parts,
+    targetPerPart: WORDS_PER_PART,
+    bandMin,
+    bandMax,
     targetSec: durationSec,
     wordsDelta: wc - target,
     isExact: wc === target,
@@ -69,6 +76,7 @@ export function masterFit(masterScript: string, durationSec: number) {
     secAtMax: atMax,
     fitsNatural: wc === target,
     fitsWithCadence: wc <= hardMax,
+    fitsBand: wc >= bandMin && wc <= bandMax,
   };
 }
 export interface AdScript {
@@ -140,6 +148,94 @@ export function targetWordRange(durationSec: number): { target: number; min: num
     // Fastest natural cadence ceiling — beyond this even 1.2x cannot fit.
     hardMax: Math.floor(durationSec * WORDS_PER_SEC * MAX_CADENCE),
   };
+}
+
+// --- 10-second part discipline (2026-11-04) ---
+// Every duration is a multiple of 10s, so a script is always N EQUAL 10-second
+// parts of WORDS_PER_PART (35) words each — and every part must END on a
+// complete sentence, so each Meta.ai 10-second take lands a finished thought
+// and the final stitch syncs flawlessly (no mid-sentence carry-over).
+
+/** Center word budget for one 10-second part (10s × WORDS_PER_SEC). */
+export const WORDS_PER_PART = 35;
+
+/** Accepted per-part band (user decision 2026-11-04): 33–37 words per 10s
+ *  part. Meta.ai's part prompts already stretch/quicken the speech cadence,
+ *  so a couple of words either side of 35 still land exactly 10 seconds. */
+export const MIN_WORDS_PER_PART = 33;
+export const MAX_WORDS_PER_PART = 37;
+
+/** True when a word count is inside the 33–37 per-part band. */
+export function withinPartWordBand(wordCount: number): boolean {
+  return wordCount >= MIN_WORDS_PER_PART && wordCount <= MAX_WORDS_PER_PART;
+}
+
+/** How many equal 10-second parts a duration splits into. */
+export function partCountFor(durationSec: number): number {
+  return Math.max(1, Math.round(durationSec / 10));
+}
+
+/** True when text ends with sentence-final punctuation (. ! ? possibly quoted). */
+export function endsWithSentence(text: string): boolean {
+  return /[.!?]["')\]]?\s*$/.test((text || '').trim());
+}
+
+/** Deterministic per-part fit: keep the text inside the 33–37 per-part band
+ *  while KEEPING a sentence-final ending — the stitch invariant beats word
+ *  precision (a clean sentence stop at 34 beats a hacked 35 mid-clause).
+ *  Already in band → verbatim (just ensure a sentence-final ending; Meta.ai's
+ *  cadence instructions absorb a couple of words either side of 35).
+ *  Under band → pad from the neutral EXACT_FILLER_WORDS pool up to the 35
+ *  center, tail-aligned so the padding ends on the pool's own sentence end.
+ *  Over band → snap to the sentence boundary inside the band closest to 35
+ *  (fallback: nearest boundary within ±8; word-cut + terminal period only
+ *  beyond that). */
+export function fitPartToWordTarget(text: string, target = WORDS_PER_PART): string {
+  const clean = (text || '').trim().replace(/\s+/g, ' ');
+  if (!clean) return clean;
+  const words = clean.split(' ').filter(Boolean);
+  const close = (s: string) => (endsWithSentence(s) ? s : s.replace(/[,;:-]+\s*$/, '') + '.');
+  if (withinPartWordBand(words.length)) return close(clean);
+  if (words.length < MIN_WORDS_PER_PART) {
+    const need = target - words.length; // pad up to the 35 center
+    // Tail-align the filler so the added words end on the pool's final sentence.
+    const pad =
+      need <= EXACT_FILLER_WORDS.length
+        ? EXACT_FILLER_WORDS.slice(EXACT_FILLER_WORDS.length - need)
+        : Array.from({ length: need }, (_, i) => EXACT_FILLER_WORDS[i % EXACT_FILLER_WORDS.length]);
+    return close([...words, ...pad].join(' '));
+  }
+  // Over the band: snap to the sentence boundary inside the band closest to 35.
+  const sentences = clean.match(/[^.!?]+[.!?]+["')\]]?/g)?.map((s) => s.trim()).filter(Boolean) || [];
+  if (sentences.length > 1) {
+    let inBand: { text: string; wc: number } | null = null;
+    let under: { text: string; wc: number } | null = null;
+    let over: { text: string; wc: number } | null = null;
+    let wc = 0;
+    const acc: string[] = [];
+    for (const s of sentences) {
+      acc.push(s);
+      wc += s.split(' ').filter(Boolean).length;
+      const cand = { text: acc.join(' '), wc };
+      if (withinPartWordBand(wc)) {
+        if (!inBand || Math.abs(wc - target) < Math.abs(inBand.wc - target)) inBand = cand;
+      } else if (wc < MIN_WORDS_PER_PART) {
+        under = cand; // last boundary below the band
+      } else {
+        over = cand; // first boundary above the band
+        break;
+      }
+    }
+    if (inBand) return inBand.text;
+    // No in-band boundary — take the nearest boundary within ±8 of 35.
+    const canUnder = !!under && under.wc >= target - 8;
+    const canOver = !!over && over.wc <= target + 8;
+    const pick = canUnder && canOver
+      ? (target - under!.wc <= over!.wc - target ? under! : over!)
+      : canUnder ? under! : canOver ? over! : null;
+    if (pick) return pick.text;
+  }
+  return close(words.slice(0, target).join(' '));
 }
 
 /** Guarantee a draft hits the EXACT word target: over → trimWords

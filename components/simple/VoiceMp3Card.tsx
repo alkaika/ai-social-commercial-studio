@@ -6,6 +6,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { META_AI_URL, STORY_VOICES, buildVoiceBatchPrompt, copyText } from '@/lib/meta-sdk/prompts';
 import type { StoryBatch } from '@/lib/meta-sdk/prompts';
+import { endsWithSentence } from '@/lib/script-utils';
 import { useProject } from '@/stores/projectStore';
 
 const voiceKey = (pid: string, i: number) => `${pid}:voice-part-${i + 1}`;
@@ -110,7 +111,7 @@ export default function VoiceMp3Card({ batches, partEdits, onPartEdit, onResetPa
       </label>
       {parts.map((b, i) => (
         <div key={b.index} className="space-y-2 border rounded-xl p-3 bg-white">
-          <p className="font-medium text-sm">Part {b.index} of {total} · ~{b.batchSec}s · {b.wordCount} words {(partEdits?.[i] ?? '') !== '' ? '· edited ✏️' : ''}</p>
+          <p className="font-medium text-sm">Part {b.index} of {total} · ~{b.batchSec}s · {b.wordCount} words · {endsWithSentence(getText(i, b.text)) ? 'complete sentence ✅' : 'add a closing sentence'} {(partEdits?.[i] ?? '') !== '' ? '· edited ✏️' : ''}</p>
           {!readOnly && (
             <label className="block text-sm space-y-1">
               <span className="font-medium">Script for this part — tweak words only</span>

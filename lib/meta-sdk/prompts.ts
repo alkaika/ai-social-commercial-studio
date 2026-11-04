@@ -4,7 +4,7 @@
 // copy-paste prompts that yield consistent voice + on-brand visuals.
 
 import type { ScriptScene } from '@/lib/script-utils';
-import { WORDS_PER_SEC } from '@/lib/script-utils';
+import { WORDS_PER_SEC, WORDS_PER_PART, MIN_WORDS_PER_PART, MAX_WORDS_PER_PART, countWords, endsWithSentence, withinPartWordBand } from '@/lib/script-utils';
 import type { ClipKind } from './types';
 
 export const META_AI_URL = 'https://www.meta.ai/';
@@ -139,139 +139,86 @@ export function checkBatchBalance(batches: StoryBatch[], durationSec: number): B
   }
   const empty = batches.filter((b) => !b.text.trim());
   for (const b of empty) warnings.push(`Segment ${b.index} is empty — the split ran before the script was finished. Re-check after editing.`);
-  const needsRebalance = maxDriftWords > 6 || overflow.length > 0 || empty.length > 0;
+  // Stitch invariant (2026-11-04): every part must end on a complete sentence.
+  const midSentence = batches.filter((b) => b.text.trim() && !endsWithSentence(b.text));
+  for (const b of midSentence) warnings.push(`Part ${b.index} doesn't end on a complete sentence — Meta.ai's stitch would cut mid-thought. Move a sentence in/out or add a closing line so it ends on a full stop.`);
+  // Word band (2026-11-04): 33–37 words per 10s part (35 ideal) — Meta.ai's
+  // cadence instructions absorb a couple of words either side of 35, but
+  // outside the band the 10-second take starts drifting.
+  const offBand = batches.filter(
+    (b) => b.text.trim() && !withinPartWordBand(b.wordCount) && !overflow.some((o) => o.b.index === b.index)
+  );
+  for (const b of offBand) warnings.push(`Part ${b.index} is ${b.wordCount} words — keep each 10-second part between ${MIN_WORDS_PER_PART} and ${MAX_WORDS_PER_PART} words (35 ideal) so Meta.ai's cadence adjustment can still land exactly 10 seconds.`);
+  const needsRebalance = maxDriftWords > 6 || overflow.length > 0 || empty.length > 0 || midSentence.length > 0 || offBand.length > 0;
   if (maxDriftWords > 6 && !overflow.length) {
     warnings.push(`Word spread is uneven for the segment lengths (biggest gap ~${maxDriftWords} words off its proportional share). Rebalance evens the segments.`);
   }
   return { even: !needsRebalance && warnings.length === 0, maxDriftWords, maxDriftSec, needsRebalance, warnings };
 }
 
-/** Even out word counts after an edit (proportional to each segment's seconds, keeps order).
- * Sentence-aware first (never cuts mid-sentence when a clean split is close),
- * word-level fallback guarantees evenness when sentences are huge/lopsided. */
-export function rebalanceBatches(batches: StoryBatch[]): StoryBatch[] {
-  if (batches.length < 2) return batches;
-  const full = batches.map((b) => b.text).join(' ').trim().replace(/\s+/g, ' ');
-  if (!full) return batches;
-  const words = full.split(' ').filter(Boolean);
-  if (!words.length) return batches;
-  const totalSecs = batches.reduce((a, b) => a + b.batchSec, 0) || batches.length;
-  // Proportional split: a 5s tail gets ~half the words of a 10s head.
-  const targets = batches.map((b) => Math.round((words.length * b.batchSec) / totalSecs));
-  targets[targets.length - 1] += words.length - targets.reduce((a, n) => a + n, 0);
-  // Word-level proportional split (always exact).
-  const wordSplit = (): StoryBatch[] => {
-    const out: StoryBatch[] = [];
-    let pos = 0;
-    batches.forEach((b, i) => {
-      const n = i === batches.length - 1 ? words.length - pos : targets[i];
-      const slice = words.slice(pos, pos + n).join(' ');
-      pos += n;
-      out.push({ ...b, text: slice, wordCount: slice.split(' ').filter(Boolean).length });
-    });
-    return out;
-  };
-  // 1) Try sentence-aware split — keeps "Say exactly" lines natural.
-  const sentences = full.match(/[^.!?]+[.!?]+["']?/g)?.map((s) => s.trim()).filter(Boolean) || [];
-  if (sentences.length >= batches.length) {
-    const sentOut: StoryBatch[] = [];
-    let si = 0;
-    for (let i = 0; i < batches.length; i++) {
-      const target = targets[i];
-      const remaining = batches.length - i;
-      if (i === batches.length - 1) {
-        const text = sentences.slice(si).join(' ');
-        sentOut.push({ ...batches[i], text, wordCount: text.split(' ').filter(Boolean).length });
-        break;
-      }
-      const acc: string[] = [];
-      let wc = 0;
-      // Must leave >=1 sentence for each remaining batch.
-      while (si < sentences.length && (sentences.length - si) > (remaining - 1)) {
-        const sw = sentences[si].split(' ').filter(Boolean).length;
-        if (acc.length > 0) {
-          // Stop if we're at/over target and adding more drifts further.
-          const without = Math.abs(wc - target);
-          const withNext = Math.abs(wc + sw - target);
-          if (wc >= target && without <= withNext) break;
-          // Stop if adding this sentence overshoots by >4 while we're close.
-          if (wc >= target - 2 && withNext > 4 && without < withNext) break;
-        }
-        acc.push(sentences[si]); wc += sw; si++;
-        if (wc >= target) break;
-      }
-      // Guarantee progress: every non-last batch takes >=1 sentence.
-      if (!acc.length && si < sentences.length) { acc.push(sentences[si]); si++; }
-      const text = acc.join(' ');
-      sentOut.push({ ...batches[i], text, wordCount: text.split(' ').filter(Boolean).length });
-    }
-    if (sentOut.length === batches.length) {
-      const maxDrift = Math.max(...sentOut.map((b, i) => Math.abs(b.wordCount - targets[i])));
-      const hasEmpty = sentOut.some((b) => !b.text.trim());
-      if (!hasEmpty && maxDrift <= 6) return sentOut;
-    }
-  }
-  // 2) Word-level fallback — guaranteed proportional, may cut mid-sentence.
-  return wordSplit();
-}
-
-/** Auto-balanced split: sentence-aware split + automatic rebalance when the
- * sentence pass drifts >6 words off proportional share. Story UI calls this
- * so the user never taps a Rebalance button. */
+/** Auto-balanced split for EQUAL 10-second parts (2026-11-04): every part
+ *  targets the 33–37 word band (35 ideal) and MUST end on a complete
+ *  sentence, so each Meta.ai take lands a finished thought and the final
+ *  stitch syncs flawlessly (the part prompts stretch/quicken the speech
+ *  cadence to land exactly 10 seconds). Story UI calls this on every
+ *  keystroke — no manual button.
+ *  1) Paragraph fast path — masters drafted part-by-part arrive as blank-line
+ *     blocks (one per 10s part); honor them verbatim when every block is
+ *     already inside the 33–37 band and sentence-final.
+ *  2) Sentence-aware fill — assign WHOLE sentences to land each part as close
+ *     to 35 words as possible while reserving >=1 sentence per remaining part
+ *     (every part ends on a sentence by construction).
+ *  3) Word-level proportional fallback ONLY when there are fewer sentences
+ *     than parts (heavily edited single-block text). */
 export function splitScriptIntoBalancedBatches(scriptText: string, durationSec: number, maxBatchSec = MAX_BATCH_SEC): StoryBatch[] {
-  const auto = splitScriptIntoBatches(scriptText, durationSec, maxBatchSec);
-  if (auto.length < 2) return auto;
-  const totalWords = auto.flatMap((b) => b.text.split(' ').filter(Boolean)).length;
-  const totalSecs = auto.reduce((a, b) => a + b.batchSec, 0) || durationSec;
-  const expectedFor = (batchSec: number) => Math.round((totalWords * batchSec) / totalSecs);
-  let maxDrift = 0;
-  for (const b of auto) maxDrift = Math.max(maxDrift, Math.abs(b.wordCount - expectedFor(b.batchSec)));
-  const hasEmpty = auto.some((b) => !b.text.trim());
-  if (maxDrift > 6 || hasEmpty) return rebalanceBatches(auto);
-  return auto;
-}
-
-export function splitScriptIntoBatches(scriptText: string, durationSec: number, maxBatchSec = MAX_BATCH_SEC): StoryBatch[] {
-  const clean = (scriptText || '').trim().replace(/\s+/g, ' ');
+  const clean = (scriptText || '').replace(/\r/g, '').trim();
   if (!clean) return [];
   const total = Math.max(1, Math.ceil(durationSec / maxBatchSec));
-  const words = clean.split(' ').filter(Boolean);
-  if (total === 1) return [{ index: 1, total, batchSec: durationSec, text: clean, wordCount: words.length }];
-  const secs: number[] = [];
-  let rem = durationSec;
-  for (let i = 0; i < total; i++) {
-    const s = i < total - 1 ? maxBatchSec : rem;
-    secs.push(s); rem -= s;
+  const batchSec = Math.max(1, Math.round(durationSec / total));
+  const mk = (i: number, text: string): StoryBatch => {
+    const t = (text || '').trim().replace(/\s+/g, ' ');
+    return { index: i + 1, total, batchSec, text: t, wordCount: t.split(' ').filter(Boolean).length };
+  };
+  if (total === 1) return [mk(0, clean.replace(/\s+/g, ' '))];
+  // 1) Paragraph fast path — respect Spark-authored part blocks when valid.
+  const blocks = clean.split(/\n{2,}/).map((b) => b.trim()).filter(Boolean);
+  if (
+    blocks.length === total &&
+    blocks.every((b) => endsWithSentence(b) && withinPartWordBand(countWords(b)))
+  ) {
+    return blocks.map((b, i) => mk(i, b));
   }
-  const targets = secs.map((s) => Math.round((s / durationSec) * words.length));
-  targets[targets.length - 1] += words.length - targets.reduce((a, b) => a + b, 0);
-  const sentences = clean.match(/[^.!?]+[.!?]+["']?/g)?.map((s) => s.trim()).filter(Boolean) || [];
+  // 2) Sentence-aware fill toward 35 words per part.
+  const flat = clean.replace(/\s+/g, ' ').trim();
+  const words = flat.split(' ').filter(Boolean);
+  const sentences = flat.match(/[^.!?]+[.!?]+["')\]]?/g)?.map((s) => s.trim()).filter(Boolean) || [];
   if (sentences.length >= total) {
     const out: StoryBatch[] = [];
     let si = 0;
-    for (let b = 0; b < total; b++) {
-      const target = targets[b];
+    for (let p = 0; p < total; p++) {
+      if (p === total - 1) { out.push(mk(p, sentences.slice(si).join(' '))); break; }
       const acc: string[] = [];
       let wc = 0;
-      while (si < sentences.length && (acc.length === 0 || wc < target)) {
+      // Take whole sentences while they bring us closer to 35 words — but
+      // always leave >=1 sentence for every remaining part.
+      while (si < sentences.length && (sentences.length - si) > (total - p - 1)) {
         const sw = sentences[si].split(' ').filter(Boolean).length;
-        if (acc.length > 0 && wc + sw > target + 4 && b < total - 1) break;
+        if (acc.length > 0 && Math.abs(wc - WORDS_PER_PART) <= Math.abs(wc + sw - WORDS_PER_PART)) break;
         acc.push(sentences[si]); wc += sw; si++;
-        if (wc >= target) break;
       }
-      if (b === total - 1) { while (si < sentences.length) acc.push(sentences[si++]); }
-      const text = acc.join(' ');
-      out.push({ index: b + 1, total, batchSec: secs[b], text, wordCount: text.split(' ').filter(Boolean).length });
+      if (!acc.length && si < sentences.length) { acc.push(sentences[si]); si++; }
+      out.push(mk(p, acc.join(' ')));
     }
     return out;
   }
+  // 3) Fewer sentences than parts — proportional word split, order preserved.
   const out: StoryBatch[] = [];
+  const per = Math.max(1, Math.round(words.length / total));
   let pos = 0;
-  for (let b = 0; b < total; b++) {
-    const n = b === total - 1 ? words.length - pos : targets[b];
-    const slice = words.slice(pos, pos + n).join(' ');
+  for (let p = 0; p < total; p++) {
+    const n = p === total - 1 ? words.length - pos : per;
+    out.push(mk(p, words.slice(pos, pos + n).join(' ')));
     pos += n;
-    out.push({ index: b + 1, total, batchSec: secs[b], text: slice, wordCount: slice.split(' ').filter(Boolean).length });
   }
   return out;
 }
@@ -519,6 +466,7 @@ export function buildBatchTestimonialPrompt(input: BatchTestimonialPromptInput):
     `Requirements:`,
     `- Total runtime: exactly ${batch.batchSec} seconds — voiceover starts immediately and ends the instant the last word is spoken: cut immediately, no pause, no trailing silence, no hold on the last frame, so the stitched video flows with no gaps.`,
     `- Voice pacing: this app aims for ~35 words per 10 seconds (~3.5 words/sec natural pace). If this part has fewer than ~35 words per 10s, slow/stretch delivery slightly to fill the full ${batch.batchSec}s; if more, quicken delivery slightly to fit — always landing the last word exactly at the end with no cut-off and no trailing silence.`,
+    `- Script integrity: this part ends on a complete sentence — deliver the final words with a natural sentence-final cadence (a clean conversational stop, not a hanging clause) so the stitched parts flow as one narration.`,
     `- Screen ratio: ${input.aspect} (${input.width}x${input.height}) — fill the full frame, no black bars.`,
     `- Platform: ${input.platformLabel}. Vibe: ${input.vibeLabel.toLowerCase()} delivery and visuals.`,
     visualLine,
@@ -570,6 +518,7 @@ export function buildVoiceBatchPrompt(input: VoiceBatchPromptInput): string {
     `Voice only — no video, no music, no sound effects, no background noise.`,
     `Clear studio quality, natural pacing, exact words only, in order. SAME voice as the other parts — one narrator for the whole commercial.`,
     `Voice pacing: this app aims for ~35 words per 10 seconds (~3.5 words/sec natural pace). If this part has fewer than ~35 words per 10s, slow/stretch delivery slightly to fill the full ~${input.batchSec}s; if more, quicken delivery slightly to fit — always landing the last word exactly at the end with no cut-off and no trailing silence.`,
+    `This part ends on a complete sentence — land the final words with a natural sentence-final cadence: a clean stop, not a hanging clause, so the joined MP3 flows as one narration.`,
     `One take, no intro/outro. Exactly ~${input.batchSec} seconds — start immediately, end the instant the last word is spoken, no trailing silence so the parts join with no gaps.${stitchBit}`,
   ].join('\n');
 }

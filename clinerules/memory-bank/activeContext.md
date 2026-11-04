@@ -1,10 +1,10 @@
-﻿# Active Context (2026-11-04, post-push: hero 10-min)
+﻿# Active Context (2026-11-04, equal 35-word parts)
 
 > Living note — status as of last push. Durable architecture lives in `systemPatterns.md`; durable scope in `projectbrief.md`.
 
 ## Current Focus
+Equal 35-word sentence-complete 10s parts (2026-11-04, user request): scripts are drafted AND split into N equal 10-second parts of 33–37 WORDS EACH (aim 35 — user widened to the band after launch; Meta.ai's per-part prompts stretch/quicken the speech cadence to land exactly 10s), each ending on a complete sentence, so the Meta.ai parts stitch flawlessly and users rarely edit part text. Spark xhigh authors the master part-by-part (N blank-line paragraphs, self-count per part) → validation (`withinPartWordBand`) → ONE diagnostic retry → `fitPartToWordTarget` band-aware backstop (in-band text kept verbatim; over-band snaps to nearest in-band sentence boundary). Story splitter = paragraph fast-path (in-band + sentence-final) → sentence-greedy fill → word fallback; both Meta.ai prompt builders add a sentence-final cadence line; Business shows "N parts × 35 words" + "✅ in 66–74 band" (`masterFit.fitsBand`); Story/VoiceMp3 headers show "complete sentence ✅"; `checkBatchBalance` warns on out-of-band counts + mid-sentence endings. `tsc` ✅, build ✅ 13 routes, node logic tests ✅ (12/12 band + 13/13 split). Committed + pushed.
 README hero + hackathon (2026-11-04, user-edited): README header → `in under 10 minutes` (matches landing hero); Notes adds `built during the 2026 Meta Global AI Developer Hackathon`. Committed + pushed.
-Hero 10-min (2026-11-04, user request): landing hero → `Make a commercial in under 10 minutes`. Build ✅.
 README built-with credit (2026-11-04, user-edited): Notes adds `This app was built with Muse Spark 1.3 Contributor (95%) and Muse Wonder 1.0 (5%)`, reorder + `None exists due to Meta TOS` wording. Committed + pushed.
 Landing step-03 batches copy (2026-11-03, user request): `app/page.tsx` WORKFLOW STEPS 03 tile → `Select 10s, 20s, 30s, or 60s timeframe and vibe. We build in 10-second batches to prevent syncing issues when Meta.ai stitches them together — TikTok, Reels & Shorts use 10s or 20s.` (mirrors Setup + README step 03). Build ✅.
 

@@ -254,7 +254,7 @@ export default function SourceHub({ onDone, onBack }: { onDone: () => void; onBa
 
       <div className="card space-y-3">
         <h3 className="font-semibold">📜 Final script — written for your {durationSec}s {platform} cut</h3>
-        <p className="text-base text-neutral-800">Drafted from your website + about page with your Setup picks (length, platform, vibe) already in mind. <b>Edit it freely</b> — this exact wording is what the app will organize into scenes. Nothing downstream runs until you approve it.</p>
+        <p className="text-base text-neutral-800">Drafted from your website + about page with your Setup picks (length, platform, vibe) already in mind — in equal 10-second parts of 33–37 words (35 ideal), each ending on a complete sentence so the Meta.ai parts stitch flawlessly. <b>Edit it freely</b> (keep one blank-line paragraph per part); this exact wording is what the app will send to Meta.ai. Nothing downstream runs until you approve it.</p>
         <div className="flex flex-wrap gap-2 items-center">
           {drafting && (
             <span className="text-sm text-neutral-500 tabular-nums" aria-live="polite">
@@ -270,7 +270,7 @@ export default function SourceHub({ onDone, onBack }: { onDone: () => void; onBa
         <textarea className="input" rows={8} value={masterScript} onChange={(e) => set({ masterScript: e.target.value, masterApproved: false })} placeholder="Or write/paste your final script here…" />
         {masterScript.trim() ? (
           <div className="flex justify-between items-center text-base text-neutral-800">
-            <span>{(() => { const f = masterFit(masterScript, durationSec); return `${f.wordCount} words · exactly ${f.targetWords} for ${durationSec}s · runs ~${f.secAtNatural}s at natural pace${f.isExact ? ' ✅ exact' : f.wordsDelta > 0 ? ` · +${f.wordsDelta} over — edit down or re-draft` : ` · ${f.wordsDelta} short — add lines or re-draft`}`; })()}</span>
+            <span>{(() => { const f = masterFit(masterScript, durationSec); return `${f.wordCount} words · ${f.parts} ${f.parts === 1 ? 'part' : 'parts'} × ${f.targetPerPart} words for ${durationSec}s · runs ~${f.secAtNatural}s at natural pace${f.isExact ? ' ✅ exact' : f.fitsBand ? ` · ✅ in ${f.bandMin}–${f.bandMax} band` : f.wordsDelta > 0 ? ` · +${f.wordsDelta} over — edit down or re-draft` : ` · ${f.wordsDelta} short — add lines or re-draft`}`; })()}</span>
             <button className="underline" onClick={() => { set({ masterScript: '', masterApproved: false }); }}>Clear draft</button>
           </div>
         ) : (
