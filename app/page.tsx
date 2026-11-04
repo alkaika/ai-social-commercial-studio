@@ -84,7 +84,7 @@ function HomeInner() {
         <div className="meta-tile">
           <p className="text-base font-semibold uppercase tracking-[0.08em] text-neutral-800 mb-1">03 · Choose Platform & Settings</p>
           <p className="font-semibold text-[17px] leading-snug">Instagram, Facebook, TikTok, X, YouTube Shorts, YouTube Video</p>
-          <p className="text-base text-neutral-800 mt-1 leading-relaxed">Select 10s, 20s, 30s, or 60s timeframe and vibe.</p>
+          <p className="text-base text-neutral-800 mt-1 leading-relaxed">Select 10s, 20s, 30s, or 60s timeframe and vibe. We build in 10-second batches to prevent syncing issues when Meta.ai stitches them together — TikTok, Reels & Shorts use 10s or 20s.</p>
         </div>
         <div className="meta-tile">
           <p className="text-base font-semibold uppercase tracking-[0.08em] text-neutral-800 mb-1">04 · Add company details</p>
