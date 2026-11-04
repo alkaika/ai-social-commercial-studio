@@ -1,9 +1,10 @@
-﻿# Active Context (2026-11-03, post-push: Setup batches copy)
+﻿# Active Context (2026-11-03, post-push: Setup orange box + README tandem heading)
 
 > Living note — status as of last push. Durable architecture lives in `systemPatterns.md`; durable scope in `projectbrief.md`.
 
 ## Current Focus
-Setup batches copy (2026-11-03, user request): `ConfigureStep.tsx` duration helper → `We build in 10-second batches to prevent syncing issues when Meta.ai stitches them together — TikTok, Reels & Shorts use 10s or 20s.` (kept `Meta.ai` spelling; user wrote `Met.ai` typo). Build ✅. Uncommitted at note write — next: commit + push.
+Setup orange box + README tandem heading (2026-11-03): `ConfigureStep.tsx` batches line wrapped in light-orange box (`bg-[#FFF3E0] border-[#F5C16C]`); user retitled `README.md` section → `Why this app works in tandem with Meta.ai` (matches landing). Build ✅. Uncommitted at note write — next: commit + push.
+Setup batches copy (2026-11-03, user request): `ConfigureStep.tsx` duration helper → `We build in 10-second batches to prevent syncing issues when Meta.ai stitches them together — TikTok, Reels & Shorts use 10s or 20s.` (kept `Meta.ai` spelling; user wrote `Met.ai` typo). Build ✅.
 HOW IT WORKS heading (2026-11-03, user request): `app/page.tsx` tile heading → `Why this app works in tandem with Meta.ai`. Build ✅. Uncommitted at note write — next: commit + push.
 Meta ToS manual-paste notice (2026-11-03, user request): added "Why manual paste instead of an integration?" box citing Meta ToS §3 (no automated-means access without prior permission) + Platform Terms §2.a (only expressly licensed API/SDK uses, no unlicensed integration/reverse engineering) + no public Meta.ai voice/video API — in `README.md` (light-orange div under "Why this app works with Meta.ai") and `app/page.tsx` HOW IT WORKS tile (light-orange `bg-[#FFF3E0]` box with linked sources). Build ✅ 13 routes. Uncommitted at note write — next: commit + push.
 README user tweaks (2026-11-03, user-edited): dev URL → `http://localhost:3000`, BYOK line drops cost-estimate clause, judging line notes temporary-during-judging-period + removal at end (back to pure BYOK). Committed + pushed. Uncommitted at note write — next: commit + push.

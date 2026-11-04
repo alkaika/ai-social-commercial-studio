@@ -18,7 +18,9 @@ export default function ConfigureStep({ onDone, onBack }: { onDone: () => void; 
       <p className="text-base text-neutral-800">Your script will be written with these settings in mind — length, platform, and vibe shape the draft from the start.</p>
       <div>
         <p className="font-medium mb-2">How long?</p>
-        <p className="text-base text-neutral-800 mb-2">We build in 10-second batches to prevent syncing issues when Meta.ai stitches them together — TikTok, Reels & Shorts use 10s or 20s.</p>
+        <div className="rounded-xl border border-[#F5C16C] bg-[#FFF3E0] p-4 mb-2">
+          <p className="text-base text-neutral-900 leading-relaxed">We build in 10-second batches to prevent syncing issues when Meta.ai stitches them together — TikTok, Reels & Shorts use 10s or 20s.</p>
+        </div>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
           {DURATIONS.map((d) => (
             <button key={d.sec} onClick={() => set({ durationSec: d.sec })}
