@@ -1,8 +1,9 @@
-﻿# Active Context (2026-11-03, post-push: Setup orange box + README tandem heading)
+﻿# Active Context (2026-11-03, post-push: README 10s-batches note)
 
 > Living note — status as of last push. Durable architecture lives in `systemPatterns.md`; durable scope in `projectbrief.md`.
 
 ## Current Focus
+README 10s-batches note (2026-11-03, user-edited): user added `We build in 10-second batches...` line under README step 03 (mirrors Setup orange box). Committed + pushed.
 Setup orange box + README tandem heading (2026-11-03): `ConfigureStep.tsx` batches line wrapped in light-orange box (`bg-[#FFF3E0] border-[#F5C16C]`); user retitled `README.md` section → `Why this app works in tandem with Meta.ai` (matches landing). Build ✅. Uncommitted at note write — next: commit + push.
 Setup batches copy (2026-11-03, user request): `ConfigureStep.tsx` duration helper → `We build in 10-second batches to prevent syncing issues when Meta.ai stitches them together — TikTok, Reels & Shorts use 10s or 20s.` (kept `Meta.ai` spelling; user wrote `Met.ai` typo). Build ✅.
 HOW IT WORKS heading (2026-11-03, user request): `app/page.tsx` tile heading → `Why this app works in tandem with Meta.ai`. Build ✅. Uncommitted at note write — next: commit + push.

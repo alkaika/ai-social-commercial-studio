@@ -25,6 +25,8 @@ Compare input/output costs and data training rights in the exact 3-row table bef
 **03 · Choose Platform & Settings — Instagram, Facebook, TikTok, X, YouTube Shorts, YouTube Video**
 Select 10s, 20s, 30s, or 60s timeframe and vibe (Fun / Professional / Bold / Friendly / Premium). That sets your part count: 10s = 1 part, 20s = 2 parts, 30s = 3 parts, 60s = 6 parts. Every part is ~10 seconds / ~35 words.
 
+We build in 10-second batches to prevent syncing issues when Meta.ai stitches them together — TikTok, Reels & Shorts use 10s or 20s.
+
 **04 · Add company details — Add website**
 AI model analyzes the website, compiles screenshots, and drafts the script. User reviews, edits (if needed), and finalizes the script. Website screenshots (up to 12 pages, auto-discovered from sitemap + nav) can be saved for attaching inside meta.ai.
 
