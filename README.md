@@ -6,13 +6,10 @@ Free studio — you bring one Meta API key and pay the provider directly, only f
 
 ## 🎬 Demo Video
 
-<video src="https://github.com/alkaika/ai-social-commercial-studio/raw/main/docs/demo.mp4" controls width="100%" playsinline preload="metadata">
-  Your browser does not support the video tag.
-  📥 <a href="https://github.com/alkaika/ai-social-commercial-studio/raw/main/docs/demo.mp4">Download / watch the MP4 demo</a>
-</video>
+[![Watch the demo — Project Demo Video for the Meta Global AI Developer Hackathon](https://i.ytimg.com/vi/vp5F_2gtyEY/maxresdefault.jpg)](https://www.youtube.com/watch?v=vp5F_2gtyEY)
 
 > ⏱️ 3-min walkthrough: judging mode vs. BYOK key, Standard vs. Contributor, platform + vibe, website → script → Meta.ai prompts → stitch.
-> 📥 [Download / watch the MP4 demo](docs/demo.mp4)
+> 🎥 [Watch on YouTube](https://www.youtube.com/watch?v=vp5F_2gtyEY)
 
 ## Why this app works in tandem with Meta.ai
 
