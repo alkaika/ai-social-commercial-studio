@@ -5,7 +5,7 @@ import { useKeyStore } from '@/stores/keyStore';
 import { JUDGING_BUILD, SERVER_KEY_PLACEHOLDER, isByokPreview } from '@/lib/judging';
 import { masterFit } from '@/lib/script-utils';
 import ShotImg from '@/components/simple/ShotImg';
-import { downloadWebsiteShot, screenshotCandidates, type WebsiteShot } from '@/lib/screenshots';
+import { downloadWebsiteShot, screenshotCandidates, type WebsiteShot, type ShotDevice } from '@/lib/screenshots';
 
 export default function SourceHub({ onDone, onBack }: { onDone: () => void; onBack?: () => void }) {
   const { urls, set, assets, brand, durationSec, platform, tone, sparkModel, masterScript, masterApproved, scriptGuidance, projectId } = useProject();
@@ -36,10 +36,12 @@ export default function SourceHub({ onDone, onBack }: { onDone: () => void; onBa
   const [selected, setSelected] = useState<Record<string, boolean>>({});
   const [dlMsg, setDlMsg] = useState('');
   const [dlBusy, setDlBusy] = useState(false);
+  // Desktop vs mobile phone-browser renders — both free, same 12 discovered pages.
+  const [shotDevice, setShotDevice] = useState<ShotDevice>('desktop');
 
   const shots: WebsiteShot[] = useMemo(
-    () => screenshotCandidates(urls, brand.aboutSource || '', brand.sitePages || []),
-    [urls, brand.aboutSource, brand.sitePages]
+    () => screenshotCandidates(urls, brand.aboutSource || '', brand.sitePages || [], shotDevice),
+    [urls, brand.aboutSource, brand.sitePages, shotDevice]
   );
   const selectedShots = shots.filter((s) => selected[s.id]);
   const toggleShot = (id: string) => setSelected((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -209,8 +211,11 @@ export default function SourceHub({ onDone, onBack }: { onDone: () => void; onBa
       </div>
 
       <div className="card space-y-3">
-        <h3 className="font-semibold">🌐 Website page screenshots ({shots.length || 'none yet'} — free)</h3>
-        <p className="text-base text-neutral-800">Your main pages (up to 12 — home, about, services, pricing…) so meta.ai sees your real site. Tap to select, then save to your drive and attach them in meta.ai.</p>
+        <div className="flex flex-wrap gap-2">
+          <button onClick={() => setShotDevice('desktop')} className={`border-2 rounded-full px-3 py-1 font-semibold text-sm ${shotDevice === 'desktop' ? 'border-black bg-neutral-100' : 'border-neutral-200 hover:border-neutral-400'}`}>🌐 Website page screenshots ({shots.length || 'none yet'} — free)</button>
+          <button onClick={() => setShotDevice('mobile')} className={`border-2 rounded-full px-3 py-1 font-semibold text-sm ${shotDevice === 'mobile' ? 'border-black bg-neutral-100' : 'border-neutral-200 hover:border-neutral-400'}`}>📱 Mobile page screenshots ({shots.length || 'none yet'} — free)</button>
+        </div>
+        <p className="text-base text-neutral-800">{shotDevice === 'mobile' ? 'The same pages rendered in a phone browser — portrait 390×844, a natural fit for TikTok / Reels / Shorts. Tap to select, then save to your drive and attach them in meta.ai.' : 'Your main pages (up to 12 — home, about, services, pricing…) so meta.ai sees your real site. Tap to select, then save to your drive and attach them in meta.ai.'}</p>
         {shots.length === 0 ? (
           <p className="text-sm text-neutral-500 border border-dashed rounded-xl p-3">No pages yet — add your website above and tap “Read my website(s)” to fill this gallery. Fewer than 10 just means a smaller site — we show whatever exists.</p>
         ) : (
@@ -222,7 +227,7 @@ export default function SourceHub({ onDone, onBack }: { onDone: () => void; onBa
               <button className="btn-secondary !py-1" disabled={dlBusy} onClick={() => downloadMany(shots)}>{dlBusy ? 'Saving…' : `💾 Save all ${shots.length}`}</button>
             </div>
             {dlMsg && <p className="text-sm bg-neutral-100 border rounded-xl p-3">{dlMsg}</p>}
-            <div className="grid grid-cols-2 gap-2">
+            <div className={`grid gap-2 ${shotDevice === 'mobile' ? 'grid-cols-3 sm:grid-cols-4' : 'grid-cols-2'}`}>
               {shots.map((sh, i) => {
                 const on = !!selected[sh.id];
                 return (
