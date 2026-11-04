@@ -17,6 +17,7 @@
 //   in Next.js dev, so a relative '/ffmpeg/...' path throws Invalid URL.
 import { FFmpeg } from '@ffmpeg/ffmpeg';
 import { fetchFile } from '@ffmpeg/util';
+import { resolveMotionTier } from '@/lib/muse/motion-tier'; // pure, client-safe
 
 let ff: FFmpeg | null = null;
 let loading: Promise<FFmpeg> | null = null;
@@ -524,7 +525,6 @@ export async function buildKenBurnsCommercial(opts: {
 }
 
 export function motionPlan(scenes: { id: string; videoUrl?: string; motionSource?: string; imageUrl?: string; voiceSource?: string; voiceClipUrl?: string; cadence?: number }[]) {
-  const { resolveMotionTier } = require('@/lib/muse/visual') as typeof import('@/lib/muse/visual');
   return scenes.map((s) => ({ id: s.id, tier: resolveMotionTier(s), src: s.videoUrl || s.imageUrl || '', vo: s.voiceClipUrl || null, voSource: s.voiceSource || 'script', cadence: s.cadence ?? 1 }));
 }
 

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { byokHeaders, callMuse, callMuseGet, normalizeBase, MuseGatewayError } from '@/lib/muse/client';
 import { GATEWAY_MODELS } from '@/lib/muse/models.config';
+import { routeError } from '@/lib/errors';
 
 // Verified against https://dev.meta.ai/docs (2026-10-27):
 // - Spark (both IDs) + Image generation WORK at OpenAI-style paths (user live test: 3/6 ✅).
@@ -18,7 +19,7 @@ import { GATEWAY_MODELS } from '@/lib/muse/models.config';
 
 export async function POST(req: NextRequest) {
   try {
-    const { key, baseUrl } = byokHeaders(req);
+    const { key, baseUrl } = await byokHeaders(req);
     // Validate key against each model. Never logs the key.
     const base = normalizeBase(baseUrl);
     const checks: Record<string, 'ok' | 'fail' | 'auth'> = {};
@@ -128,6 +129,6 @@ export async function POST(req: NextRequest) {
     ]);
     return NextResponse.json({ checks, details, baseUrl: base });
   } catch (e: any) {
-    return NextResponse.json({ error: e?.message || 'Validation failed.' }, { status: 400 });
+    return NextResponse.json({ error: routeError(e, 'Validation failed — please try again.') }, { status: 400 });
   }
 }

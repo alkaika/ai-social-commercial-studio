@@ -1,19 +1,20 @@
 import { callMuse } from './client';
+import { MuseGatewayError, PublicError } from '@/lib/errors';
 
 export async function generateImage(opts: { key: string; baseUrl: string; prompt: string; aspect?: string }) {
-  if (!opts.key) throw new Error('Missing API key. Add your Meta key first — it is sent with this request only.');
+  if (!opts.key) throw new PublicError('Missing API key. Add your Meta key first — it is sent with this request only.');
   const data: any = await callMuse({
     key: opts.key, baseUrl: opts.baseUrl, path: '/v1/images/generations',
     body: { model: 'muse-image-1.0', prompt: opts.prompt, size: opts.aspect === '16:9' ? '1792x1024' : opts.aspect === '1:1' ? '1024x1024' : '1024x1792' },
     timeoutMs: 120000,
   });
   const url = data?.data?.[0]?.url || (data?.data?.[0]?.b64_json ? `data:image/png;base64,${data.data[0].b64_json}` : '');
-  if (!url) throw new Error('Image generation came back empty — try again.');
+  if (!url) throw new PublicError('Image generation came back empty — try again.');
   return { url, mock: false };
 }
 
 export async function segmentImage(opts: { key: string; baseUrl: string; imageUrl: string; prompt?: string }) {
-  if (!opts.key) throw new Error('Missing API key. Add your Meta key first — it is sent with this request only.');
+  if (!opts.key) throw new PublicError('Missing API key. Add your Meta key first — it is sent with this request only.');
   try {
     // SAM 3.1 via Responses API (model sam-3-1), verified against dev.meta.ai docs:
     // POST /v1/responses { model, input: [{ role:'user', content:[
@@ -33,26 +34,17 @@ export async function segmentImage(opts: { key: string; baseUrl: string; imageUr
     });
     return { maskUrl: data?.output?.[0]?.content?.[0]?.mask_url || data?.mask_url || '', mock: false, raw: data };
   } catch (e: any) {
-    throw new Error(e?.message || 'Segmentation failed — try again.');
+    // Keep user-safe messages (gateway diagnostics, PublicErrors); hide internals.
+    if (e instanceof MuseGatewayError || e instanceof PublicError) throw e;
+    throw new PublicError('Segmentation failed — try again.');
   }
 }
 
-export type MotionTier = 'metai-upload' | 'kenburns';
-
-// Motion flow: [uploaded meta.ai clip] -> [website screenshot] -> Ken Burns.
-// - 'metai-upload': user-made clip from the consumer meta.ai app (10s w/ audio).
-//   No API exists; the app accepts the upload and we mute/duck its baked-in
-//   audio under real Voice-over at render time.
-// - 'screenshot': website shot picked on the Story page (mShots/thum.io,
-//   free, no key). Renders as a Ken Burns zoom over the shot.
-// - 'kenburns': always-available local fallback (slow zoom over the still).
-// (Wonder retired 2026-10-27: muse-wonder-1.0 was text-only, never video;
-// all reasoning — script, organize, revision planning — runs on the user's
-// chosen Spark writer.)
-export function resolveMotionTier(scene: { videoUrl?: string; motionSource?: string }): MotionTier {
-  if (scene.videoUrl && scene.motionSource === 'metai-upload') return 'metai-upload';
-  return 'kenburns';
-}
+// Motion tier logic moved to lib/muse/motion-tier.ts (pure, client-safe) so
+// client render code (lib/render/ffmpeg.ts) never imports this server-only
+// module. Re-exported here for backward compatibility with server imports.
+export { resolveMotionTier } from './motion-tier';
+export type { MotionTier } from './motion-tier';
 
 /** Retired stub — Wonder was text-only, never video. Motion = clips/Ken Burns. */
 export async function generateMotion(opts: { key: string; baseUrl: string; imageUrl: string; prompt: string }) {

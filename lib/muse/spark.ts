@@ -1,4 +1,5 @@
 import { callMuse } from './client';
+import { PublicError } from '@/lib/errors';
 import { endpointModelForSpark, reasoningEffortForSpark } from './models.config';
 import { normalizeDurationSec } from '@/config/platforms';
 import type { SparkModelId } from '@/config/pricing';
@@ -61,7 +62,7 @@ Return STRICT JSON: {"masterScript": "part 1 text\\n\\npart 2 text\\n\\n…"} wi
 export async function generateMasterScript(opts: { key: string; baseUrl: string } & MasterScriptInput): Promise<string> {
   const dSec = normalizeDurationSec(opts.durationSec);
   const parts = partCountFor(dSec);
-  if (!opts.key) throw new Error('Missing API key. Add your Meta key first — it is sent with this request only.');
+  if (!opts.key) throw new PublicError('Missing API key. Add your Meta key first — it is sent with this request only.');
   const call = async (content: string, temperature: number): Promise<string> => {
     const data: any = await callMuse({
       key: opts.key, baseUrl: opts.baseUrl, path: '/v1/chat/completions',
@@ -122,7 +123,7 @@ export async function generateMasterScript(opts: { key: string; baseUrl: string 
     blocks.map((b, i) => `Part ${i + 1}: ${countWords(b)} words (needs ${MIN_WORDS_PER_PART}–${MAX_WORDS_PER_PART}, aim ${WORDS_PER_PART})${endsWithSentence(b) ? '' : ' — does NOT end on a complete sentence'}.`).join('\n');
 
   const first = extract(await call(buildMasterScriptPrompt(opts), 0.8));
-  if (!first) throw new Error('Script draft came back empty — try again.');
+  if (!first) throw new PublicError('Script draft came back empty — try again.');
   let blocks = partBlocks(first);
   if (valid(blocks)) return normalize(blocks);
   // One diagnostic retry — xhigh reasons over its own miss list.
@@ -174,7 +175,7 @@ Return STRICT JSON: {"scenes":[{"id":"s1","heading":"...","voiceover":"...","onS
 
 export async function generateScript(opts: { key: string; baseUrl: string } & ScriptInput): Promise<AdScript> {
   const dSec = normalizeDurationSec((opts as any).durationSec);
-  if (!opts.key) throw new Error('Missing API key. Add your Meta key first — it is sent with this request only.');
+  if (!opts.key) throw new PublicError('Missing API key. Add your Meta key first — it is sent with this request only.');
   const data: any = await callMuse({
     key: opts.key, baseUrl: opts.baseUrl, path: '/v1/chat/completions',
     body: { model: endpointModelForSpark(opts.sparkModel), messages: [{ role: 'user', content: buildScriptPrompt(opts) }], temperature: 0.8, reasoning_effort: reasoningEffortForSpark(opts.sparkModel) },
@@ -189,10 +190,10 @@ export async function generateScript(opts: { key: string; baseUrl: string } & Sc
       visualPrompt: s.visualPrompt || '', durationSec: Number(s.durationSec) || 5,
       storyBeat: s.storyBeat || '', cadence: 1,
     }));
-    if (!scenes.length) throw new Error('Script organize came back empty — try again.');
+    if (!scenes.length) throw new PublicError('Script organize came back empty — try again.');
     return { scenes, totalSec: dSec, sparkModel: opts.sparkModel };
   } catch (e: any) {
     if (e?.message?.includes('came back empty')) throw e;
-    throw new Error('Script organize failed — try again.');
+    throw new PublicError('Script organize failed — try again.');
   }
 }
