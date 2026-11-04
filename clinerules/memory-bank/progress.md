@@ -2,6 +2,7 @@
 
 > Living note — status as of last push. `clinerules/` is intentionally committed (no secrets inside) so clones carry the why, not just the what.
 
+- README hero + hackathon (2026-11-04, user-edited): header → `in under 10 minutes`; Notes adds `built during the 2026 Meta Global AI Developer Hackathon`.
 - Hero 10-min (2026-11-04, user request): landing hero → `Make a commercial in under 10 minutes`. Build ✅.
 - README built-with credit (2026-11-04, user-edited): Notes adds built-with-Spark-Contributor/Wonder line, reorder, `None exists due to Meta TOS` wording.
 - Landing step-03 batches copy (2026-11-03, user request): WORKFLOW STEPS 03 tile adds `We build in 10-second batches to prevent syncing issues when Meta.ai stitches them together — TikTok, Reels & Shorts use 10s or 20s.` Build ✅.

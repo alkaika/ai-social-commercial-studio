@@ -1,6 +1,6 @@
 # AI Social Commercial Studio
 
-Make a commercial **in under 5 minutes**. No editing experience needed. No monthly subscription.
+Make a commercial **in under 10 minutes**. No editing experience needed. No monthly subscription.
 
 Free studio — you bring one Meta API key and pay the provider directly, only for what you generate. Your key stays in your browser tab and is never stored on our server.
 
@@ -59,6 +59,7 @@ Default gateway is the Meta Model API (`https://api.meta.ai/v1`). No ffmpeg inst
 
 ## Notes
 
+- This app was built during the 2026 Meta Global AI Developer Hackathon.
 - This app was built with Muse Spark 1.3 Contributor (95%) and Muse Wonder 1.0 (5%)
 - Stack: Next.js 14, React 18, TypeScript, Tailwind, Zustand, Dexie, FFmpeg.wasm, WebAuthn PRF vault.
 - Voice-only prompts: no background music, no sound effects — Meta.ai text-to-voice only.
